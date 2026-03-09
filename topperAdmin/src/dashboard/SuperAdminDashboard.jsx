@@ -6,11 +6,13 @@ import {
   Description as DescriptionIcon,
   PieChart as PieChartIcon,
   Payment as PayoutIcon,
-  Settings as SettingsIcon,
   PendingActions as PendingIcon,
+
   CheckCircle as ApprovedIcon,
-  Cancel as RejectedIcon
+  Cancel as RejectedIcon,
+  Person as ProfileIcon
 } from '@mui/icons-material';
+
 import { Box, useTheme, styled } from "@mui/material";
 
 import Sidebar from "../components/Sidebar";
@@ -94,11 +96,14 @@ const SuperAdminDashboard = () => {
       navigate: "reports",
     },
     {
-      title: "Settings",
-      icon: <SettingsIcon />,
-      navigate: "settings",
+      title: "Profile",
+      icon: <ProfileIcon />,
+      navigate: "profile",
     },
+
+
   ];
+
 
   return (
     <DashboardMainContainer>

@@ -1,20 +1,14 @@
-import React, { useEffect, useMemo, useCallback } from "react";
+import React, { useEffect, useMemo, useCallback, useState } from "react";
 import {
     Box,
     Typography,
-    Paper,
     Button,
     Stack,
-    CircularProgress,
-    TextField,
+    Avatar,
     IconButton,
-    MenuItem,
-    Select,
-    FormControl,
-    InputLabel,
     alpha,
-    Grid,
-    useTheme
+    useTheme,
+    Chip
 } from "@mui/material";
 import {
     useGetPendingToppersQuery,
@@ -27,20 +21,21 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import DataTable from "../../../components/DataTable";
 import StatusChip from "../../../components/common/StatusChip";
+import FilterBar from "../../../components/common/FilterBar";
 
 const PendingToppers = () => {
     const theme = useTheme();
     const token = useMemo(() => localStorage.getItem("authToken"), []);
 
-    const [page, setPage] = React.useState(1);
-    const [rowsPerPage, setRowsPerPage] = React.useState(10);
-    const [search, setSearch] = React.useState("");
-    const [filters, setFilters] = React.useState({
+    const [page, setPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [search, setSearch] = useState("");
+    const [filters, setFilters] = useState({
         expertiseClass: "",
         stream: ""
     });
 
-    const [modalConfig, setModalConfig] = React.useState({
+    const [modalConfig, setModalConfig] = useState({
         open: false,
         type: '',
         id: null,
@@ -51,7 +46,7 @@ const PendingToppers = () => {
         showReasonField: false
     });
 
-    const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+    const [debouncedSearch, setDebouncedSearch] = useState(search);
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(search);
@@ -123,6 +118,35 @@ const PendingToppers = () => {
         }));
         setPage(1);
     }, []);
+
+    const handleSearchChange = (val) => {
+        setSearch(val);
+        setPage(1);
+    };
+
+    const filterFields = [
+        {
+            name: 'expertiseClass',
+            label: 'Class',
+            type: 'select',
+            width: 3,
+            options: [
+                { label: 'Class 10', value: '10' },
+                { label: 'Class 12', value: '12' }
+            ]
+        },
+        {
+            name: 'stream',
+            label: 'Stream',
+            type: 'select',
+            width: 3,
+            options: [
+                { label: 'Science', value: 'Science' },
+                { label: 'Commerce', value: 'Commerce' },
+                { label: 'Arts', value: 'Arts' }
+            ]
+        }
+    ];
 
     const columns = useMemo(() => [
         {
@@ -222,64 +246,14 @@ const PendingToppers = () => {
                 </IconButton>
             </Box>
 
-            <Paper
-                elevation={0}
-                sx={{
-                    p: 2,
-                    mb: 3,
-                    borderRadius: 4,
-                    border: '1px solid',
-                    borderColor: alpha(theme.palette.divider, 0.1),
-                    bgcolor: alpha(theme.palette.background.paper, 0.5)
-                }}
-            >
-                <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} md={6}>
-                        <TextField
-                            fullWidth
-                            placeholder="Search by name or phone..."
-                            variant="outlined"
-                            size="small"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            sx={{ bgcolor: 'background.paper', borderRadius: 2 }}
-                        />
-                    </Grid>
-                    <Grid item xs={6} md={3}>
-                        <FormControl fullWidth size="small">
-                            <InputLabel>Class</InputLabel>
-                            <Select
-                                name="expertiseClass"
-                                value={filters.expertiseClass}
-                                label="Class"
-                                onChange={handleFilterChange}
-                                sx={{ bgcolor: 'background.paper', borderRadius: 2 }}
-                            >
-                                <MenuItem value="">All Classes</MenuItem>
-                                <MenuItem value="10">Class 10</MenuItem>
-                                <MenuItem value="12">Class 12</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Grid>
-                    <Grid item xs={6} md={3}>
-                        <FormControl fullWidth size="small">
-                            <InputLabel>Stream</InputLabel>
-                            <Select
-                                name="stream"
-                                value={filters.stream}
-                                label="Stream"
-                                onChange={handleFilterChange}
-                                sx={{ bgcolor: 'background.paper', borderRadius: 2 }}
-                            >
-                                <MenuItem value="">All Streams</MenuItem>
-                                <MenuItem value="Science">Science</MenuItem>
-                                <MenuItem value="Commerce">Commerce</MenuItem>
-                                <MenuItem value="Arts">Arts</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Grid>
-                </Grid>
-            </Paper>
+            <FilterBar
+                searchPlaceholder="Search by name or phone..."
+                search={search}
+                onSearchChange={handleSearchChange}
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                fields={filterFields}
+            />
 
             <DataTable
                 columns={columns}

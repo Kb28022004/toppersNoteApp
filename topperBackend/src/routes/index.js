@@ -4,6 +4,7 @@ router.use('/auth',     require('../modules/auth/auth.routes'));
 router.use('/students', require('../modules/students/student.routes'));
 router.use('/toppers',  require('../modules/toppers/topper.routes'));
 router.use('/admin',    require('../modules/admin/admin.routes'));
+router.use('/dashboard', require('../modules/admin/admin.routes'));
 router.use('/notes',    require('../modules/notes/notes.routes'));
 router.use('/reviews',  require('../modules/reviews/review.routes'));
 router.use('/payments', require('../modules/payments/payment.routes'));

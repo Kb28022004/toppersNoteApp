@@ -16,6 +16,15 @@ router.post(
     controller.createProfile
 );
 
+// Get Admin Profile
+router.get(
+    '/profile',
+    auth,
+    role('ADMIN'),
+    controller.getProfile
+);
+
+
 // Get all pending topper profiles
 router.get(
   '/toppers/pending',
@@ -95,6 +104,14 @@ router.patch(
   auth,
   role('ADMIN'),
   controller.updatePayoutStatus
+);
+
+// Dashboard Stats
+router.get(
+    '/dashboard',
+    auth,
+    role('ADMIN'),
+    controller.getDashboardData
 );
 
 module.exports = router;

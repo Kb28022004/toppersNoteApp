@@ -62,6 +62,17 @@ export const adminApi = createApi({
       }),
     }),
 
+    getProfile: builder.query({
+      query: (token) => ({
+        url: `admin/profile`,
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+      }),
+    }),
+
+
     // Topper Management
     getPendingToppers: builder.query({
       query: (arg) => {
@@ -112,11 +123,22 @@ export const adminApi = createApi({
 
     // Note Management
     getPendingNotes: builder.query({
-      query: ({ token, status, search }) => ({
-        url: `admin/notes/pending?status=${status || 'UNDER_REVIEW'}&search=${search || ''}`,
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      }),
+      query: ({ token, status, search, page, limit, subject, expertiseClass, board }) => {
+        const params = new URLSearchParams();
+        if (status) params.append("status", status);
+        if (search) params.append("search", search);
+        if (page) params.append("page", page);
+        if (limit) params.append("limit", limit);
+        if (subject) params.append("subject", subject);
+        if (expertiseClass) params.append("expertiseClass", expertiseClass);
+        if (board) params.append("board", board);
+
+        return {
+          url: `admin/notes/pending?${params.toString()}`,
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        };
+      },
       providesTags: ["Notes"],
     }),
     approveNote: builder.mutation({
@@ -177,7 +199,9 @@ export const {
   useVerifyOtpMutation,
   useLoginMutation,
   useCreateProfileMutation,
+  useGetProfileQuery,
   useGetPendingToppersQuery,
+
   useApproveTopperMutation,
   useRejectTopperMutation,
   useGetPendingNotesQuery,

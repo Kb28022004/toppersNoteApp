@@ -8,6 +8,7 @@ const redis = require("../../config/redis");
 const StudentProfile = require("../students/student.model");
 const Payout = require("../earnings/earnings.model");
 const notificationService = require('../notifications/notification.service');
+const Order = require("../orders/order.model");
 
 const avg = (arr) => arr.reduce((sum, s) => sum + s.marks, 0) / arr.length;
 
@@ -56,6 +57,11 @@ exports.createProfile = async (userId, payload, file, req) => {
     await User.findByIdAndUpdate(userId, { profileCompleted: true });
 
     return profile;
+};
+
+// Get Admin Profile
+exports.getProfile = async (userId) => {
+    return await AdminProfile.findOne({ userId });
 };
 
 // Get all pending topper profiles
@@ -318,63 +324,96 @@ exports.rejectTopper = async (profileId, reason) => {
 
 
 // 1️⃣ Get notes by status
-exports.getNotesByStatus = async (status = 'UNDER_REVIEW') => {
-  const cacheKey = `admin:notes:${status.toLowerCase()}`;
-  
-  try {
-    if (redis.status === 'ready') {
-        const cached = await redis.get(cacheKey);
-        if (cached) return JSON.parse(cached);
-    }
-  } catch (err) {
-    console.error("Redis Cache Error (Get Notes By Status):", err.message);
-  }
+exports.getNotesByStatus = async ({
+    status = 'UNDER_REVIEW',
+    page = 1,
+    limit = 10,
+    search = '',
+    subject = '',
+    expertiseClass = '',
+    board = ''
+}) => {
+    const skip = (page - 1) * limit;
+    
+    // Create match stage
+    const matchStage = { status };
+    if (subject) matchStage.subject = subject;
+    if (expertiseClass) matchStage.class = expertiseClass;
+    if (board) matchStage.board = board;
 
-  const notes = await Note.aggregate([
-    { $match: { status } },
-    {
-      $lookup: {
-        from: 'topperprofiles',
-        localField: 'topperId',
-        foreignField: 'userId',
-        as: 'topperProfile'
-      }
-    },
-    {
-      $unwind: {
-        path: '$topperProfile',
-        preserveNullAndEmptyArrays: true
-      }
-    },
-    {
-      $project: {
-        _id: 1,
-        subject: 1,
-        class: 1,
-        chapterName: 1,
-        board: 1,
-        price: 1,
-        status: 1,
-        createdAt: 1,
-        topperId: {
-          _id: '$topperId',
-          firstName: '$topperProfile.firstName',
-          lastName: '$topperProfile.lastName'
+    const pipeline = [
+        { $match: matchStage },
+        {
+            $lookup: {
+                from: 'topperprofiles',
+                localField: 'topperId',
+                foreignField: 'userId',
+                as: 'topperProfile'
+            }
+        },
+        {
+            $unwind: {
+                path: '$topperProfile',
+                preserveNullAndEmptyArrays: true
+            }
         }
-      }
-    },
-    { $sort: { createdAt: -1 } }
-  ]);
+    ];
 
-  try {
-    if (redis.status === 'ready') {
-        await redis.set(cacheKey, JSON.stringify(notes), 'EX', 300);
+    if (search) {
+        const searchRegex = new RegExp(search, "i");
+        pipeline.push({
+            $match: {
+                $or: [
+                    { subject: searchRegex },
+                    { chapterName: searchRegex },
+                    { title: searchRegex },
+                    { "topperProfile.firstName": searchRegex },
+                    { "topperProfile.lastName": searchRegex },
+                ],
+            },
+        });
     }
-  } catch (err) {
-    console.error("Redis Cache Error (Set Notes By Status):", err.message);
-  }
-  
-  return notes;
+
+    pipeline.push({
+        $facet: {
+            metadata: [{ $count: "total" }],
+            data: [
+                { $sort: { createdAt: -1 } },
+                { $skip: skip },
+                { $limit: limit },
+                {
+                    $project: {
+                        _id: 1,
+                        subject: 1,
+                        class: 1,
+                        chapterName: 1,
+                        board: 1,
+                        price: 1,
+                        status: 1,
+                        createdAt: 1,
+                        topperId: {
+                            _id: '$topperId',
+                            firstName: '$topperProfile.firstName',
+                            lastName: '$topperProfile.lastName'
+                        }
+                    }
+                }
+            ]
+        }
+    });
+
+    const [result] = await Note.aggregate(pipeline);
+    const total = result.metadata[0] ? result.metadata[0].total : 0;
+
+    return {
+        data: result.data,
+        pagination: {
+            total,
+            page,
+            pages: Math.ceil(total / limit),
+            limit
+        }
+    };
 };
 
 // 2️⃣ Approve note
@@ -535,4 +574,24 @@ exports.updatePayoutStatus = async (payoutId, status, transactionId, adminRemark
 
   await payout.save();
   return `Payout ${status.toLowerCase()} successfully`;
+};
+
+exports.getDashboardData = async () => {
+    const totalStudents = await StudentProfile.countDocuments();
+    const totalToppers = await TopperProfile.countDocuments({ status: 'APPROVED' });
+    const totalNotes = await Note.countDocuments({ status: 'PUBLISHED' });
+
+    const revenueData = await Order.aggregate([
+        { $match: { paymentStatus: 'SUCCESS' } },
+        { $group: { _id: null, total: { $sum: '$amountPaid' } } }
+    ]);
+
+    const totalRevenue = revenueData.length > 0 ? revenueData[0].total : 0;
+
+    return {
+        totalStudents,
+        totalToppers,
+        totalNotes,
+        totalRevenue
+    };
 };

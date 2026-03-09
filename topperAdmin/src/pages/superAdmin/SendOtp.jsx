@@ -218,11 +218,11 @@ const InputContainer = styled("div")`
   border-radius: 4px;
   height: 40px;
   padding: 0 12px;
-  background-color: #fff;
+  background-color: #ffffff;
 `;
 
 const Prefix = styled("span")`
-  color: #333;
+  color: #3b3b3b;
   font-weight: 600;
   margin-right: 10px;
   border-right: 1px solid #ccc;
@@ -236,7 +236,9 @@ const PhoneInput = styled("input")`
   width: 100%;
   height: 100%;
   font-size: 13px;
-  color: #757575;
+ background-color:#fff;
+  color:#000;
   font-family: "Mulish";
   font-weight: 400;
+  padding : 0 10px
 `;

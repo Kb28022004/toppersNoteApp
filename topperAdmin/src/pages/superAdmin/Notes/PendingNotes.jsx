@@ -3,11 +3,8 @@ import { useNavigate } from "react-router-dom";
 import {
     Box,
     Typography,
-    Paper,
     Button,
     Avatar,
-    Chip,
-    Stack,
     IconButton,
     alpha,
     useTheme
@@ -24,13 +21,30 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import DataTable from "../../../components/DataTable";
 import StatusChip from "../../../components/common/StatusChip";
+import FilterBar from "../../../components/common/FilterBar";
 
 const PendingNotes = () => {
     const navigate = useNavigate();
     const theme = useTheme();
     const token = useMemo(() => localStorage.getItem("authToken"), []);
 
-    const { data: notes, isLoading, isFetching, refetch } = useGetPendingNotesQuery({ token, status: 'UNDER_REVIEW' }, { skip: !token });
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [search, setSearch] = useState("");
+    const [filters, setFilters] = useState({
+        expertiseClass: '',
+        board: '',
+        subject: ''
+    });
+
+    const { data: notes, isLoading, isFetching, refetch } = useGetPendingNotesQuery({
+        token,
+        status: 'UNDER_REVIEW',
+        page,
+        limit,
+        search,
+        ...filters
+    }, { skip: !token });
 
     const [approveNote, { isLoading: isApproving }] = useApproveNoteMutation();
     const [rejectNote, { isLoading: isRejecting }] = useRejectNoteMutation();
@@ -45,6 +59,17 @@ const PendingNotes = () => {
         confirmColor: 'primary',
         showReasonField: false
     });
+
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+        setPage(1);
+    };
+
+    const handleSearchChange = (val) => {
+        setSearch(val);
+        setPage(1);
+    };
 
     const handleApprove = useCallback((id) => {
         setModalConfig({
@@ -89,6 +114,31 @@ const PendingNotes = () => {
         }
     }, [modalConfig, approveNote, rejectNote, token, refetch]);
 
+    const filterFields = [
+        {
+            name: 'expertiseClass',
+            label: 'Class',
+            type: 'select',
+            width: 2.5,
+            options: [
+                { label: 'Class 10', value: '10' },
+                { label: 'Class 12', value: '12' }
+            ]
+        },
+        {
+            name: 'board',
+            label: 'Board',
+            type: 'select',
+            width: 2.5,
+            options: [
+                { label: 'CBSE', value: 'CBSE' },
+                { label: 'ICSE', value: 'ICSE' },
+                { label: 'State Board', value: 'State Board' }
+            ]
+        },
+        { name: 'subject', label: 'Subject', type: 'text', width: 3 }
+    ];
+
     const columns = useMemo(() => [
         {
             id: 'title',
@@ -110,9 +160,18 @@ const PendingNotes = () => {
             label: 'Author',
             render: (row) => (
                 <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{row.topperId?.firstName || 'Unknown'}</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{row.topperId?.firstName || 'Unknown'} {row.topperId?.lastName || ''}</Typography>
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>Topper Profile</Typography>
                 </Box>
+            )
+        },
+        {
+            id: 'board',
+            label: 'Board',
+            render: (row) => (
+                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                    {row.board || '—'}
+                </Typography>
             )
         },
         {
@@ -133,7 +192,7 @@ const PendingNotes = () => {
             id: 'actions',
             label: 'Moderation',
             render: (row) => (
-                <Stack direction="row" spacing={1}>
+                <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button
                         variant="soft" size="small" color="secondary"
                         startIcon={<VisibilityIcon />}
@@ -158,7 +217,7 @@ const PendingNotes = () => {
                     >
                         Reject
                     </Button>
-                </Stack>
+                </Box>
             )
         }
     ], [handleApprove, handleReject, isApproving, isRejecting, theme, navigate]);
@@ -175,11 +234,23 @@ const PendingNotes = () => {
                 </IconButton>
             </Box>
 
+            <FilterBar
+                searchPlaceholder="Search by subject, chapter, or topper name..."
+                search={search}
+                onSearchChange={handleSearchChange}
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                fields={filterFields}
+            />
+
             <DataTable
                 columns={columns}
                 data={notes?.data}
                 isLoading={isLoading}
                 isFetching={isFetching}
+                pagination={notes?.pagination}
+                onPageChange={setPage}
+                onRowsPerPageChange={setLimit}
                 noDataMessage="No pending study notes found"
                 noDataIcon={DescriptionOutlinedIcon}
             />

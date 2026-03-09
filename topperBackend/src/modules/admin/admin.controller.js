@@ -19,6 +19,20 @@ exports.createProfile = async (req, res, next) => {
     }
 };
 
+// Get Admin Profile
+exports.getProfile = async (req, res, next) => {
+    try {
+        const profile = await adminService.getProfile(req.user.id);
+        res.json({
+            success: true,
+            data: profile
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+
 // Get all pending topper profiles
 exports.getPendingToppers = async (req, res, next) => {
   try {
@@ -66,11 +80,19 @@ exports.rejectTopper = async (req, res, next) => {
 // Get all notes by status
 exports.getPendingNotes = async (req, res, next) => {
   try {
-    const { status } = req.query;
-    const notes = await adminService.getNotesByStatus(status || 'UNDER_REVIEW');
+    const { status, page, limit, search, subject, expertiseClass, board } = req.query;
+    const result = await adminService.getNotesByStatus({
+      status: status || 'UNDER_REVIEW',
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || 10,
+      search,
+      subject,
+      expertiseClass,
+      board
+    });
     res.json({
       success: true,
-      data: notes,
+      ...result
     });
   } catch (err) {
     next(err);
@@ -169,4 +191,16 @@ exports.updatePayoutStatus = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+exports.getDashboardData = async (req, res, next) => {
+    try {
+        const data = await adminService.getDashboardData();
+        res.json({
+            success: true,
+            data
+        });
+    } catch (err) {
+        next(err);
+    }
 };

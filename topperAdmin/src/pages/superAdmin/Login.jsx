@@ -204,6 +204,8 @@ const LoginInput = styled("input")`
   width: 100%;
   height: 100%;
   font-size: 13px;
+  background-color:#fff;
+  color:#000
 `;
 
 const LoginLabel = styled("label")({

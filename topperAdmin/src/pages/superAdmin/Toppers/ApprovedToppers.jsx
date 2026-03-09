@@ -2,24 +2,17 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
     Box,
     Typography,
-    Paper,
     Stack,
-    TextField,
     Avatar,
-    Chip,
     Button,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
     alpha,
-    useTheme,
-    Grid
+    useTheme
 } from "@mui/material";
 import { useGetPendingToppersQuery } from "../../../feature/api/adminApi";
 import DataTable from "../../../components/DataTable";
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import StatusChip from "../../../components/common/StatusChip";
+import FilterBar from "../../../components/common/FilterBar";
 
 const ApprovedToppers = () => {
     const theme = useTheme();
@@ -48,6 +41,24 @@ const ApprovedToppers = () => {
         ...filters,
         status: "APPROVED"
     }, { skip: !token });
+
+    const handleFilterChange = useCallback((e) => {
+        setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        setPage(1);
+    }, []);
+
+    const filterFields = [
+        {
+            name: 'expertiseClass',
+            label: 'Experience Level',
+            type: 'select',
+            width: 4,
+            options: [
+                { label: 'Class 10', value: '10' },
+                { label: 'Class 12', value: '12' }
+            ]
+        }
+    ];
 
     const columns = useMemo(() => [
         {
@@ -106,10 +117,10 @@ const ApprovedToppers = () => {
         }
     ], [theme]);
 
-    const handleFilterChange = useCallback((e) => {
-        setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const handleSearchChange = (val) => {
+        setSearch(val);
         setPage(1);
-    }, []);
+    };
 
     return (
         <Box sx={{ p: { xs: 2, md: 4 } }}>
@@ -121,47 +132,14 @@ const ApprovedToppers = () => {
                 </Typography>
             </Box>
 
-            <Paper
-                elevation={0}
-                sx={{
-                    p: 2,
-                    mb: 3,
-                    borderRadius: 4,
-                    border: '1px solid',
-                    borderColor: alpha(theme.palette.divider, 0.1),
-                    bgcolor: alpha(theme.palette.background.paper, 0.5)
-                }}
-            >
-                <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} md={6}>
-                        <TextField
-                            fullWidth
-                            placeholder="Find by name..."
-                            variant="outlined"
-                            size="small"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            sx={{ bgcolor: 'background.paper', borderRadius: 2 }}
-                        />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                        <FormControl fullWidth size="small">
-                            <InputLabel>Experience Level</InputLabel>
-                            <Select
-                                name="expertiseClass"
-                                value={filters.expertiseClass}
-                                label="Experience Level"
-                                onChange={handleFilterChange}
-                                sx={{ bgcolor: 'background.paper', borderRadius: 2 }}
-                            >
-                                <MenuItem value="">All Experience</MenuItem>
-                                <MenuItem value="10">Class 10</MenuItem>
-                                <MenuItem value="12">Class 12</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Grid>
-                </Grid>
-            </Paper>
+            <FilterBar
+                searchPlaceholder="Find by name..."
+                search={search}
+                onSearchChange={handleSearchChange}
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                fields={filterFields}
+            />
 
             <DataTable
                 columns={columns}

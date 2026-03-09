@@ -243,6 +243,8 @@ const VerifyOtpInput = styled("input")`
   color: #757575;
   font-size: 13px;
   font-wight: 400;
+ background-color:#fff;
+  color:#000
 `;
 
 const SeePassword = styled(IconButton)`

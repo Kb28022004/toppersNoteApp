@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
     Box,
@@ -13,7 +13,8 @@ import {
     Chip,
     alpha,
     useTheme,
-    Avatar
+    Avatar,
+    Tooltip
 } from "@mui/material";
 import {
     usePreviewNoteQuery,
@@ -25,6 +26,11 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import ZoomOutIcon from '@mui/icons-material/ZoomOut';
+import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import toast from "react-hot-toast";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 
@@ -32,11 +38,13 @@ const ReviewNote = () => {
     const { id } = useParams();
     const theme = useTheme();
     const navigate = useNavigate();
+    const scrollContainerRef = useRef(null);
     const token = useMemo(() => localStorage.getItem("authToken"), []);
     const { data: noteData, isLoading, error } = usePreviewNoteQuery({ id, token }, { skip: !id || !token });
 
     const [approveNote, { isLoading: isApproving }] = useApproveNoteMutation();
     const [rejectNote, { isLoading: isRejecting }] = useRejectNoteMutation();
+    const [zoom, setZoom] = useState(1);
 
     const [modalConfig, setModalConfig] = useState({
         open: false,
@@ -72,6 +80,13 @@ const ReviewNote = () => {
         });
     };
 
+    const handleScroll = (direction) => {
+        if (scrollContainerRef.current) {
+            const scrollAmount = direction === 'left' ? -600 : 600;
+            scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+    };
+
     const handleConfirmAction = async (reason) => {
         try {
             if (modalConfig.type === 'approve') {
@@ -91,23 +106,27 @@ const ReviewNote = () => {
     if (isLoading) {
         return (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 4, minHeight: "80vh", alignItems: "center" }}>
-                <CircularProgress />
+                <CircularProgress thickness={5} size={60} sx={{ color: 'primary.main' }} />
             </Box>
         );
     }
 
     if (error || !noteData?.data) {
         return (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-                <Button
-                    startIcon={<ArrowBackIcon />}
-                    onClick={() => navigate(-1)}
-                    sx={{ mb: 4 }}
-                >
-                    Return to Pipeline
-                </Button>
-                <Typography variant="h5" color="error">Resource Unavailable</Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>The requested note content could not be found or loaded.</Typography>
+            <Box sx={{ p: 4, textAlign: 'center', minHeight: '80vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                <Paper sx={{ p: 6, borderRadius: 6, maxWidth: 500, bgcolor: alpha(theme.palette.error.main, 0.05), border: `1px solid ${alpha(theme.palette.error.main, 0.1)}` }}>
+                    <CancelOutlinedIcon sx={{ fontSize: 80, color: 'error.main', mb: 2 }} />
+                    <Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>Resource Unavailable</Typography>
+                    <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4 }}>The requested note content could not be found or loaded. It might have been deleted or moved.</Typography>
+                    <Button
+                        variant="contained"
+                        startIcon={<ArrowBackIcon />}
+                        onClick={() => navigate(-1)}
+                        sx={{ borderRadius: 3, px: 4 }}
+                    >
+                        Return to Pipeline
+                    </Button>
+                </Paper>
             </Box>
         );
     }
@@ -115,203 +134,292 @@ const ReviewNote = () => {
     const note = noteData.data;
 
     return (
-        <Box sx={{ p: { xs: 2, md: 4 } }}>
-            <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
-                <IconButton
-                    onClick={() => navigate(-1)}
-                    sx={{
-                        bgcolor: alpha(theme.palette.divider, 0.05),
-                        '&:hover': { bgcolor: alpha(theme.palette.divider, 0.1) }
-                    }}
-                >
-                    <ArrowBackIcon />
-                </IconButton>
-                <Box>
-                    <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>Content Verification</Typography>
-                    <Typography variant="h4" sx={{ fontWeight: 800 }}>Review Document</Typography>
+        <Box sx={{ p: { xs: 2, md: 4 }, minHeight: '100vh', bgcolor: alpha(theme.palette.background.default, 0.4) }}>
+            {/* Header Area */}
+            <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                    <IconButton
+                        onClick={() => navigate(-1)}
+                        sx={{
+                            bgcolor: 'background.paper',
+                            boxShadow: theme.shadows[2],
+                            color: 'primary.main',
+                            '&:hover': { bgcolor: 'primary.main', color: 'white' }
+                        }}
+                    >
+                        <ArrowBackIcon />
+                    </IconButton>
+                    <Box>
+                        <Typography variant="overline" sx={{ color: "primary.main", fontWeight: 900, letterSpacing: 1.5 }}>ADMINISTRATION • CONTENT REVIEW</Typography>
+                        <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: -1 }}>Verify Submission</Typography>
+                    </Box>
                 </Box>
+
+                <Stack direction="row" spacing={2}>
+                    <Button
+                        variant="soft"
+                        color="error"
+                        startIcon={<CancelOutlinedIcon />}
+                        onClick={handleReject}
+                        sx={{ px: 3, py: 1.2, borderRadius: 3, fontWeight: 700 }}
+                    >
+                        Reject Note
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<CheckCircleOutlineIcon />}
+                        onClick={handleApprove}
+                        sx={{ px: 4, py: 1.2, borderRadius: 3, fontWeight: 800, boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}` }}
+                    >
+                        Approve & Publish
+                    </Button>
+                </Stack>
             </Box>
 
             <Grid container spacing={4}>
-                {/* Meta Panel */}
+                {/* Meta Panel - Glassmorphism style */}
                 <Grid item xs={12} lg={4}>
                     <Paper
                         elevation={0}
                         sx={{
-                            p: 3,
-                            borderRadius: 4,
+                            p: 4,
+                            borderRadius: 6,
                             border: '1px solid',
                             borderColor: alpha(theme.palette.divider, 0.1),
-                            bgcolor: alpha(theme.palette.background.paper, 0.5),
+                            bgcolor: alpha(theme.palette.background.paper, 0.7),
+                            backdropFilter: 'blur(10px)',
                             position: { lg: 'sticky' },
-                            top: 24
+                            top: 24,
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.05)',
+                            width:"75vw"
                         }}
                     >
                         <Stack spacing={4}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main', width: 56, height: 56, borderRadius: 3 }}>
-                                    <DescriptionOutlinedIcon fontSize="large" />
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
+                                <Avatar sx={{
+                                    bgcolor: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                                    width: 72, height: 72, borderRadius: 4,
+                                    boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.2)}`
+                                }}>
+                                    <DescriptionOutlinedIcon sx={{ fontSize: 32, color: 'white' }} />
                                 </Avatar>
                                 <Box>
-                                    <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.2 }}>{note.chapterName || note.title}</Typography>
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>ID: {note._id?.slice(-8)}</Typography>
+                                    <Typography variant="h5" sx={{ fontWeight: 900, color: 'text.primary', mb: 0.5 }}>{note.chapterName || note.title}</Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Chip label={note.subject} size="small" sx={{ fontWeight: 800, bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main', height: 24 }} />
+                                        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>#{note._id?.slice(-8).toUpperCase()}</Typography>
+                                    </Box>
                                 </Box>
                             </Box>
 
-                            <Divider sx={{ borderStyle: 'dashed' }} />
+                            <Divider sx={{ borderStyle: 'dashed', borderColor: alpha(theme.palette.divider, 0.3) }} />
 
-                            <Stack spacing={2.5}>
-                                <Box>
-                                    <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 700 }}>Subject Area</Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 700 }}>{note.subject}</Typography>
-                                </Box>
+                            <Grid container spacing={3}>
+                                <Grid item xs={6}>
+                                    <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 800, display: 'block' }}>Academic Stream</Typography>
+                                    <Typography variant="body1" sx={{ fontWeight: 800 }}>Class {note.class}</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 800, display: 'block' }}>Board</Typography>
+                                    <Typography variant="body1" sx={{ fontWeight: 800 }}>{note.board}</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 800, display: 'block' }}>Market Valuation</Typography>
+                                    <Typography variant="h5" sx={{ fontWeight: 900, color: 'success.main' }}>₹{note.price}</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 800, display: 'block' }}>Volume</Typography>
+                                    <Typography variant="body1" sx={{ fontWeight: 800 }}>{note.pageCount} Pages</Typography>
+                                </Grid>
+                            </Grid>
 
-                                <Box>
-                                    <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 700 }}>Classification</Typography>
-                                    <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
-                                        <Chip label={`Class ${note.class}`} size="small" sx={{ fontWeight: 700, bgcolor: alpha(theme.palette.secondary.main, 0.1), color: 'secondary.main' }} />
-                                        <Chip label={note.board} size="small" sx={{ fontWeight: 700, bgcolor: alpha(theme.palette.info.main, 0.1), color: 'info.main' }} />
-                                    </Stack>
-                                </Box>
+                            <Divider sx={{ borderStyle: 'solid', borderColor: alpha(theme.palette.divider, 0.1) }} />
 
-                                <Box>
-                                    <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 700 }}>Pricing Structure</Typography>
-                                    <Typography variant="h4" sx={{ fontWeight: 900, color: 'primary.main' }}>₹{note.price}</Typography>
-                                </Box>
-
-                                <Stack direction="row" spacing={3}>
+                            <Box>
+                                <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 800, display: 'block', mb: 1.5 }}>Submitting Author</Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, borderRadius: 4, bgcolor: alpha(theme.palette.divider, 0.05) }}>
+                                    <Avatar sx={{ width: 48, height: 48, bgcolor: 'secondary.main', fontWeight: 800 }}>{note.topperId?.firstName?.charAt(0)}</Avatar>
                                     <Box>
-                                        <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 700, display: 'block' }}>Total Extent</Typography>
-                                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{note.pageCount} Pages</Typography>
+                                        <Typography variant="body1" sx={{ fontWeight: 800 }}>{note.topperId?.firstName} {note.topperId?.lastName || ''}</Typography>
+                                        <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 700 }}>VERIFIED TOPPER</Typography>
                                     </Box>
-                                    <Box>
-                                        <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 700, display: 'block' }}>Author</Typography>
-                                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{note.topperId?.firstName || "Topper"}</Typography>
-                                    </Box>
+                                </Box>
+                            </Box>
+
+                            <Box sx={{ p: 2.5, bgcolor: alpha(theme.palette.info.main, 0.05), borderRadius: 4, border: `1px solid ${alpha(theme.palette.info.main, 0.1)}` }}>
+                                <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                                    <InfoOutlinedIcon sx={{ color: 'info.main', fontSize: 22, mt: 0.3 }} />
+                                    <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500, lineHeight: 1.5 }}>
+                                        Examine visual clarity, content accuracy, and academic relevance before final authorization.
+                                    </Typography>
                                 </Stack>
-                            </Stack>
-
-                            <Stack spacing={2} sx={{ pt: 2 }}>
-                                <Button
-                                    fullWidth
-                                    variant="contained"
-                                    size="large"
-                                    startIcon={<CheckCircleOutlineIcon />}
-                                    onClick={handleApprove}
-                                    disabled={isApproving || isRejecting}
-                                    sx={{ py: 1.5, borderRadius: 3, fontWeight: 800, boxShadow: theme.shadows[4] }}
-                                >
-                                    Authorize & Publish
-                                </Button>
-                                <Button
-                                    fullWidth
-                                    variant="soft"
-                                    color="error"
-                                    size="large"
-                                    startIcon={<CancelOutlinedIcon />}
-                                    onClick={handleReject}
-                                    disabled={isApproving || isRejecting}
-                                    sx={{ py: 1.5, borderRadius: 3, fontWeight: 700 }}
-                                >
-                                    Reject Submission
-                                </Button>
-                            </Stack>
-
-                            <Box sx={{ display: 'flex', gap: 1.5, p: 2, bgcolor: alpha(theme.palette.warning.main, 0.05), borderRadius: 3, border: `1px solid ${alpha(theme.palette.warning.main, 0.1)}` }}>
-                                <InfoOutlinedIcon sx={{ color: 'warning.main', fontSize: 20, mt: 0.2 }} />
-                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                    Review these notes carefully. Once published, they will be live on the student marketplace immediately.
-                                </Typography>
                             </Box>
                         </Stack>
                     </Paper>
                 </Grid>
 
-                {/* Preview Panel */}
+                {/* Preview Panel - Horizontal Scroll Redesign */}
                 <Grid item xs={12} lg={8}>
                     <Paper
                         elevation={0}
                         sx={{
-                            borderRadius: 4,
+                            borderRadius: 6,
                             border: '1px solid',
                             borderColor: alpha(theme.palette.divider, 0.1),
                             bgcolor: 'background.paper',
                             overflow: 'hidden',
-                            height: '100%',
+                            height: 'auto',
+                            minHeight: 700,
                             display: 'flex',
-                            flexDirection: 'column'
+                            flexDirection: 'column',
+                            boxShadow: '0 30px 60px rgba(0,0,0,0.08)'
                         }}
                     >
+                        {/* Viewer Toolbar */}
                         <Box sx={{
-                            p: 2,
+                            px: 3,
+                            py: 2,
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
-                            bgcolor: alpha(theme.palette.background.paper, 0.8),
-                            backdropFilter: 'blur(10px)',
+                            bgcolor: alpha(theme.palette.background.paper, 0.9),
                             borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                            zIndex: 2
+                            zIndex: 10
                         }}>
-                            <Typography variant="h6" sx={{ fontWeight: 800 }}>Document Preview</Typography>
-                            <Chip
-                                label={`${note.previewImages?.length || 0} Pages Loaded`}
-                                size="small"
-                                sx={{ fontWeight: 700, borderRadius: 1 }}
-                            />
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 900, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    Document Viewer
+                                    <Chip label={`${note.previewImages?.length || 0} Pages`} size="small" variant="outlined" sx={{ fontWeight: 800 }} />
+                                </Typography>
+                            </Box>
+
+                            <Stack direction="row" spacing={1} alignItems="center">
+                                <IconButton onClick={() => setZoom(prev => Math.max(0.5, prev - 0.1))} size="small" title="Zoom Out">
+                                    <ZoomOutIcon />
+                                </IconButton>
+                                <Typography variant="caption" sx={{ fontWeight: 800, width: 40, textAlign: 'center' }}>{Math.round(zoom * 100)}%</Typography>
+                                <IconButton onClick={() => setZoom(prev => Math.min(2, prev + 0.1))} size="small" title="Zoom In">
+                                    <ZoomInIcon />
+                                </IconButton>
+                                <Divider orientation="vertical" flexItem sx={{ mx: 1, height: 20, my: 'auto' }} />
+                                <IconButton size="small" title="Fullscreen">
+                                    <FullscreenIcon />
+                                </IconButton>
+                                <Divider orientation="vertical" flexItem sx={{ mx: 1, height: 20, my: 'auto' }} />
+                                <Stack direction="row" spacing={1}>
+                                    <IconButton
+                                        onClick={() => handleScroll('left')}
+                                        sx={{ bgcolor: alpha(theme.palette.divider, 0.05) }}
+                                    >
+                                        <ChevronLeftIcon />
+                                    </IconButton>
+                                    <IconButton
+                                        onClick={() => handleScroll('right')}
+                                        sx={{ bgcolor: alpha(theme.palette.divider, 0.05) }}
+                                    >
+                                        <ChevronRightIcon />
+                                    </IconButton>
+                                </Stack>
+                            </Stack>
                         </Box>
 
-                        <Box sx={{
-                            flexGrow: 1,
-                            overflowY: "auto",
-                            p: 3,
-                            bgcolor: alpha(theme.palette.divider, 0.02),
-                            "&::-webkit-scrollbar": { width: 8 },
-                            "&::-webkit-scrollbar-track": { bgcolor: "transparent" },
-                            "&::-webkit-scrollbar-thumb": { bgcolor: alpha(theme.palette.text.primary, 0.1), borderRadius: 10 }
-                        }}>
-                            <Stack spacing={4} alignItems="center">
-                                {note.previewImages && note.previewImages.length > 0 ? (
-                                    note.previewImages.map((url, index) => (
-                                        <Box key={index} sx={{ width: "100%", maxWidth: 800, position: "relative", boxShadow: theme.shadows[10] }}>
-                                            <Box
-                                                sx={{
-                                                    position: "absolute",
-                                                    top: 16,
-                                                    right: 16,
-                                                    bgcolor: alpha("#000", 0.7),
-                                                    backdropFilter: 'blur(4px)',
-                                                    color: "white",
-                                                    px: 1.5,
-                                                    py: 0.5,
-                                                    borderRadius: 1.5,
-                                                    zIndex: 1,
-                                                    fontSize: '0.75rem',
-                                                    fontWeight: 700,
-                                                    border: '1px solid rgba(255,255,255,0.1)'
-                                                }}
-                                            >
-                                                Page {index + 1} of {note.previewImages.length}
-                                            </Box>
+                        {/* Horizontal Scroll Container */}
+                        <Box
+                            ref={scrollContainerRef}
+                            sx={{
+                                flexGrow: 1,
+                                overflowX: "auto",
+                                overflowY: "hidden",
+                                whiteSpace: "nowrap",
+                                p: 6,
+                                bgcolor: alpha(theme.palette.divider, 0.04),
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6,
+                                scrollSnapType: 'x mandatory',
+                                scrollBehavior: 'smooth',
+                                "&::-webkit-scrollbar": { height: 10 },
+                                "&::-webkit-scrollbar-track": { bgcolor: "transparent" },
+                                "&::-webkit-scrollbar-thumb": {
+                                    bgcolor: alpha(theme.palette.primary.main, 0.2),
+                                    borderRadius: 10,
+                                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.4) }
+                                }
+                            }}
+                        >
+                            {note.previewImages && note.previewImages.length > 0 ? (
+                                note.previewImages.map((url, index) => (
+                                    <Box
+                                        key={index}
+                                        sx={{
+                                            display: 'inline-block',
+                                            flexShrink: 0,
+                                            width: `${85 * zoom}%`,
+                                            maxWidth: 800 * zoom,
+                                            position: "relative",
+                                            scrollSnapAlign: 'center',
+                                            transition: 'transform 0.3s ease',
+                                            '&:hover': { transform: 'scale(1.02)' }
+                                        }}
+                                    >
+                                        {/* Page Indicator Tag */}
+                                        <Box
+                                            sx={{
+                                                position: "absolute",
+                                                top: -30,
+                                                left: 0,
+                                                bgcolor: 'background.paper',
+                                                color: "text.primary",
+                                                px: 2,
+                                                py: 0.5,
+                                                borderRadius: '8px 8px 0 0',
+                                                fontSize: '0.7rem',
+                                                fontWeight: 900,
+                                                border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                                                borderBottom: 'none',
+                                                boxShadow: '0 -4px 8px rgba(0,0,0,0.05)'
+                                            }}
+                                        >
+                                            PAGE {index + 1}
+                                        </Box>
+
+                                        <Paper
+                                            elevation={24}
+                                            sx={{
+                                                borderRadius: 3,
+                                                overflow: 'hidden',
+                                                border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                                                bgcolor: 'white',
+                                                display: 'flex'
+                                            }}
+                                        >
                                             <img
                                                 src={url}
                                                 alt={`Preview Page ${index + 1}`}
                                                 style={{
                                                     width: "100%",
                                                     height: "auto",
-                                                    display: 'block',
-                                                    borderRadius: 8
+                                                    display: 'block'
                                                 }}
                                             />
-                                        </Box>
-                                    ))
-                                ) : (
-                                    <Box sx={{ py: 12, textAlign: "center", opacity: 0.5 }}>
-                                        <DescriptionOutlinedIcon sx={{ fontSize: 80, mb: 2 }} />
-                                        <Typography variant="h6">No Visual Assets Available</Typography>
-                                        <Typography variant="caption">The document preview could not be generated for this submission.</Typography>
+                                        </Paper>
                                     </Box>
-                                )}
-                            </Stack>
+                                ))
+                            ) : (
+                                <Box sx={{ width: '100%', py: 20, textAlign: "center", display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <DescriptionOutlinedIcon sx={{ fontSize: 100, color: alpha(theme.palette.text.disabled, 0.2), mb: 3 }} />
+                                    <Typography variant="h5" sx={{ color: 'text.disabled', fontWeight: 800 }}>No Visual Assets</Typography>
+                                    <Typography variant="body2" sx={{ color: 'text.disabled' }}>The document preview could not be generated.</Typography>
+                                </Box>
+                            )}
+                        </Box>
+
+                        {/* Footer / Progress */}
+                        <Box sx={{ p: 2, textAlign: 'center', borderTop: `1px solid ${alpha(theme.palette.divider, 0.05)}`, bgcolor: 'background.paper' }}>
+                            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: 1 }}>
+                                SCROLL HORIZONTALLY TO BROWSE PAGES
+                            </Typography>
                         </Box>
                     </Paper>
                 </Grid>

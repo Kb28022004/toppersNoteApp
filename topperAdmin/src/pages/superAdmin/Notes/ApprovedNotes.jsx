@@ -3,15 +3,12 @@ import { useNavigate } from "react-router-dom";
 import {
     Box,
     Typography,
-    Paper,
     Button,
     Avatar,
-    Stack,
     IconButton,
-    TextField,
     alpha,
     useTheme,
-    Grid
+    Stack
 } from "@mui/material";
 import {
     useGetPendingNotesQuery,
@@ -25,22 +22,31 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import DataTable from "../../../components/DataTable";
 import StatusChip from "../../../components/common/StatusChip";
+import FilterBar from "../../../components/common/FilterBar";
 
 const ApprovedNotes = () => {
     const navigate = useNavigate();
     const theme = useTheme();
     const token = useMemo(() => localStorage.getItem("authToken"), []);
 
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
     const [search, setSearch] = useState("");
-    const [debouncedSearch, setDebouncedSearch] = useState("");
-
-    useEffect(() => {
-        const timer = setTimeout(() => setDebouncedSearch(search), 500);
-        return () => clearTimeout(timer);
-    }, [search]);
+    const [filters, setFilters] = useState({
+        expertiseClass: '',
+        board: '',
+        subject: ''
+    });
 
     const { data: notes, isLoading, isFetching, refetch } = useGetPendingNotesQuery(
-        { token, status: 'PUBLISHED', search: debouncedSearch },
+        {
+            token,
+            status: 'PUBLISHED',
+            page,
+            limit,
+            search,
+            ...filters
+        },
         { skip: !token }
     );
 
@@ -55,6 +61,17 @@ const ApprovedNotes = () => {
         confirmColor: 'primary',
         showReasonField: false
     });
+
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+        setPage(1);
+    };
+
+    const handleSearchChange = (val) => {
+        setSearch(val);
+        setPage(1);
+    };
 
     const handleReject = useCallback((id) => {
         setModalConfig({
@@ -80,6 +97,31 @@ const ApprovedNotes = () => {
         }
     }, [modalConfig, rejectNote, token, refetch]);
 
+    const filterFields = [
+        {
+            name: 'expertiseClass',
+            label: 'Class',
+            type: 'select',
+            width: 2.5,
+            options: [
+                { label: 'Class 10', value: '10' },
+                { label: 'Class 12', value: '12' }
+            ]
+        },
+        {
+            name: 'board',
+            label: 'Board',
+            type: 'select',
+            width: 2.5,
+            options: [
+                { label: 'CBSE', value: 'CBSE' },
+                { label: 'ICSE', value: 'ICSE' },
+                { label: 'State Board', value: 'State Board' }
+            ]
+        },
+        { name: 'subject', label: 'Subject', type: 'text', width: 3 }
+    ];
+
     const columns = useMemo(() => [
         {
             id: 'title',
@@ -103,9 +145,18 @@ const ApprovedNotes = () => {
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Avatar sx={{ width: 24, height: 24, fontSize: '0.65rem' }}>{row.topperId?.firstName?.charAt(0)}</Avatar>
                     <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{row.topperId?.firstName}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{row.topperId?.firstName} {row.topperId?.lastName || ''}</Typography>
                     </Box>
                 </Stack>
+            )
+        },
+        {
+            id: 'board',
+            label: 'Board',
+            render: (row) => (
+                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                    {row.board || '—'}
+                </Typography>
             )
         },
         {
@@ -126,7 +177,7 @@ const ApprovedNotes = () => {
             id: 'actions',
             label: 'Management',
             render: (row) => (
-                <Stack direction="row" spacing={1}>
+                <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button
                         variant="soft" size="small" color="secondary"
                         startIcon={<VisibilityIcon />}
@@ -143,7 +194,7 @@ const ApprovedNotes = () => {
                     >
                         Take Down
                     </Button>
-                </Stack>
+                </Box>
             )
         }
     ], [navigate, handleReject, isRejecting, theme]);
@@ -160,33 +211,23 @@ const ApprovedNotes = () => {
                 </IconButton>
             </Box>
 
-            <Paper
-                elevation={0}
-                sx={{
-                    p: 2,
-                    mb: 4,
-                    borderRadius: 4,
-                    border: '1px solid',
-                    borderColor: alpha(theme.palette.divider, 0.1),
-                    bgcolor: alpha(theme.palette.background.paper, 0.5)
-                }}
-            >
-                <TextField
-                    fullWidth
-                    placeholder="Search by title, subject or topper..."
-                    variant="outlined"
-                    size="small"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    sx={{ bgcolor: 'background.paper', borderRadius: 2 }}
-                />
-            </Paper>
+            <FilterBar
+                searchPlaceholder="Search by title, subject or topper..."
+                search={search}
+                onSearchChange={handleSearchChange}
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                fields={filterFields}
+            />
 
             <DataTable
                 columns={columns}
                 data={notes?.data}
                 isLoading={isLoading}
                 isFetching={isFetching}
+                pagination={notes?.pagination}
+                onPageChange={setPage}
+                onRowsPerPageChange={setLimit}
                 noDataMessage="No published study notes found"
                 noDataIcon={CheckCircleOutlineIcon}
             />

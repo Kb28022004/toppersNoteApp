@@ -12,7 +12,7 @@ export const darkTheme = createTheme({
       main: '#10b981', // Emerald Green
     },
     background: {
-      default: '#0f172a', // Slate 900
+      default: '#000000ff', // Slate 900
       paper: '#1e293b',   // Slate 800
     },
     text: {
@@ -54,7 +54,7 @@ export const darkTheme = createTheme({
       styleOverrides: {
         head: {
           fontWeight: 600,
-          backgroundColor: '#1e293b',
+          backgroundColor: '#000000ff',
           color: '#cbd5e1',
         },
       },
