@@ -19,6 +19,11 @@ const RejectedNotes = lazy(() => import("../pages/superAdmin/Notes/RejectedNotes
 const ReviewNote = lazy(() => import("../pages/superAdmin/Notes/ReviewNote"));
 const PayoutManagement = lazy(() => import("../pages/superAdmin/Payouts/PayoutManagement"));
 const Profile = lazy(() => import("../pages/superAdmin/Profile"));
+const Students = lazy(() => import("../pages/superAdmin/Students"));
+const Transactions = lazy(() => import("../pages/superAdmin/Transactions"));
+const Reports = lazy(() => import("../pages/superAdmin/Reports"));
+const Settings = lazy(() => import("../pages/superAdmin/Settings"));
+const AuditLogs = lazy(() => import("../pages/superAdmin/AuditLogs"));
 
 
 import {
@@ -169,6 +174,46 @@ const AppRoute = () => {
           element: (
             <Suspense fallback={<LoadingFallback />}>
               <Profile />
+            </Suspense>
+          )
+        },
+        {
+          path: "students",
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <Students />
+            </Suspense>
+          )
+        },
+        {
+          path: "transactions",
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <Transactions />
+            </Suspense>
+          )
+        },
+        {
+          path: "reports",
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <Reports />
+            </Suspense>
+          )
+        },
+        {
+          path: "settings",
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <Settings />
+            </Suspense>
+          )
+        },
+        {
+          path: "logs",
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <AuditLogs />
             </Suspense>
           )
         },

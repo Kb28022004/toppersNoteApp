@@ -258,7 +258,7 @@ const TopperVerification = ({ navigation }) => {
                         keyboardShouldPersistTaps="handled"
                         keyboardDismissMode="on-drag"
                         enableOnAndroid={true}
-                        extraScrollHeight={80}
+                        extraScrollHeight={250}
                     >
 
                         {/* Upload Section */}

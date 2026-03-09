@@ -9,6 +9,8 @@ const StudentProfile = require("../students/student.model");
 const Payout = require("../earnings/earnings.model");
 const notificationService = require('../notifications/notification.service');
 const Order = require("../orders/order.model");
+const SystemConfig = require('./systemConfig.model');
+const AuditLog = require('./auditLog.model');
 
 const avg = (arr) => arr.reduce((sum, s) => sum + s.marks, 0) / arr.length;
 
@@ -588,10 +590,185 @@ exports.getDashboardData = async () => {
 
     const totalRevenue = revenueData.length > 0 ? revenueData[0].total : 0;
 
+    // 📊 Note Distribution by Class
+    const class10Notes = await Note.countDocuments({ class: '10', status: 'PUBLISHED' });
+    const class12Notes = await Note.countDocuments({ class: '12', status: 'PUBLISHED' });
+
+    // 📊 Top Subjects (Sample aggregation)
+    const topSubjects = await Note.aggregate([
+        { $match: { status: 'PUBLISHED' } },
+        { $group: { _id: '$subject', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 5 }
+    ]);
+
     return {
-        totalStudents,
-        totalToppers,
-        totalNotes,
-        totalRevenue
+        stats: {
+            totalStudents,
+            totalToppers,
+            totalNotes,
+            totalRevenue
+        },
+        charts: {
+            noteDistribution: [
+                { name: 'Class 10', value: class10Notes },
+                { name: 'Class 12', value: class12Notes }
+            ],
+            topSubjects: topSubjects.map(s => ({ name: s._id, value: s.count }))
+        }
+    };
+};
+
+// 👥 Get all students
+exports.getAllStudents = async ({ page = 1, limit = 10, search = '', class_filter = '', board = '' }) => {
+    const skip = (page - 1) * limit;
+    const matchStage = {};
+    if (class_filter) matchStage.class = class_filter;
+    if (board) matchStage.board = board;
+    if (search) {
+        matchStage.fullName = new RegExp(search, "i");
+    }
+
+    const students = await StudentProfile.find(matchStage)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+    const total = await StudentProfile.countDocuments(matchStage);
+
+    return {
+        data: students,
+        pagination: {
+            total,
+            page,
+            pages: Math.ceil(total / limit),
+            limit
+        }
+    };
+};
+
+// 🛒 Get all orders/transactions
+exports.getAllOrders = async ({ page = 1, limit = 10, search = '', status = '' }) => {
+    const skip = (page - 1) * limit;
+    const matchStage = {};
+    if (status) matchStage.paymentStatus = status;
+
+    const orders = await Order.find(matchStage)
+        .populate('studentId', 'fullName')
+        .populate('noteId', 'title subject')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+    const total = await Order.countDocuments(matchStage);
+
+    return {
+        data: orders,
+        pagination: {
+            total,
+            page,
+            pages: Math.ceil(total / limit),
+            limit
+        }
+    };
+};
+
+// ⚙️ System Configuration
+exports.getSystemConfig = async () => {
+    let config = await SystemConfig.findOne();
+    if (!config) {
+        config = await SystemConfig.create({});
+    }
+    return config;
+};
+
+exports.updateSystemConfig = async (updateData) => {
+    const config = await SystemConfig.findOneAndUpdate(
+        {},
+        { $set: updateData },
+        { new: true, upsert: true }
+    );
+    return config;
+};
+
+// 📢 Broadcast Notifications
+exports.sendBroadcastNotification = async ({ title, body, targetRole, payload = {} }) => {
+    const query = {};
+    if (targetRole && targetRole !== 'ALL') {
+        query.role = targetRole;
+    }
+
+    const users = await User.find(query).select('_id');
+    const userIds = users.map(u => u._id);
+
+    if (userIds.length > 0) {
+        await notificationService.sendToUser(userIds, title, body, {
+            type: 'SYSTEM_BROADCAST',
+            ...payload
+        });
+    }
+
+    return { success: true, targetCount: userIds.length };
+};
+
+// 🚫 User Moderation
+exports.toggleUserStatus = async (userId) => {
+    const user = await User.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    if (user.role === 'ADMIN') throw new Error("Cannot modify admin status");
+
+    user.status = user.status === 'ACTIVE' ? 'BLOCKED' : 'ACTIVE';
+    await user.save();
+
+    return {
+        success: true,
+        status: user.status,
+        message: `User has been ${user.status.toLowerCase()}`
+    };
+};
+
+// 📜 Audit Logs
+exports.logAction = async ({ adminId, action, targetId, targetModel, details, ipAddress, userAgent }) => {
+    try {
+        await AuditLog.create({
+            adminId,
+            action,
+            targetId,
+            targetModel,
+            details,
+            ipAddress,
+            userAgent
+        });
+    } catch (err) {
+        console.error("❌ Audit Logging Failed:", err.message);
+    }
+};
+
+exports.getAuditLogs = async ({ page = 1, limit = 20, action = '', adminId = '' }) => {
+    const skip = (page - 1) * limit;
+    const query = {};
+    if (action) query.action = action;
+    if (adminId) query.adminId = adminId;
+
+    const logs = await AuditLog.find(query)
+        .populate('adminId', 'fullName phone')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+    const total = await AuditLog.countDocuments(query);
+
+    return {
+        data: logs,
+        pagination: {
+            total,
+            page,
+            pages: Math.ceil(total / limit),
+            limit
+        }
     };
 };

@@ -58,6 +58,17 @@ exports.getPendingToppers = async (req, res, next) => {
 exports.approveTopper = async (req, res, next) => {
   try {
     const result = await adminService.approveTopper(req.params.id);
+    
+    // 📜 Log Action
+    await adminService.logAction({
+      adminId: req.user.id,
+      action: 'APPROVE_TOPPER',
+      targetId: req.params.id,
+      targetModel: 'TopperProfile',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
+
     res.json({ success: true, message: result });
   } catch (err) {
     next(err);
@@ -103,6 +114,17 @@ exports.getPendingNotes = async (req, res, next) => {
 exports.approveNote = async (req, res, next) => {
   try {
     const result = await adminService.approveNote(req.params.noteId);
+
+    // 📜 Log Action
+    await adminService.logAction({
+      adminId: req.user.id,
+      action: 'APPROVE_NOTE',
+      targetId: req.params.noteId,
+      targetModel: 'Note',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
+
     res.json({
       success: true,
       message: result,
@@ -199,6 +221,141 @@ exports.getDashboardData = async (req, res, next) => {
         res.json({
             success: true,
             data
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// 👥 Get all students
+exports.getAllStudents = async (req, res, next) => {
+    try {
+        const { page, limit, search, class_filter, board } = req.query;
+        const result = await adminService.getAllStudents({
+            page: parseInt(page) || 1,
+            limit: parseInt(limit) || 10,
+            search,
+            class_filter,
+            board
+        });
+        res.json({
+            success: true,
+            ...result
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// 🛒 Get all orders
+exports.getAllOrders = async (req, res, next) => {
+    try {
+        const { page, limit, search, status } = req.query;
+        const result = await adminService.getAllOrders({
+            page: parseInt(page) || 1,
+            limit: parseInt(limit) || 10,
+            search,
+            status
+        });
+        res.json({
+            success: true,
+            ...result
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// ⚙️ System Configuration
+exports.getSystemConfig = async (req, res, next) => {
+    try {
+        const config = await adminService.getSystemConfig();
+        res.json({
+            success: true,
+            data: config
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.updateSystemConfig = async (req, res, next) => {
+    try {
+        const config = await adminService.updateSystemConfig(req.body);
+
+        // 📜 Log Action
+        await adminService.logAction({
+            adminId: req.user.id,
+            action: 'UPDATE_CONFIG',
+            details: req.body,
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent')
+        });
+
+        res.json({
+            success: true,
+            data: config,
+            message: "System configuration updated successfully"
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// 📢 Broadcast Notifications
+exports.sendBroadcastNotification = async (req, res, next) => {
+    try {
+        const { title, body, targetRole, payload } = req.body;
+        const result = await adminService.sendBroadcastNotification({
+            title,
+            body,
+            targetRole,
+            payload
+        });
+        res.json({
+            success: true,
+            ...result,
+            message: `Broadcasting to ${result.targetCount} users`
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.updateUserStatus = async (req, res, next) => {
+    try {
+        const { userId } = req.params;
+        const result = await adminService.toggleUserStatus(userId);
+
+        // 📜 Log Action
+        await adminService.logAction({
+            adminId: req.user.id,
+            action: 'TOGGLE_USER_STATUS',
+            targetId: userId,
+            targetModel: 'User',
+            details: { newStatus: result.status },
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent')
+        });
+
+        res.json(result);
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.getAuditLogs = async (req, res, next) => {
+    try {
+        const { page, limit, action, adminId } = req.query;
+        const result = await adminService.getAuditLogs({
+            page: parseInt(page) || 1,
+            limit: parseInt(limit) || 20,
+            action,
+            adminId
+        });
+        res.json({
+            success: true,
+            ...result
         });
     } catch (err) {
         next(err);

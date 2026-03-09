@@ -114,4 +114,57 @@ router.get(
     controller.getDashboardData
 );
 
+// Get all students
+router.get(
+    '/students',
+    auth,
+    role('ADMIN'),
+    controller.getAllStudents
+);
+
+// Get all orders
+router.get(
+    '/orders',
+    auth,
+    role('ADMIN'),
+    controller.getAllOrders
+);
+
+// System Configuration
+router.get(
+    '/config',
+    auth,
+    role('ADMIN'),
+    controller.getSystemConfig
+);
+
+router.patch(
+    '/config',
+    auth,
+    role('ADMIN'),
+    controller.updateSystemConfig
+);
+
+// Broadcast Notification
+router.post(
+    '/broadcast',
+    auth,
+    role('ADMIN'),
+    controller.sendBroadcastNotification
+);
+
+router.patch(
+    '/users/:userId/status',
+    auth,
+    role('ADMIN'),
+    controller.updateUserStatus
+);
+
+router.get(
+    '/logs',
+    auth,
+    role('ADMIN'),
+    controller.getAuditLogs
+);
+
 module.exports = router;

@@ -16,6 +16,7 @@ import {
   KeyboardArrowDown as ArrowDownIcon,
   PersonOutline as PersonIcon,
   Logout as LogoutIcon,
+  Settings as SettingsIcon
 } from "@mui/icons-material";
 import { useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -40,6 +41,10 @@ const Header = ({ setOpenSidebar, openSidebar }) => {
       'rejected': 'Rejected List',
       'payouts': 'Payout Management',
       'reports': 'Analytics & Reports',
+      'settings': 'System Settings',
+      'logs': 'Security Audit Logs',
+      'students': 'Student Ecosystem',
+      'transactions': 'Financial Ledger'
     };
 
     return titles[lastSegment] || lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
@@ -124,6 +129,10 @@ const Header = ({ setOpenSidebar, openSidebar }) => {
           <MenuItem component={NavLink} to="/superAdmin/profile" sx={{ py: 1, gap: 1.5 }}>
             <PersonIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
             <Typography variant="body2">My Profile</Typography>
+          </MenuItem>
+          <MenuItem component={NavLink} to="/superAdmin/settings" sx={{ py: 1, gap: 1.5 }}>
+            <SettingsIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+            <Typography variant="body2">System Settings</Typography>
           </MenuItem>
 
           <Box sx={{ borderBottom: '1px solid', borderColor: 'divider', my: 0.5 }} />

@@ -433,7 +433,7 @@ const UploadNotes = ({ navigation }) => {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
                 enableOnAndroid={true}
-                extraScrollHeight={80}
+                extraScrollHeight={330}
             >
                 {currentStep === 1 && renderStep1()}
                 {currentStep === 2 && renderStep2()}

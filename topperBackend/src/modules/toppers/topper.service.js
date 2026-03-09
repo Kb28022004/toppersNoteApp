@@ -114,20 +114,20 @@ exports.getPublicProfile = async (userId, viewerId, req) => {
   }
 
   if (!profileData) {
-    // 1️⃣ Fetch topper profile
+    // 2️⃣ Fetch user (for verified badge)
+    const user = await User.findById(userId).select('isTopperVerified');
+    
+    // Also need to select all fields we want to expose
     const profile = await TopperProfile.findOne({
       userId,
       status: 'APPROVED',
-    }).lean();
+    }).select('-payoutSettings').lean();
 
     if (!profile) {
       const err = new Error('Topper profile not found');
       err.status = 404;
       throw err;
     }
-
-    // 2️⃣ Fetch user (for verified badge)
-    const user = await User.findById(userId).select('isTopperVerified');
 
     // 4️⃣ Fetch Latest Uploads (Notes)
     const notes = await Note.find({
@@ -170,6 +170,14 @@ exports.getPublicProfile = async (userId, viewerId, req) => {
       profilePhoto: getFullUrl(profile.profilePhoto),
       verified: user?.isTopperVerified || false,
       achievements: profile.achievements,
+      expertiseClass: profile.expertiseClass,
+      stream: profile.stream,
+      board: profile.board,
+      yearOfPassing: profile.yearOfPassing,
+      coreSubjects: profile.coreSubjects,
+      highlights: profile.highlights,
+      subjectMarks: profile.subjectMarks,
+      marksheetUrl: getFullUrl(profile.marksheetUrl),
       stats: {
         followers: profile.stats?.followersCount || 0,
         rating: {

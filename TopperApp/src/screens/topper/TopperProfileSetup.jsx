@@ -225,7 +225,7 @@ const TopperProfileSetup = ({ navigation }) => {
                         keyboardShouldPersistTaps="handled"
                         keyboardDismissMode="on-drag"
                         enableOnAndroid={true}
-                        extraScrollHeight={120}
+                        extraScrollHeight={150}
                     >
 
                         {/* Profile Photo */}

@@ -10,7 +10,11 @@ import {
 
   CheckCircle as ApprovedIcon,
   Cancel as RejectedIcon,
-  Person as ProfileIcon
+  Person as ProfileIcon,
+  History as HistoryIcon,
+  School as SchoolIcon,
+  ReceiptLong as ReceiptIcon,
+  Settings as SettingsIcon
 } from '@mui/icons-material';
 
 import { Box, useTheme, styled } from "@mui/material";
@@ -94,6 +98,26 @@ const SuperAdminDashboard = () => {
       title: "Reports",
       icon: <PieChartIcon />,
       navigate: "reports",
+    },
+    {
+      title: "Students",
+      icon: <SchoolIcon />,
+      navigate: "students",
+    },
+    {
+      title: "Transactions",
+      icon: <ReceiptIcon />,
+      navigate: "transactions",
+    },
+    {
+      title: "Settings",
+      icon: <SettingsIcon />,
+      navigate: "settings",
+    },
+    {
+      title: "Audit Logs",
+      icon: <HistoryIcon />,
+      navigate: "logs",
     },
     {
       title: "Profile",

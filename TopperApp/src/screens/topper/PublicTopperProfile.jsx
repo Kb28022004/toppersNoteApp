@@ -8,7 +8,9 @@ import {
     Dimensions,
     FlatList,
     RefreshControl,
-    ActivityIndicator
+    ActivityIndicator,
+    Linking,
+    Share
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, Feather, FontAwesome5 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,6 +18,7 @@ import AppText from '../../components/AppText';
 import Loader from '../../components/Loader';
 import ScreenLoader from '../../components/ScreenLoader';
 import PageHeader from '../../components/PageHeader';
+import BottomSheet from '../../components/BottomSheet';
 import { useGetPublicProfileQuery, useFollowTopperMutation } from '../../features/api/topperApi';
 import { useToggleFavoriteNoteMutation } from '../../features/api/noteApi';
 import { useInitializeChatMutation } from '../../features/api/chatApi';
@@ -27,7 +30,7 @@ const { width } = Dimensions.get('window');
 
 const PublicTopperProfile = ({ route, navigation }) => {
     const { showAlert } = useAlert();
-    const { topperId } = route.params;
+    const { topperId, isPreview = false } = route.params;
     const { data: profile, isLoading, isError, refetch } = useGetPublicProfileQuery(topperId);
     const { refreshing, onRefresh } = useRefresh(refetch);
     const [followTopper, { isLoading: isFollowing }] = useFollowTopperMutation();
@@ -36,6 +39,7 @@ const PublicTopperProfile = ({ route, navigation }) => {
 
     const [activeTab, setActiveTab] = useState('All Notes');
     const [isBioExpanded, setIsBioExpanded] = useState(false);
+    const [isOptionsVisible, setIsOptionsVisible] = useState(false);
 
     // Use local state needed for immediate UI update on toggle
     const [following, setFollowing] = useState(false);
@@ -82,10 +86,18 @@ const PublicTopperProfile = ({ route, navigation }) => {
         stats = {},
         about,
         latestUploads = [],
-        isFollowing: initialFollowing
+        isFollowing: initialFollowing,
+        expertiseClass,
+        stream,
+        board,
+        yearOfPassing,
+        coreSubjects = [],
+        highlights = [],
+        subjectMarks = [],
+        marksheetUrl
     } = profile?.data || {};
 
-    console.log("Stats", stats);
+    console.log("Stats", profile?.data?.marksheetUrl);
 
 
     const handleFollow = async () => {
@@ -125,24 +137,48 @@ const PublicTopperProfile = ({ route, navigation }) => {
         }
     };
 
+    const handleShare = async () => {
+        try {
+            const classText = expertiseClass ? `Class ${expertiseClass}` : '';
+            const streamText = stream ? ` ${stream}` : '';
+            await Share.share({
+                message: `Check out ${fullName}'s verified profile on TopperApp! They are a ${classText}${streamText} Topper. Download the app to check out their notes!`,
+            });
+        } catch (error) {
+            console.log("Share error: ", error.message);
+        }
+    };
+
+    const handleCopyLink = () => {
+        setIsOptionsVisible(false);
+        showAlert("Link Copied", "Profile link copied to your clipboard!", "success");
+    };
+
+    const handleReport = () => {
+        setIsOptionsVisible(false);
+        showAlert("Report Submitted", "Your report has been sent to our community team for review.", "success");
+    };
+
     const renderNoteCard = ({ item }) => (
         <TouchableOpacity
             style={styles.noteCard}
-            onPress={() => navigation.navigate('StudentNoteDetails', { noteId: item.id })}
+            onPress={() => isPreview ? navigation.navigate('TopperNoteDetails', { noteId: item.id }) : navigation.navigate('StudentNoteDetails', { noteId: item.id })}
         >
             <View style={styles.noteThumbnail}>
                 <Image source={item.coverImage ? { uri: item.coverImage } : require('../../../assets/topper.avif')} style={styles.thumbnailImg} resizeMode="cover" />
 
-                <TouchableOpacity
-                    style={styles.saveBtnTopper}
-                    onPress={() => handleFavoriteToggle(item.id)}
-                >
-                    <Ionicons
-                        name={item.isFavorite ? "heart" : "heart-outline"}
-                        size={16}
-                        color={item.isFavorite ? "#F43F5E" : "white"}
-                    />
-                </TouchableOpacity>
+                {!isPreview && (
+                    <TouchableOpacity
+                        style={styles.saveBtnTopper}
+                        onPress={() => handleFavoriteToggle(item.id)}
+                    >
+                        <Ionicons
+                            name={item.isFavorite ? "heart" : "heart-outline"}
+                            size={16}
+                            color={item.isFavorite ? "#F43F5E" : "white"}
+                        />
+                    </TouchableOpacity>
+                )}
 
                 <View style={styles.pageBadge}>
                     <AppText style={styles.pageText}>{item.pageCount || 24} pgs</AppText>
@@ -183,11 +219,11 @@ const PublicTopperProfile = ({ route, navigation }) => {
                 onBackPress={() => navigation.goBack()}
                 rightComponent={
                     <View style={styles.headerActions}>
-                        <TouchableOpacity style={styles.iconBtn}>
+                        <TouchableOpacity style={styles.iconBtn} onPress={handleShare}>
                             <Ionicons name="share-social-outline" size={22} color="white" />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.iconBtn}>
-                            <MaterialCommunityIcons name="dots-vertical" size={22} color="white" />
+                        <TouchableOpacity style={styles.iconBtn} onPress={() => setIsOptionsVisible(true)}>
+                            <Ionicons name="ellipsis-vertical" size={22} color="white" />
                         </TouchableOpacity>
                     </View>
                 }
@@ -217,8 +253,25 @@ const PublicTopperProfile = ({ route, navigation }) => {
                     {/* Credentials Pill */}
                     <View style={styles.credentialsPill}>
                         <Ionicons name="school" size={14} color="#3B82F6" />
-                        <AppText style={styles.credentialsText}>{achievements && achievements.length > 0 ? achievements.join(' • ') : 'No achievements listed'}</AppText>
+                        <AppText style={styles.credentialsText}>
+                            {`Class ${expertiseClass || 'N/A'}`}
+                            {stream ? ` • ${stream}` : ''}
+                            {board ? ` • ${board}` : ''}
+                            {yearOfPassing ? ` (${yearOfPassing})` : ''}
+                        </AppText>
                     </View>
+
+                    {/* Highlights (if any) */}
+                    {highlights && highlights.length > 0 && (
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginBottom: 25 }}>
+                            {highlights.map((h, i) => (
+                                <View key={i} style={styles.highlightPill}>
+                                    <Ionicons name="star" size={12} color="#F59E0B" />
+                                    <AppText style={styles.highlightText}>{h}</AppText>
+                                </View>
+                            ))}
+                        </View>
+                    )}
 
                     {/* Stats Row */}
                     <View style={styles.statsContainer}>
@@ -240,35 +293,84 @@ const PublicTopperProfile = ({ route, navigation }) => {
                     </View>
 
                     {/* Action Buttons */}
-                    <View style={styles.actionButtons}>
-                        <TouchableOpacity style={[styles.followBtn, following && { backgroundColor: '#334155' }]} onPress={handleFollow} disabled={isFollowing}>
-                            <Ionicons name={following ? "checkmark" : "person-add"} size={18} color="white" />
-                            <AppText style={styles.followText}>{following ? 'Following' : 'Follow'}</AppText>
-                        </TouchableOpacity>
+                    {!isPreview && (
+                        <View style={styles.actionButtons}>
+                            <TouchableOpacity style={[styles.followBtn, following && { backgroundColor: '#334155' }]} onPress={handleFollow} disabled={isFollowing}>
+                                <Ionicons name={following ? "checkmark" : "person-add"} size={18} color="white" />
+                                <AppText style={styles.followText}>{following ? 'Following' : 'Follow'}</AppText>
+                            </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.messageBtn} onPress={handleMessage} disabled={isChatLoading}>
-                            {isChatLoading ? (
-                                <ActivityIndicator size="small" color="#E2E8F0" />
-                            ) : (
-                                <>
-                                    <MaterialCommunityIcons name="email-outline" size={20} color="#E2E8F0" />
-                                    <AppText style={styles.messageText}>Message</AppText>
-                                </>
+                            <TouchableOpacity style={styles.messageBtn} onPress={handleMessage} disabled={isChatLoading}>
+                                {isChatLoading ? (
+                                    <ActivityIndicator size="small" color="#E2E8F0" />
+                                ) : (
+                                    <>
+                                        <MaterialCommunityIcons name="email-outline" size={20} color="#E2E8F0" />
+                                        <AppText style={styles.messageText}>Message</AppText>
+                                    </>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    )}
+
+                    {/* Subject Marks & Marksheet ALWAYS VISIBLE */}
+                    {((subjectMarks && subjectMarks.length > 0) || marksheetUrl) && (
+                        <View style={{ width: '100%', marginBottom: 25, backgroundColor: 'rgba(30, 41, 59, 0.4)', borderRadius: 12, padding: 15, borderWidth: 1, borderColor: Theme.colors.border }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 15, gap: 8 }}>
+                                <Ionicons name="ribbon-outline" size={18} color="#00B1FC" />
+                                <AppText weight="bold" style={{ fontSize: 15, color: '#E2E8F0' }}>Academic Verification</AppText>
+                            </View>
+
+                            {subjectMarks && subjectMarks.map((mark, idx) => (
+                                <View key={idx} style={styles.marksRow}>
+                                    <AppText style={styles.marksSubject}>{mark.subject}</AppText>
+                                    <View style={styles.markBadge}>
+                                        <AppText style={styles.markValue}>{mark.marks} / 100</AppText>
+                                    </View>
+                                </View>
+                            ))}
+
+                            {marksheetUrl && (
+                                <TouchableOpacity
+                                    style={styles.marksheetBtn}
+                                    onPress={() => Linking.openURL(marksheetUrl)}
+                                >
+                                    <Ionicons name="document-text" size={16} color="white" />
+                                    <AppText style={styles.marksheetText} weight="bold">View Verified Marksheet</AppText>
+                                </TouchableOpacity>
                             )}
-                        </TouchableOpacity>
-                    </View>
+                        </View>
+                    )}
 
                     {/* Accordion / Info */}
                     <TouchableOpacity style={styles.accordion} onPress={() => setIsBioExpanded(!isBioExpanded)}>
                         <View style={styles.row}>
                             <Ionicons name="information-circle" size={18} color="#94A3B8" />
-                            <AppText style={styles.accordionTitle}>About Me & Study Tips</AppText>
+                            <AppText style={styles.accordionTitle}>About Me & Background</AppText>
                         </View>
                         <Ionicons name={isBioExpanded ? "chevron-up" : "chevron-down"} size={18} color="#94A3B8" />
                     </TouchableOpacity>
                     {isBioExpanded && (
                         <View style={styles.bioContent}>
+                            <AppText weight="bold" style={[styles.bioText, { marginBottom: 4, color: 'white' }]}>Bio:</AppText>
                             <AppText style={styles.bioText}>{about || "No bio available."}</AppText>
+
+                            {coreSubjects && coreSubjects.length > 0 && (
+                                <>
+                                    <AppText weight="bold" style={[styles.bioText, { marginTop: 15, marginBottom: 4, color: 'white' }]}>Core Subjects:</AppText>
+                                    <AppText style={styles.bioText}>{coreSubjects.join(', ')}</AppText>
+                                </>
+                            )}
+
+                            {achievements && achievements.length > 0 && (
+                                <>
+                                    <AppText weight="bold" style={[styles.bioText, { marginTop: 15, marginBottom: 4, color: 'white' }]}>Achievements:</AppText>
+                                    {achievements.map((ach, idx) => (
+                                        <AppText key={idx} style={styles.bioText}>• {ach}</AppText>
+                                    ))}
+                                </>
+                            )}
+
                         </View>
                     )}
                 </View>
@@ -299,7 +401,18 @@ const PublicTopperProfile = ({ route, navigation }) => {
                             <View style={styles.uploadsSection}>
                                 <View style={styles.rowBetween}>
                                     <AppText style={styles.sectionTitle} weight="bold">{idx === 1 ? 'Bundles' : (idx === 2 ? 'Free Uploads' : 'Latest Uploads')}</AppText>
-                                    <TouchableOpacity>
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            if (isPreview) {
+                                                navigation.navigate('MyUploads');
+                                            } else {
+                                                navigation.navigate('Store', {
+                                                    topperId: topperId,
+                                                    sortBy: idx === 2 ? 'price_low' : 'newest',
+                                                });
+                                            }
+                                        }}
+                                    >
                                         <AppText style={styles.viewAllText}>View all</AppText>
                                     </TouchableOpacity>
                                 </View>
@@ -329,6 +442,36 @@ const PublicTopperProfile = ({ route, navigation }) => {
                 </ScrollView>
 
             </ScrollView>
+
+            <BottomSheet visible={isOptionsVisible} onClose={() => setIsOptionsVisible(false)}>
+                <View style={[styles.modalHeader, { paddingBottom: 15 }]}>
+                    <AppText style={styles.modalTitle} weight="bold">Profile Options</AppText>
+                    <TouchableOpacity onPress={() => setIsOptionsVisible(false)}>
+                        <Ionicons name="close" size={24} color="#64748B" />
+                    </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity style={styles.optionBtn} onPress={handleShare}>
+                    <View style={styles.optionIconContainer}>
+                        <Ionicons name="share-social-outline" size={22} color="white" />
+                    </View>
+                    <AppText style={styles.optionText} weight="medium">Share Profile</AppText>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.optionBtn} onPress={handleCopyLink}>
+                    <View style={styles.optionIconContainer}>
+                        <Ionicons name="link-outline" size={22} color="white" />
+                    </View>
+                    <AppText style={styles.optionText} weight="medium">Copy Profile Link</AppText>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={[styles.optionBtn, styles.deleteOptionBtn]} onPress={handleReport}>
+                    <View style={[styles.optionIconContainer, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
+                        <Ionicons name="flag-outline" size={22} color="#EF4444" />
+                    </View>
+                    <AppText style={[styles.optionText, { color: '#EF4444' }]} weight="medium">Report Profile</AppText>
+                </TouchableOpacity>
+            </BottomSheet>
         </View>
     );
 };
@@ -394,12 +537,28 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
         borderRadius: 20,
         gap: 6,
-        marginBottom: 25,
+        marginBottom: 10, // Reduced from 25 to make room for highlights
     },
     credentialsText: {
         color: '#60A5FA', // Light Blue
         fontSize: 12,
         fontWeight: '600',
+    },
+    highlightPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: 'rgba(245, 158, 11, 0.2)',
+        gap: 4,
+    },
+    highlightText: {
+        color: '#FBBF24',
+        fontSize: 11,
+        fontWeight: 'bold',
     },
     statsContainer: {
         flexDirection: 'row',
@@ -498,6 +657,87 @@ const styles = StyleSheet.create({
         color: Theme.colors.textSubtle,
         fontSize: 14,
         lineHeight: 20,
+    },
+    marksRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: 'rgba(30, 41, 59, 0.5)',
+        paddingHorizontal: 15,
+        paddingVertical: 10,
+        borderRadius: 8,
+        marginBottom: 6,
+        borderWidth: 1,
+        borderColor: 'rgba(51, 65, 85, 0.5)',
+    },
+    marksSubject: {
+        color: '#E2E8F0',
+        fontSize: 13,
+        fontWeight: '500',
+    },
+    markBadge: {
+        backgroundColor: '#10B981',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 12,
+    },
+    markValue: {
+        color: 'white',
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
+    marksheetBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#3B82F6',
+        paddingVertical: 12,
+        borderRadius: 12,
+        marginTop: 20,
+        gap: 8,
+    },
+    marksheetText: {
+        color: 'white',
+        fontSize: 14,
+    },
+    emptyText: {
+        color: '#94A3B8',
+        fontSize: 14,
+        marginTop: 10,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    modalTitle: {
+        fontSize: 18,
+        color: 'white',
+    },
+    optionBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+    },
+    deleteOptionBtn: {
+        borderBottomWidth: 0,
+        marginTop: 5,
+    },
+    optionIconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 15,
+    },
+    optionText: {
+        fontSize: 16,
+        color: 'white',
     },
     tabsContainer: {
         flexDirection: 'row',

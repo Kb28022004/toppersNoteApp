@@ -18,6 +18,11 @@ const userSchema = new mongoose.Schema(
     },
 
     profileCompleted: { type: Boolean, default: false },
+    status: {
+      type: String,
+      enum: ['ACTIVE', 'BLOCKED'],
+      default: 'ACTIVE'
+    }
   },
   { timestamps: true }
 );

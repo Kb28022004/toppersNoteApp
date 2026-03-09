@@ -174,10 +174,10 @@ const TopperProfile = ({ navigation }) => {
 
                         <TouchableOpacity
                             style={styles.previewBtn}
-                            onPress={() => navigation.navigate('PublicTopperProfile', { topperId: userData?.userId })}
+                            onPress={() => navigation.navigate('PublicTopperProfile', { topperId: userData?.userId, isPreview: true })}
                         >
                             <Feather name="eye" size={14} color="#00B1FC" />
-                            <AppText style={styles.previewText} weight="bold">Preview Public Profile</AppText>
+                            <AppText style={styles.previewText} weight="bold">View My Profile</AppText>
                         </TouchableOpacity>
                     </View>
                 </View>

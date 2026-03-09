@@ -189,7 +189,91 @@ export const adminApi = createApi({
       }),
       invalidatesTags: ["Payouts"],
     }),
+
+    getAllStudents: builder.query({
+      query: ({ token, page, limit, search, class_filter, board }) => {
+        const params = new URLSearchParams();
+        if (page) params.append("page", page);
+        if (limit) params.append("limit", limit);
+        if (search) params.append("search", search);
+        if (class_filter) params.append("class_filter", class_filter);
+        if (board) params.append("board", board);
+
+        return {
+          url: `admin/students?${params.toString()}`,
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        };
+      },
+    }),
+
+    getAllOrders: builder.query({
+      query: ({ token, page, limit, search, status }) => {
+        const params = new URLSearchParams();
+        if (page) params.append("page", page);
+        if (limit) params.append("limit", limit);
+        if (search) params.append("search", search);
+        if (status) params.append("status", status);
+
+        return {
+          url: `admin/orders?${params.toString()}`,
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        };
+      },
+    }),
+
+    getSystemConfig: builder.query({
+      query: (token) => ({
+        url: `admin/config`,
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    }),
+
+    updateSystemConfig: builder.mutation({
+      query: ({ token, config }) => ({
+        url: `admin/config`,
+        method: "PATCH",
+        body: config,
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    }),
+
+    sendBroadcast: builder.mutation({
+      query: ({ token, ...data }) => ({
+        url: `admin/broadcast`,
+        method: "POST",
+        body: data,
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    }),
+
+    toggleUserStatus: builder.mutation({
+      query: ({ token, userId }) => ({
+        url: `admin/users/${userId}/status`,
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    }),
+
+    getAuditLogs: builder.query({
+      query: ({ token, page, limit, action, adminId }) => {
+        const params = new URLSearchParams();
+        if (page) params.append("page", page);
+        if (limit) params.append("limit", limit);
+        if (action) params.append("action", action);
+        if (adminId) params.append("adminId", adminId);
+
+        return {
+          url: `admin/logs?${params.toString()}`,
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        };
+      },
+    }),
   }),
+
 });
 
 export const {
@@ -211,5 +295,12 @@ export const {
   useLazyPreviewNoteQuery,
   useGetStudentUsageQuery,
   useGetPayoutRequestsQuery,
-  useUpdatePayoutStatusMutation
+  useUpdatePayoutStatusMutation,
+  useGetAllStudentsQuery,
+  useGetAllOrdersQuery,
+  useGetSystemConfigQuery,
+  useUpdateSystemConfigMutation,
+  useSendBroadcastMutation,
+  useToggleUserStatusMutation,
+  useGetAuditLogsQuery
 } = adminApi;
