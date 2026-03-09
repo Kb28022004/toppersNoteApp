@@ -1,0 +1,359 @@
+import React, { useState, useEffect } from 'react';
+import { Theme } from '../../theme/Theme';
+import { View, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Stepper from '../../components/Stepper';
+import AppText from '../../components/AppText';
+import PageHeader from '../../components/PageHeader';
+import ReusableButton from '../../components/ReausableButton';
+import FormField from '../../components/FormField';
+import { Ionicons } from "@expo/vector-icons";
+import CustomDropdown from '../../components/CustomDropdown';
+import { useCreateProfileMutation } from '../../features/api/studentApi';
+import useApiFeedback from '../../hooks/useApiFeedback';
+import Loader from '../../components/Loader';
+import { useAlert } from '../../context/AlertContext';
+import useInitialLoad from '../../hooks/useInitialLoad';
+
+const CLASSES = ['8', '9', '10', '11', '12'];
+const BOARDS = ['CBSE', 'ICSE', 'State Board'];
+const MEDIUMS = ['ENGLISH', 'HINDI'];
+const STREAMS = ['Science (PCM)', 'Science (PCB)', 'Science (PCMB)', 'Commerce', 'Arts'];
+
+const SUBJECTS_DATA = {
+    general: [
+        { id: 'maths', name: 'Maths', icon: 'calculator' },
+        { id: 'science', name: 'Science', icon: 'flask' },
+        { id: 'english', name: 'English', icon: 'book' },
+        { id: 'sst', name: 'Social Studies', icon: 'earth' },
+        { id: 'hindi', name: 'Hindi', icon: 'language' },
+        { id: 'sanskrit', name: 'Sanskrit', icon: 'book' },
+    ],
+    pcmb: [
+        { id: 'phy', name: 'Physics', icon: 'flash' },
+        { id: 'chem', name: 'Chemistry', icon: 'flask' },
+        { id: 'maths', name: 'Maths', icon: 'calculator' },
+        { id: 'bio', name: 'Biology', icon: 'leaf' },
+        { id: 'english', name: 'English', icon: 'book' },
+        { id: 'cs', name: 'Comp. Sci', icon: 'laptop' },
+        { id: 'pe', name: 'Physical Edu.', icon: 'basketball' },
+    ],
+    commerce: [
+        { id: 'acc', name: 'Accountancy', icon: 'calculator' },
+        { id: 'bst', name: 'Business Studies', icon: 'briefcase' },
+        { id: 'eco', name: 'Economics', icon: 'cash' },
+        { id: 'maths', name: 'Maths', icon: 'calculator' },
+        { id: 'english', name: 'English', icon: 'book' },
+        { id: 'ip', name: 'Info. Prac.', icon: 'laptop' },
+    ],
+    arts: [
+        { id: 'hist', name: 'History', icon: 'time' },
+        { id: 'pol', name: 'Pol. Science', icon: 'people' },
+        { id: 'geo', name: 'Geography', icon: 'earth' },
+        { id: 'eco', name: 'Economics', icon: 'cash' },
+        { id: 'english', name: 'English', icon: 'book' },
+        { id: 'psych', name: 'Psychology', icon: 'brain' },
+    ]
+};
+
+const StudentProfileSetup = ({ navigation }) => {
+    const { showAlert } = useAlert();
+
+    const [fullName, setFullName] = useState('');
+    const [selectedClass, setSelectedClass] = useState('11');
+    const [selectedBoard, setSelectedBoard] = useState('CBSE');
+    const [selectedMedium, setSelectedMedium] = useState('ENGLISH');
+    const [selectedStream, setSelectedStream] = useState('');
+    const [selectedSubjects, setSelectedSubjects] = useState([]);
+    const [displayedSubjects, setDisplayedSubjects] = useState([]);
+    const [image, setImage] = useState(null);
+    const isLoading = useInitialLoad(1000);
+
+    // ─── Validation ───────────────────────────────────────────────────────────
+    const [errors, setErrors] = useState({});
+    const [submitted, setSubmitted] = useState(false);
+
+    const [createProfile, { isLoading: createProfileLoading, isSuccess, data, isError, error }] = useCreateProfileMutation();
+
+    useApiFeedback(isSuccess, data, isError, error, async () => {
+        const userStr = await AsyncStorage.getItem('user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            user.profileCompleted = true;
+            await AsyncStorage.setItem('user', JSON.stringify(user));
+        }
+        navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+    }, "Profile created successfully!");
+
+    useEffect(() => {
+        let subjects = [];
+        const isHigherClass = ['11', '12', 'Dropper'].includes(selectedClass);
+        if (!isHigherClass) {
+            subjects = SUBJECTS_DATA.general;
+            if (selectedStream) setSelectedStream('');
+        } else {
+            if (selectedStream.includes('PCM') || selectedStream.includes('PCB')) {
+                subjects = SUBJECTS_DATA.pcmb;
+            } else if (selectedStream === 'Commerce') {
+                subjects = SUBJECTS_DATA.commerce;
+            } else if (selectedStream === 'Arts') {
+                subjects = SUBJECTS_DATA.arts;
+            }
+        }
+        setDisplayedSubjects(subjects);
+        setSelectedSubjects([]);
+    }, [selectedClass, selectedStream]);
+
+    const validateForm = () => {
+        const e = {};
+        if (!fullName.trim()) e.fullName = 'Full name is required';
+        setErrors(e);
+        return Object.keys(e).length === 0;
+    };
+
+    const pickImage = async () => {
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: "Images",
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 1,
+            });
+            if (!result.canceled) setImage(result.assets[0].uri);
+        } catch {
+            showAlert("Error", "Failed to open gallery. Please try again.", "error");
+        }
+    };
+
+    const toggleSubject = (subjectId) => {
+        setSelectedSubjects(prev =>
+            prev.includes(subjectId) ? prev.filter(id => id !== subjectId) : [...prev, subjectId]
+        );
+    };
+
+    const handleSave = async () => {
+        setSubmitted(true);
+        if (!validateForm()) {
+            showAlert("Missing Fields", "Please fill all required fields marked with *", "warning");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("fullName", fullName);
+        formData.append("class", selectedClass);
+        formData.append("board", selectedBoard);
+        formData.append("medium", selectedMedium);
+        if (selectedStream) formData.append("stream", selectedStream);
+        selectedSubjects.forEach(subj => formData.append("subjects", subj));
+
+        if (image) {
+            const filename = image.split('/').pop();
+            const match = /\.(\w+)$/.exec(filename);
+            formData.append("photo", { uri: image, name: filename, type: match ? `image/${match[1]}` : 'image' });
+        }
+
+        try {
+            await createProfile(formData).unwrap();
+        } catch { /* handled by useApiFeedback */ }
+    };
+
+    const handleBack = async () => {
+        if (navigation.canGoBack()) {
+            navigation.goBack();
+        } else {
+            await AsyncStorage.removeItem('token');
+            await AsyncStorage.removeItem('user');
+            navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+        }
+    };
+
+    const isHigherSecondary = ['11', '12', 'Dropper'].includes(selectedClass);
+
+    return (
+        <View style={{ flex: 1 }}>
+            <View style={styles.mainContainer}>
+                <Loader visible={isLoading} />
+                <View style={styles.container}>
+                    <PageHeader
+                        title="Set up your profile"
+                        onBackPress={handleBack}
+                        paddingHorizontal={20}
+                    />
+                    <View style={{ paddingHorizontal: Theme.layout.screenPadding }}>
+                        <Stepper currentStep={3} totalSteps={3} />
+                    </View>
+
+                    <KeyboardAwareScrollView
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={styles.scrollContent}
+                        keyboardShouldPersistTaps="handled"
+                        keyboardDismissMode="on-drag"
+                        enableOnAndroid={true}
+                        extraScrollHeight={80}
+                    >
+
+                        {/* Profile Photo */}
+                        <View style={styles.profileSection}>
+                            <TouchableOpacity onPress={pickImage} style={styles.avatarContainer}>
+                                <Image
+                                    source={image ? { uri: image } : require('../../../assets/student.avif')}
+                                    style={styles.avatar}
+                                />
+                                <View style={styles.editIcon}>
+                                    <Ionicons name="pencil" size={16} color="white" />
+                                </View>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={pickImage}>
+                                <AppText style={styles.uploadText}>Upload Photo</AppText>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Full Name */}
+                        <FormField
+                            label="Full Name"
+                            required
+                            error={errors.fullName}
+                            placeholder="Enter your Full Name"
+                            value={fullName}
+                            onChangeText={(t) => {
+                                setFullName(t);
+                                if (submitted) setErrors(prev => ({ ...prev, fullName: t.trim() ? null : 'Full name is required' }));
+                            }}
+                        />
+
+                        {/* Class Selection */}
+                        <View style={styles.formGroup}>
+                            <View style={styles.labelRow}>
+                                <AppText style={styles.label}>Which class are you in?</AppText>
+                                <AppText style={styles.required}> *</AppText>
+                            </View>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                <View style={styles.row}>
+                                    {CLASSES.map((cls) => (
+                                        <TouchableOpacity
+                                            key={cls}
+                                            style={[styles.chip, selectedClass === cls && styles.chipSelected]}
+                                            onPress={() => setSelectedClass(cls)}
+                                        >
+                                            <AppText style={[styles.chipText, selectedClass === cls && styles.chipTextSelected]}>
+                                                {cls}
+                                            </AppText>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            </ScrollView>
+                        </View>
+
+                        {/* Stream (Conditional) */}
+                        {isHigherSecondary && (
+                            <FormField label="Select Stream" required error={errors.stream}>
+                                <CustomDropdown
+                                    options={STREAMS}
+                                    selectedValue={selectedStream}
+                                    onSelect={(v) => {
+                                        setSelectedStream(v);
+                                        if (submitted) setErrors(prev => ({ ...prev, stream: null }));
+                                    }}
+                                    placeholder="Choose Stream"
+                                />
+                            </FormField>
+                        )}
+
+                        {/* Board & Medium */}
+                        <View style={styles.rowBetween}>
+                            <View style={styles.halfWidth}>
+                                <FormField label="Board" required error={errors.board}>
+                                    <CustomDropdown
+                                        options={BOARDS}
+                                        selectedValue={selectedBoard}
+                                        onSelect={setSelectedBoard}
+                                        placeholder="Select Board"
+                                    />
+                                </FormField>
+                            </View>
+                            <View style={styles.halfWidth}>
+                                <FormField label="Medium" required error={errors.medium}>
+                                    <CustomDropdown
+                                        options={MEDIUMS}
+                                        selectedValue={selectedMedium}
+                                        onSelect={setSelectedMedium}
+                                        placeholder="Select Medium"
+                                    />
+                                </FormField>
+                            </View>
+                        </View>
+
+                        {/* Subjects */}
+                        {displayedSubjects.length > 0 && (
+                            <View style={styles.formGroup}>
+                                <View style={styles.labelRow}>
+                                    <AppText style={styles.label}>Subjects of Interest</AppText>
+                                </View>
+                                <AppText style={styles.subLabel}>Pick at least 3 subjects to personalize your feed.</AppText>
+                                <View style={styles.subjectsGrid}>
+                                    {displayedSubjects.map((sub) => {
+                                        const isSelected = selectedSubjects.includes(sub.id);
+                                        return (
+                                            <TouchableOpacity
+                                                key={sub.id}
+                                                style={[styles.subjectChip, isSelected && styles.subjectChipSelected]}
+                                                onPress={() => toggleSubject(sub.id)}
+                                            >
+                                                <Ionicons name={sub.icon} size={18} color={isSelected ? "white" : "#a0aec0"} />
+                                                <AppText style={[styles.subjectText, isSelected && styles.subjectTextSelected]}>
+                                                    {sub.name}
+                                                </AppText>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            </View>
+                        )}
+
+                        <ReusableButton
+                            title="Save & Continue"
+                            loading={createProfileLoading}
+                            loadingText="Saving..."
+                            onPress={handleSave}
+                            style={styles.saveButton}
+                        />
+
+                    </KeyboardAwareScrollView>
+                </View>
+            </View>
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    mainContainer: { flex: 1 },
+    container: { flex: 1 },
+    scrollContent: { paddingBottom: 40, paddingHorizontal: Theme.layout.screenPadding },
+    profileSection: { alignItems: 'center', marginVertical: 20 },
+    avatarContainer: { position: 'relative' },
+    avatar: { width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: '#4377d8ff' },
+    editIcon: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#4377d8ff', padding: 8, borderRadius: 20, borderWidth: 2, borderColor: '#1a202c' },
+    uploadText: { color: '#4377d8ff', marginTop: 10, fontSize: 14, fontWeight: '600' },
+    formGroup: { marginBottom: 20 },
+    labelRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+    label: { fontSize: 14, fontWeight: '600', color: '#E2E8F0' },
+    required: { fontSize: 15, color: '#EF4444', fontWeight: '700' },
+    subLabel: { fontSize: 12, color: '#a0aec0', marginBottom: 10 },
+    row: { flexDirection: 'row', gap: 10 },
+    chip: { width: 50, height: 50, borderRadius: 12, backgroundColor: 'rgba(58, 60, 63, 0.5)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)', marginRight: 10 },
+    chipSelected: { backgroundColor: '#4377d8ff', borderColor: '#4377d8ff' },
+    chipText: { color: '#a0aec0', fontSize: 16, fontWeight: 'bold' },
+    chipTextSelected: { color: 'white' },
+    rowBetween: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 0 },
+    halfWidth: { width: '48%' },
+    subjectsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    subjectChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(58, 60, 63, 0.5)', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)', gap: 8 },
+    subjectChipSelected: { backgroundColor: '#4377d8ff', borderColor: '#4377d8ff' },
+    subjectText: { color: '#a0aec0', fontSize: 14 },
+    subjectTextSelected: { color: 'white', fontWeight: '600' },
+    saveButton: { marginTop: 10, marginBottom: 30 },
+});
+
+export default StudentProfileSetup;
