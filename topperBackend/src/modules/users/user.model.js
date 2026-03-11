@@ -22,6 +22,25 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['ACTIVE', 'BLOCKED'],
       default: 'ACTIVE'
+    },
+
+    // 🏆 REFERRAL SYSTEM
+    myReferralCode: { 
+      type: String, 
+      unique: true, 
+      sparse: true, 
+      uppercase: true,
+      trim: true 
+    },
+    referredBy: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'User',
+      index: true
+    },
+    walletBalance: { 
+      type: Number, 
+      default: 0,
+      min: 0
     }
   },
   { timestamps: true }

@@ -6,8 +6,10 @@ import {
     Image,
     Dimensions,
     StatusBar,
-    ActivityIndicator
+    ActivityIndicator,
+    FlatList
 } from 'react-native';
+import ImageZoom from 'react-native-image-pan-zoom';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import * as ScreenCapture from 'expo-screen-capture';
@@ -34,6 +36,22 @@ const NotePreview = ({ route, navigation }) => {
     const [userData, setUserData] = useState(null);
     const [isFullScreen, setIsFullScreen] = useState(false);
     const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false);
+    const flatListRef = React.useRef(null);
+
+    const onViewableItemsChanged = React.useRef(({ viewableItems }) => {
+        if (viewableItems.length > 0) {
+            setCurrentPageIndex(viewableItems[0].index);
+        }
+    }).current;
+
+    const viewabilityConfig = React.useRef({
+        itemVisiblePercentThreshold: 50
+    }).current;
+
+    const handleSliderChange = (value) => {
+        setCurrentPageIndex(value);
+        flatListRef.current?.scrollToIndex({ index: value, animated: true });
+    };
 
     // Payment Hooks
     const [createOrder, { isLoading: isCreatingOrder }] = useCreateOrderMutation();
@@ -93,7 +111,9 @@ const NotePreview = ({ route, navigation }) => {
 
     if (isLoading && !localNote) return <Loader visible />;
 
-    const previewImages = displayNote?.previewImages || (localNote?.localThumbnail ? [localNote.localThumbnail] : localNote?.thumbnail ? [localNote.thumbnail] : []);
+    const previewImages = (displayNote?.previewImages && displayNote.previewImages.length > 0)
+        ? displayNote.previewImages
+        : (localNote?.localThumbnail ? [localNote.localThumbnail] : localNote?.thumbnail ? [localNote.thumbnail] : []);
     const totalPages = displayNote?.pageCount || 0;
     const isPurchased = displayNote?.isPurchased || !!localNote;
     const hasMorePages = totalPages > previewImages.length;
@@ -177,39 +197,46 @@ const NotePreview = ({ route, navigation }) => {
 
             {/* Note Content */}
             <View style={[styles.contentContainer, isFullScreen && styles.fullScreenContent]}>
-                <View style={styles.imageWrapper}>
+                <View style={[styles.imageWrapper, { width: '100%', height: '100%' }]}>
                     {previewImages.length > 0 ? (
-                        <Image
-                            source={{ uri: previewImages[currentPageIndex] }}
-                            style={styles.noteImage}
-                            resizeMode="contain"
+                        <FlatList
+                            ref={flatListRef}
+                            data={previewImages}
+                            horizontal
+                            pagingEnabled
+                            showsHorizontalScrollIndicator={false}
+                            keyExtractor={(item, index) => index.toString()}
+                            onViewableItemsChanged={onViewableItemsChanged}
+                            viewabilityConfig={viewabilityConfig}
+                            getItemLayout={(data, index) => ({
+                                length: isFullScreen ? width : width - 32,
+                                offset: (isFullScreen ? width : width - 32) * index,
+                                index,
+                            })}
+                            renderItem={({ item }) => (
+                                <View style={{ width: isFullScreen ? width : width - 34, height: '100%', justifyContent: 'center', alignItems: 'center' }}>
+                                    <ImageZoom
+                                        cropWidth={isFullScreen ? width : width - 34}
+                                        cropHeight={height * 0.7} // Approximate height of the container
+                                        imageWidth={isFullScreen ? width : width - 34}
+                                        imageHeight={height * 0.7}
+                                        enableDoubleClickZoom={true}
+                                        centerOn={null}
+                                    >
+                                        <Image
+                                            source={{ uri: item }}
+                                            style={styles.noteImage}
+                                            resizeMode="contain"
+                                        />
+                                    </ImageZoom>
+                                </View>
+                            )}
                         />
                     ) : (
                         <View style={styles.emptyState}>
                             <AppText style={{ color: '#64748B' }}>No preview pages available</AppText>
                         </View>
                     )}
-
-                    {/* Navigation Buttons */}
-                    <View style={styles.navOverlay} pointerEvents="box-none">
-                        {currentPageIndex > 0 && (
-                            <TouchableOpacity
-                                style={[styles.navBtn, styles.navBtnPrev]}
-                                onPress={() => setCurrentPageIndex(prev => prev - 1)}
-                            >
-                                <Ionicons name="chevron-back" size={32} color="white" />
-                            </TouchableOpacity>
-                        )}
-
-                        {currentPageIndex < previewImages.length - 1 && (
-                            <TouchableOpacity
-                                style={[styles.navBtn, styles.navBtnNext]}
-                                onPress={() => setCurrentPageIndex(prev => prev + 1)}
-                            >
-                                <Ionicons name="chevron-forward" size={32} color="white" />
-                            </TouchableOpacity>
-                        )}
-                    </View>
 
                     {isFullScreen && (
                         <TouchableOpacity style={styles.exitFullScreenBtn} onPress={() => setIsFullScreen(false)}>
@@ -277,7 +304,7 @@ const NotePreview = ({ route, navigation }) => {
                             maximumValue={previewImages.length - 1}
                             step={1}
                             value={currentPageIndex}
-                            onValueChange={setCurrentPageIndex}
+                            onSlidingComplete={handleSliderChange}
                             minimumTrackTintColor="#00B1FC"
                             maximumTrackTintColor="#1E293B"
                             thumbTintColor="#00B1FC"

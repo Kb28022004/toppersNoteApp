@@ -261,6 +261,7 @@ exports.getAllApprovedNotes = async (user, filters = {}) => {
     // 5. Pagination & Execution
     const totalNotes = await Note.countDocuments(query);
     let notes = await Note.find(query)
+        .select('subject chapterName class board price tags description stats previewImages pageCount topperId status createdAt')
         .sort(sortOptions)
         .skip(skip)
         .limit(limit)
@@ -452,7 +453,7 @@ exports.getNoteDetails = async (noteId, userId, userRole) => {
     // Fetch if not in cache OR if cache is missing critical rawPdfUrl field
     if (!noteData || !noteData.rawPdfUrl) {
         // 1. Fetch Note + Topper
-        const note = await Note.findOne({ _id: new mongoose.Types.ObjectId(noteId) })
+        const note = await Note.findOne({ _id: noteId })
             .populate("topperId", "firstName lastName profilePhoto stream highlights isVerified");
         
         if (!note) throw new Error("Note not found");
@@ -466,7 +467,7 @@ exports.getNoteDetails = async (noteId, userId, userRole) => {
         const topperProfile = await TopperProfile.findOne({ userId: note.topperId._id }).lean();
 
         // 5. Fetch Real Reviews
-        const reviews = await Review.find({ noteId: new mongoose.Types.ObjectId(noteId) })
+        const reviews = await Review.find({ noteId: noteId })
             .populate({
                 path: 'studentId',
                 select: 'fullName profilePhoto userId'
@@ -583,10 +584,7 @@ exports.getNoteDetails = async (noteId, userId, userRole) => {
  */
 exports.getNoteBuyers = async (topperId, noteId) => {
   // 1️⃣ Verify ownership
-  const note = await Note.findOne({
-    _id: noteId,
-    topperId,
-  });
+  const note = await Note.findOne({ _id: noteId, topperId });
 
   if (!note) {
     throw new Error("You are not authorized to view buyers of this note");
@@ -687,7 +685,7 @@ exports.toggleFavoriteNote = async (userId, noteId) => {
  * ===============================
  */
 exports.getFavoriteNotes = async (userId, options = {}) => {
-    const { page = 1, limit = 10, search = '' } = options;
+    const { page = 1, limit = 10, search = '', sortBy = 'newest' } = options;
     const skip = (page - 1) * limit;
 
     const profile = await StudentProfile.findOne({ userId }).populate({
@@ -701,6 +699,12 @@ exports.getFavoriteNotes = async (userId, options = {}) => {
     });
 
     if (!profile) throw new Error("Student profile not found");
+
+    // Sorting
+    if (sortBy === 'newest') profile.savedNotes.sort((a, b) => b.createdAt - a.createdAt);
+    else if (sortBy === 'oldest') profile.savedNotes.sort((a, b) => a.createdAt - b.createdAt);
+    else if (sortBy === 'a-z') profile.savedNotes.sort((a, b) => a.chapterName.localeCompare(b.chapterName));
+    else if (sortBy === 'z-a') profile.savedNotes.sort((a, b) => b.chapterName.localeCompare(a.chapterName));
 
     const total = profile.savedNotes.length;
     // Client side pagination because populate match doesn't support pagination easily on subdocs
@@ -790,8 +794,15 @@ exports.getMyNotes = async (userId, options = {}) => {
  * ===============================
  */
 exports.getPurchasedNotes = async (userId, options = {}) => {
-  const { search = '', page = 1, limit = 10 } = options;
+  const { search = '', page = 1, limit = 10, sortBy = 'newest' } = options;
   const skip = (page - 1) * limit;
+
+  const sortOption = {};
+  if (sortBy === 'newest') sortOption.createdAt = -1;
+  else if (sortBy === 'oldest') sortOption.createdAt = 1;
+  else if (sortBy === 'a-z') sortOption.chapterName = 1;
+  else if (sortBy === 'z-a') sortOption.chapterName = -1;
+  else sortOption.createdAt = -1;
 
 
   // 1. Fetch ALL successful orders for this student to get noteIds
@@ -814,7 +825,7 @@ exports.getPurchasedNotes = async (userId, options = {}) => {
   // 3. Fetch Notes with Pagination
   const totalNotes = await Note.countDocuments(noteFilter);
   const notes = await Note.find(noteFilter)
-    .sort({ createdAt: -1 })
+    .sort(sortOption)
     .skip(skip)
     .limit(limit)
     .lean();

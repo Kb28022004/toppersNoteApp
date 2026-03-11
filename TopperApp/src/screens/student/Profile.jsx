@@ -101,6 +101,7 @@ const Profile = ({ navigation }) => {
                 { title: 'My Library', icon: 'library-outline', screen: 'MyLibrary', params: { initialTab: 'Purchases' }, color: '#00B1FC' },
                 { title: 'My Following', icon: 'people-outline', screen: 'FollowingList', color: '#A855F7' },
                 { title: 'Favourite Notes', icon: 'heart-outline', screen: 'MyLibrary', params: { initialTab: 'Favorites' }, color: '#F43F5E' },
+                { title: 'Refer & Earn', icon: 'gift-outline', screen: 'ReferAndEarn', color: '#F59E0B' },
             ]
         },
         {
@@ -200,16 +201,37 @@ const Profile = ({ navigation }) => {
                     </LinearGradient>
                 </View>
 
-                {/* Learning Streak Banner (Hypothetical) */}
+                {/* Learning Streak Banner */}
                 <View style={styles.streakBanner}>
                     <View style={styles.streakIcon}>
-                        <MaterialCommunityIcons name="fire" size={20} color="#EF4444" />
+                        <MaterialCommunityIcons name="fire" size={20} color={profile?.stats?.streakCount > 0 ? "#EF4444" : "#94A3B8"} />
                     </View>
                     <View style={{ flex: 1, marginLeft: 12 }}>
-                        <AppText style={styles.streakTitle} weight="bold">3 Day Learning Streak!</AppText>
+                        <AppText style={styles.streakTitle} weight="bold">
+                            {profile?.stats?.streakCount > 0
+                                ? `${profile.stats.streakCount} Day Learning Streak!`
+                                : "Start your learning streak today!"}
+                        </AppText>
                         <View style={styles.streakProgressBg}>
-                            <View style={[styles.streakProgressFill, { width: '40%' }]} />
+                            <View
+                                style={[
+                                    styles.streakProgressFill,
+                                    {
+                                        width: `${profile?.stats?.streakCount > 0
+                                                ? Math.min((((profile.stats.streakCount - 1) % 7) + 1) / 7 * 100, 100)
+                                                : 0
+                                            }%`
+                                    }
+                                ]}
+                            />
                         </View>
+                        {profile?.stats?.streakCount > 0 && (
+                            <AppText style={{ fontSize: 10, color: '#94A3B8', marginTop: 4 }}>
+                                {profile.stats.streakCount % 7 === 0
+                                    ? "🔥 Weekly Milestone Reached!"
+                                    : `${7 - (profile.stats.streakCount % 7)} more days to a 7-day milestone!`}
+                            </AppText>
+                        )}
                     </View>
                 </View>
 

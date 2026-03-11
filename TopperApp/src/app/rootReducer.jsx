@@ -1,4 +1,5 @@
 import { combineReducers } from "@reduxjs/toolkit";
+import { apiSlice } from "../features/api/apiSlice";
 
 import { authApi } from "../features/api/authApi";
 import { studentApi } from "../features/api/studentApi";
@@ -11,6 +12,7 @@ import { chatApi } from "../features/api/chatApi";
 import usageReducer from "../features/usageSlice";
 
 const rootReducer = combineReducers({
+  [apiSlice.reducerPath]: apiSlice.reducer,
   [authApi.reducerPath]: authApi.reducer,
   [studentApi.reducerPath]: studentApi.reducer,
   [topperApi.reducerPath]: topperApi.reducer,

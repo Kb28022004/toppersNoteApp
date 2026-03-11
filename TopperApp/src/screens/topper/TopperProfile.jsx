@@ -112,7 +112,7 @@ const TopperProfile = ({ navigation }) => {
             items: [
                 { icon: 'person-outline', label: 'Personal Information', color: '#6366F1', onPress: () => navigation.navigate('EditAcademicProfile') },
                 { icon: 'wallet-outline', label: 'Earnings & Payouts', color: '#10B981', onPress: () => navigation.navigate('EarningsPayouts') },
-                // { icon: 'shield-checkmark-outline', label: 'Identity Verification', color: '#00B1FC', onPress: null },
+                { icon: 'gift-outline', label: 'Refer & Earn', color: '#F59E0B', onPress: () => navigation.navigate('ReferAndEarn') },
             ]
         },
         // {

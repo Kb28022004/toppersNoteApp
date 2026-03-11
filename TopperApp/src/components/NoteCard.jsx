@@ -1,5 +1,6 @@
 import React, { memo, useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AppText from './AppText';
@@ -27,7 +28,9 @@ const NoteCard = memo(({ note, onPress }) => {
                 <Image
                     source={note?.thumbnail ? { uri: note?.thumbnail } : require('../../assets/topper.avif')}
                     style={styles.image}
-                    resizeMode="cover"
+                    contentFit="cover"
+                    transition={200}
+                    cachePolicy="memory-disk"
                 />
                 <LinearGradient
                     colors={['transparent', 'rgba(15, 23, 42, 0.7)']}

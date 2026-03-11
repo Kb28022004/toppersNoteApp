@@ -147,6 +147,7 @@ export const noteApi = createApi({
         url: "/notes/purchased/me",
         params: {
           search: params?.search || undefined,
+          sortBy: params?.sortBy || 'newest',
           page: params?.page || 1,
           limit: params?.limit || 10
         }
@@ -230,6 +231,7 @@ export const noteApi = createApi({
         url: "/notes/favorites/me",
         params: {
           search: params?.search || undefined,
+          sortBy: params?.sortBy || 'newest',
           page: params?.page || 1,
           limit: params?.limit || 10
         }

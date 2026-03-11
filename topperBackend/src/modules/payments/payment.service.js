@@ -5,19 +5,21 @@ const Note = require('../notes/notes.model');
 const TopperProfile = require('../toppers/topper.model');
 const redis = require('../../config/redis');
 const notificationService = require('../notifications/notification.service');
+const referralService = require('../../services/referral.service');
 
 // Create Order (Initialize Payment)
 exports.createOrder = async (userId, noteId) => {
   const note = await Note.findById(noteId);
   if (!note) throw new Error('Note not found');
 
-  const amount = note.price * 100; // Razorpay expects amount in paise (INR)
+  const amount = note.price * 100; 
+  
 
   const options = {
     amount: amount,
     currency: "INR",
     receipt: `order_${Date.now()}_${userId}`,
-    payment_capture: 1, // Auto capture
+    payment_capture: 1, 
   };
 
   let razorpayOrder; 
@@ -111,6 +113,18 @@ exports.verifyPayment = async (orderId, paymentId, signature) => {
         );
     } catch (notifyErr) {
         console.error("Payment Notification Error:", notifyErr.message);
+    }
+
+    // 🏆 Process Referral Reward for Purchase
+    try {
+        await referralService.handlePurchaseReferral(
+            order.studentId, 
+            order.amountPaid, 
+            order.noteId, 
+            order._id
+        );
+    } catch (refErr) {
+        console.error("Referral Purchase Reward Error:", refErr.message);
     }
 
     // Potentially grant access here if not handled dynamically by queries

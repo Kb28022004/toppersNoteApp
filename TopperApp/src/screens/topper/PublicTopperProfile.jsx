@@ -406,9 +406,12 @@ const PublicTopperProfile = ({ route, navigation }) => {
                                             if (isPreview) {
                                                 navigation.navigate('MyUploads');
                                             } else {
-                                                navigation.navigate('Store', {
-                                                    topperId: topperId,
-                                                    sortBy: idx === 2 ? 'price_low' : 'newest',
+                                                navigation.navigate('Home', {
+                                                    screen: 'Store',
+                                                    params: {
+                                                        topperId: topperId,
+                                                        sortBy: idx === 2 ? 'price_low' : 'newest',
+                                                    }
                                                 });
                                             }
                                         }}

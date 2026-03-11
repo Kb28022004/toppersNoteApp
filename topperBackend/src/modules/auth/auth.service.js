@@ -1,17 +1,27 @@
 const User = require('../users/user.model');
 const otpService = require('../../services/otp.service');
 const jwtService = require('../../services/jwt.service');
+const referralService = require('../../services/referral.service');
 
-exports.sendOtp = async (phone, role) => {
+exports.sendOtp = async (phone, role, referralCode) => {
   let user = await User.findOne({ phone });
 
   // 🟢 First-time registration
   if (!user) {
+    // Generate unique referral code for the new user
+    const myCode = await referralService.generateUniqueCode();
+    
     user = await User.create({
       phone,
       role,
       isVerified: false,
+      myReferralCode: myCode
     });
+
+    // Process referral if code was provided
+    if (referralCode) {
+      await referralService.handleRegistrationReferral(user._id, referralCode);
+    }
   }
 
   // 🔴 Prevent role switching

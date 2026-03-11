@@ -88,6 +88,7 @@ exports.getStudentProfile = async (userId) => {
   return {
     ...profile,
     stats: {
+      ...(profile.stats || {}),
       notesPurchased: notesPurchasedCount,
       hoursStudied: hoursStudied,
       subjectsCovered: subjectsCoveredCount,
@@ -187,8 +188,29 @@ exports.updateUsageStats = async (userId, { timeSpent }) => {
   const profile = await StudentProfile.findOne({ userId });
   if (!profile) throw new Error('Student profile not found');
 
-  profile.stats.totalTimeSpent += parseInt(timeSpent || 0);
-  profile.stats.lastActiveAt = new Date();
+  const now = new Date();
+  const lastActive = profile.stats?.lastActiveAt ? new Date(profile.stats.lastActiveAt) : null;
+  
+  // 🔥 Streak logic: Check if user is active on a new day
+  if (lastActive) {
+      const isSameDay = now.toDateString() === lastActive.toDateString();
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const isNextDay = yesterday.toDateString() === lastActive.toDateString();
+
+      if (!isSameDay) {
+          if (isNextDay) {
+              profile.stats.streakCount = (profile.stats.streakCount || 0) + 1;
+          } else {
+              profile.stats.streakCount = 1; // reset streak if gap > 1 day
+          }
+      }
+  } else {
+      profile.stats.streakCount = 1; // first activity ever
+  }
+
+  profile.stats.totalTimeSpent = (profile.stats.totalTimeSpent || 0) + parseInt(timeSpent || 0);
+  profile.stats.lastActiveAt = now;
   
   await profile.save();
   return profile;

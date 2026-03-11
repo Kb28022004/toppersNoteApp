@@ -11,5 +11,6 @@ router.use('/payments', require('../modules/payments/payment.routes'));
 router.use('/earnings', require('../modules/earnings/earnings.routes'));
 router.use('/notifications', require('../modules/notifications/notification.routes'));
 router.use('/chats', require('../modules/chats/chat.routes'));
+router.use('/referrals', require('../modules/referrals/referral.routes'));
 
 module.exports = router;

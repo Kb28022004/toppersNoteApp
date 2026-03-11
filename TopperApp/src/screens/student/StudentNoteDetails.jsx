@@ -28,7 +28,7 @@ import { useDispatch } from 'react-redux';
 import { useAlert } from '../../context/AlertContext';
 import useRefresh from '../../hooks/useRefresh';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { downloadNote, isNoteDownloaded } from '../../helpers/downloadService';
+import { downloadNote, isNoteDownloaded, getDownloadedNotes } from '../../helpers/downloadService';
 import { Theme } from '../../theme/Theme';
 import PaymentConfirmationModal from '../../components/PaymentConfirmationModal';
 
@@ -57,6 +57,7 @@ const StudentNoteDetails = ({ route, navigation }) => {
     const [isDownloading, setIsDownloading] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
     const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false);
+    const [localNote, setLocalNote] = useState(null);
     const { showAlert } = useAlert();
     const dispatch = useDispatch();
 
@@ -69,13 +70,23 @@ const StudentNoteDetails = ({ route, navigation }) => {
     }, []);
 
     useEffect(() => {
-        if (note) {
-            setFollowing(note.isFollowing);
+        if (noteId) {
             const checkDownload = async () => {
-                const status = await isNoteDownloaded(note.id);
+                const status = await isNoteDownloaded(noteId);
                 setIsDownloaded(status);
+                if (status) {
+                    const downloads = await getDownloadedNotes();
+                    const found = downloads.find(d => d.id === noteId);
+                    if (found) setLocalNote(found);
+                }
             };
             checkDownload();
+        }
+    }, [noteId]);
+
+    useEffect(() => {
+        if (note) {
+            setFollowing(note.isFollowing);
             setIsFavorite(note.isFavorite);
         }
     }, [note]);
@@ -98,15 +109,18 @@ const StudentNoteDetails = ({ route, navigation }) => {
         </View>
     );
 
+    const displayNote = note || localNote;
+    if (!displayNote && !isLoading) return null;
+
     const {
-        title,
-        subject,
+        title: nTitle,
+        subject: nSubject,
         chapterName,
         previewImages,
         price,
         description,
         topper,
-        isPurchased,
+        isPurchased: nIsPurchased,
         reviews,
         rating: avgRating,
         reviewCount,
@@ -114,7 +128,11 @@ const StudentNoteDetails = ({ route, navigation }) => {
         language = "English",
         pdfSize = "12 MB",
         tableOfContents = []
-    } = note;
+    } = displayNote || {};
+
+    const isPurchased = nIsPurchased || !!localNote;
+    const title = nTitle || localNote?.title;
+    const subject = nSubject || localNote?.subject;
 
 
     const handleFollow = async () => {
@@ -263,11 +281,24 @@ const StudentNoteDetails = ({ route, navigation }) => {
                 {/* Preview Image */}
                 <View style={styles.previewContainer}>
                     <Image
-                        source={{ uri: previewImages && previewImages.length > 0 ? previewImages[0] : null }}
+                        source={
+                            (previewImages && previewImages.length > 0)
+                                ? { uri: previewImages[0] }
+                                : (localNote?.localThumbnail)
+                                    ? { uri: localNote.localThumbnail }
+                                    : (localNote?.thumbnail)
+                                        ? { uri: localNote.thumbnail }
+                                        : require('../../../assets/topper.avif')
+                        }
                         style={styles.previewImage}
                         resizeMode="cover"
                     />
-                    <View style={styles.overlay} />
+                    <View style={styles.gradientOverlay}>
+                        <LinearGradient
+                            colors={['transparent', 'rgba(15, 23, 42, 0.8)']}
+                            style={StyleSheet.absoluteFill}
+                        />
+                    </View>
 
 
                     <TouchableOpacity
@@ -540,23 +571,22 @@ const styles = StyleSheet.create({
         paddingBottom: 120, // Make space for footer
     },
     previewContainer: {
-        height: 520, // Taller image
-        width: width,
+        height: 380,
+        width: width - 40,
+        marginHorizontal: 20,
+        borderRadius: 20,
+        overflow: 'hidden',
         position: 'relative',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 20,
-        backgroundColor: '#1E293B'
+        backgroundColor: '#1E293B',
+        marginBottom: 25,
     },
     previewImage: {
-        width: '80%',
-        height: '90%',
-        borderRadius: 8,
-        transform: [{ rotate: '2deg' }], // Slight creative tilt
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.5,
-        shadowRadius: 15,
+        width: '100%',
+        height: '100%',
+    },
+    gradientOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        justifyContent: 'flex-end',
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
@@ -579,16 +609,16 @@ const styles = StyleSheet.create({
     },
     previewBtn: {
         position: 'absolute',
-        bottom: 30,
+        bottom: 20,
+        right: 20,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        paddingHorizontal: 25,
-        paddingVertical: 12,
-        borderRadius: 30,
+        backgroundColor: 'rgba(15, 23, 42, 0.8)',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 12,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
-        backdropFilter: 'blur(10px)', // Only works on supported platforms, ignored on others
+        borderColor: 'rgba(255, 255, 255, 0.1)',
     },
     previewBtnText: {
         color: 'white',

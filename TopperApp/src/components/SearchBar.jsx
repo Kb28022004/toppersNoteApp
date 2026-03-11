@@ -23,17 +23,19 @@ const SearchBar = ({
                     returnKeyType="search"
                 />
             </View>
-            <TouchableOpacity
-                style={[styles.filterBtn, isFilterActive && styles.filterBtnActive]}
-                onPress={onFilterPress}
-            >
-                <Ionicons
-                    name="options-outline"
-                    size={24}
-                    color={isFilterActive ? '#fff' : '#00B1FC'}
-                />
-                {isFilterActive && <View style={styles.activeDot} />}
-            </TouchableOpacity>
+            {onFilterPress && (
+                <TouchableOpacity
+                    style={[styles.filterBtn, isFilterActive && styles.filterBtnActive]}
+                    onPress={onFilterPress}
+                >
+                    <Ionicons
+                        name="options-outline"
+                        size={24}
+                        color={isFilterActive ? '#fff' : '#00B1FC'}
+                    />
+                    {isFilterActive && <View style={styles.activeDot} />}
+                </TouchableOpacity>
+            )}
         </View>
     );
 };

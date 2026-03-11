@@ -18,8 +18,10 @@ export const Theme = {
         white: '#FFFFFF',
         headerBottomBorder: '#262727ff',
         uploadNotesButton: '#24459fff',
-        backgroundGradient: ["#020617", "#0F172A", "#020617"],
+        backgroundGradient: ["#2d313fff", "#1f2534ff", "#29383bff"],
         inputBackground: 'rgba(33, 36, 40, 0.5)',
+        modalBackground: '#111827',
+        modalItem: '#1E293B',
     },
     spacing: {
         xs: 4,
@@ -40,7 +42,7 @@ export const Theme = {
             justifyContent: 'space-between',
             alignItems: 'center',
             paddingHorizontal: 20,
-            paddingTop: 55,
+            paddingTop: 50,
             paddingBottom: 20,
             backgroundColor: 'transparent', // Make changes here to alter globally
             minHeight: 100, // ensuring same height globally

@@ -1,4 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
+import { apiSlice } from "../features/api/apiSlice";
 import rootReducer from "./rootReducer";
 import { authApi } from "../features/api/authApi";
 import { studentApi } from "../features/api/studentApi";
@@ -15,6 +16,7 @@ export const store = configureStore({
   reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
+      apiSlice.middleware,
       authApi.middleware,
       studentApi.middleware,
       topperApi.middleware,

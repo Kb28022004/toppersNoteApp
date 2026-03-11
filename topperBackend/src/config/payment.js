@@ -1,4 +1,6 @@
 const Razorpay = require('razorpay');
+const dotenv = require('dotenv');
+dotenv.config();
 
 // Replace with your actual credentials or process.env variables
 const instance = new Razorpay({

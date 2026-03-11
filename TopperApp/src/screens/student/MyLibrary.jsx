@@ -25,6 +25,7 @@ import PageHeader from '../../components/PageHeader';
 import { Theme } from '../../theme/Theme';
 import { useAlert } from '../../context/AlertContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import SortModal from '../../components/SortModal';
 
 const { width } = Dimensions.get('window');
 
@@ -32,6 +33,8 @@ const MyLibrary = ({ navigation, route }) => {
     const { showAlert } = useAlert();
     const { searchQuery, localSearch, setLocalSearch } = useDebounceSearch('', 500);
     const [activeTab, setActiveTab] = useState(route.params?.initialTab || 'Purchases'); // 'Purchases', 'Favorites', or 'Downloaded'
+    const [sortBy, setSortBy] = useState('newest');
+    const [isSortModalVisible, setIsSortModalVisible] = useState(false);
     const TABS = ['Purchases', 'Favorites', 'Downloaded'];
     const scrollRef = useRef(null);
 
@@ -73,6 +76,7 @@ const MyLibrary = ({ navigation, route }) => {
         refetch,
     } = useGetPurchasedNotesQuery({
         search: searchQuery,
+        sortBy,
         page,
         limit: 10
     });
@@ -87,6 +91,7 @@ const MyLibrary = ({ navigation, route }) => {
         refetch: refetchFavorites
     } = useGetFavoriteNotesQuery({
         search: searchQuery,
+        sortBy,
         page: favoritesPage,
         limit: 10
     }, {
@@ -97,11 +102,11 @@ const MyLibrary = ({ navigation, route }) => {
     const hasMore = (purchasedData?.pagination?.page || 0) < (purchasedData?.pagination?.totalPages || 0);
     const hasMoreFavorites = (favoritesData?.pagination?.page || 0) < (favoritesData?.pagination?.totalPages || 0);
 
-    // Reset pages when search changes
+    // Reset pages when search or sort changes
     useEffect(() => {
         setPage(1);
         setFavoritesPage(1);
-    }, [searchQuery]);
+    }, [searchQuery, sortBy]);
 
     // Reset pages when tab changes (so stale pages don't carry over)
     useEffect(() => {
@@ -110,6 +115,8 @@ const MyLibrary = ({ navigation, route }) => {
     }, [activeTab]);
 
     const [downloadedNotes, setDownloadedNotes] = useState([]);
+
+    console.log("downloadNotes", downloadedNotes)
 
     const fetchDownloads = useCallback(async () => {
         const downloads = await getDownloadedNotes();
@@ -236,6 +243,8 @@ const MyLibrary = ({ navigation, route }) => {
                     value={localSearch}
                     onChangeText={setLocalSearch}
                     placeholder="Search in your collection..."
+                    onFilterPress={() => setIsSortModalVisible(true)}
+                    isFilterActive={sortBy !== 'newest'}
                     containerStyle={styles.searchBar}
                 />
 
@@ -397,6 +406,20 @@ const MyLibrary = ({ navigation, route }) => {
                     );
                 })}
             </ScrollView>
+
+            <SortModal
+                visible={isSortModalVisible}
+                onClose={() => setIsSortModalVisible(false)}
+                selectedSort={sortBy}
+                onSelectSort={setSortBy}
+                sortOptions={[
+                    { label: 'Recently Purchased', value: 'newest', icon: 'clock-outline' },
+                    { label: 'Oldest Purchased', value: 'oldest', icon: 'history' },
+                    { label: 'Subject: A to Z', value: 'a-z', icon: 'sort-alphabetical-ascending' },
+                    { label: 'Subject: Z to To A', value: 'z-a', icon: 'sort-alphabetical-descending' },
+                ]}
+                timeOptions={[]}
+            />
         </View >
     );
 };

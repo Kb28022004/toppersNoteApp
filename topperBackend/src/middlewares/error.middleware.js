@@ -32,9 +32,9 @@ const errorMiddleware = (err, req, res, next) => {
         return res.status(401).json({ success: false, message: 'Invalid or expired token' });
     }
 
-    // Handle Mongoose CastError (invalid ObjectId)
-    if (err.name === 'CastError') {
-        return res.status(400).json({ success: false, message: 'Invalid resource ID' });
+    // Handle Mongoose CastError or BSONError (invalid ObjectId, e.g. "undefined")
+    if (err.name === 'CastError' || err.name === 'BSONError' || err.message.includes('BSONError')) {
+        return res.status(400).json({ success: false, message: 'Invalid resource ID provided' });
     }
 
     // Handle Mongoose duplicate key

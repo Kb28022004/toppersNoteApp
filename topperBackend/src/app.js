@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const compression = require('compression');
+const morgan = require('morgan');
 const path = require('path');
 const fs = require('fs');
 const routes = require('./routes');
@@ -45,16 +47,31 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// ─── Static Files ─────────────────────────────────────────────────────────────
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-// ─── Request Logger (minimal, no sensitive data) ─────────────────────────────
-app.use((req, _res, next) => {
-    if (!isProduction) {
-        console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+// ─── Gzip Compression (Optimizes payload size) ────────────────────────────────
+app.use(compression({
+    level: 6, // balanced between compression ratio and CPU usage
+    threshold: 100 * 1024, // only compress responses larger than 100kb
+    filter: (req, res) => {
+        if (req.headers['x-no-compression']) return false;
+        return compression.filter(req, res);
     }
-    next();
-});
+}));
+
+// ─── Request Logger ──────────────────────────────────────────────────────────
+if (isProduction) {
+    app.use(morgan('combined', {
+        skip: (req, res) => res.statusCode < 400, // in prod, only log errors to save disk/IO
+        stream: fs.createWriteStream(path.join(__dirname, '../access.log'), { flags: 'a' })
+    }));
+} else {
+    app.use(morgan('dev'));
+}
+
+// ─── Static Files ─────────────────────────────────────────────────────────────
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
+    maxAge: '1d', // Cache static uploads for 1 day
+    etag: true,
+}));
 
 // ─── Rate Limiting ────────────────────────────────────────────────────────────
 app.use('/api/v1', apiLimiter);

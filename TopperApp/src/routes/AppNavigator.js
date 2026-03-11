@@ -39,6 +39,7 @@ import AllToppers from '../screens/student/AllToppers';
 import Notifications from '../screens/student/Notifications';
 import ChatList from '../screens/shared/ChatList';
 import ChatDetails from '../screens/shared/ChatDetails';
+import ReferAndEarn from '../screens/shared/ReferAndEarn';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useState, useEffect } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -262,6 +263,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Notifications" component={Notifications} />
         <Stack.Screen name="ChatList" component={ChatList} />
         <Stack.Screen name="ChatDetails" component={ChatDetails} />
+        <Stack.Screen name="ReferAndEarn" component={ReferAndEarn} />
 
         <Stack.Screen name="AdminProfileSetup">
           {(props) => (

@@ -100,11 +100,9 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     orderCard: {
-        backgroundColor: 'rgba(30, 41, 59, 0.5)',
+        backgroundColor: Theme.colors.modalItem,
         borderRadius: 20,
         padding: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.05)',
         marginTop: 10,
     },
     itemRow: {
@@ -138,7 +136,7 @@ const styles = StyleSheet.create({
     },
     billingSection: {
         marginTop: 24,
-        backgroundColor: 'rgba(30, 41, 59, 0.3)',
+        backgroundColor: Theme.colors.modalItem,
         borderRadius: 20,
         padding: 20,
     },

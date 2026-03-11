@@ -2,7 +2,7 @@ const authService = require('./auth.service');
 
 exports.sendOtp = async (req, res, next) => {
   try {
-    const { phone, role } = req.body;
+    const { phone, role, referralCode } = req.body;
 
     if (!phone || !role) {
       return res.status(400).json({
@@ -10,7 +10,7 @@ exports.sendOtp = async (req, res, next) => {
       });
     }
 
-    const result = await authService.sendOtp(phone, role);
+    const result = await authService.sendOtp(phone, role, referralCode);
 
     res.status(200).json({
       success: true,

@@ -3,7 +3,6 @@ import {
     View,
     StyleSheet,
     ScrollView,
-    Image,
     TouchableOpacity,
     FlatList,
     Dimensions,
@@ -11,6 +10,7 @@ import {
     ActivityIndicator,
     StatusBar
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
@@ -176,6 +176,9 @@ const StudentHome = ({ navigation }) => {
                 <Image
                     source={item.thumbnail ? { uri: item.thumbnail } : require('../../../assets/topper.avif')}
                     style={styles.noteImage}
+                    contentFit="cover"
+                    transition={200}
+                    cachePolicy="memory-disk"
                 />
                 <LinearGradient
                     colors={['transparent', 'rgba(15, 23, 42, 0.8)']}
@@ -237,6 +240,9 @@ const StudentHome = ({ navigation }) => {
                 <Image
                     source={item.profilePhoto ? { uri: item.profilePhoto } : require('../../../assets/topper.avif')}
                     style={styles.topperAvatar}
+                    contentFit="cover"
+                    transition={200}
+                    cachePolicy="memory-disk"
                 />
                 <View style={styles.topperStatusDot} />
             </View>
@@ -394,6 +400,10 @@ const StudentHome = ({ navigation }) => {
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.notesList}
+                    initialNumToRender={5}
+                    windowSize={5}
+                    maxToRenderPerBatch={5}
+                    removeClippedSubviews={true}
                     ListEmptyComponent={
                         (notesLoading || notesFetching) ? (
                             <ActivityIndicator size="large" color="#00B1FC" style={{ width: width - 40, marginTop: 20 }} />
@@ -406,6 +416,31 @@ const StudentHome = ({ navigation }) => {
                         )
                     }
                 />
+
+                {/* Refer and Earn Banner */}
+                <TouchableOpacity
+                    style={styles.referBanner}
+                    onPress={() => navigation.navigate('ReferAndEarn')}
+                    activeOpacity={0.9}
+                >
+                    <LinearGradient
+                        colors={Theme.colors.backgroundGradient}
+                        style={styles.referGradient}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                    >
+                        <View style={styles.referContent}>
+                            <View style={styles.referIconContainer}>
+                                <MaterialCommunityIcons name="gift" size={30} color="white" />
+                            </View>
+                            <View style={styles.referTextContainer}>
+                                <AppText style={styles.referTitle} weight="bold">Refer & Earn CASH</AppText>
+                                <AppText style={styles.referSubtitle}>Invite friends and get 10% commission on every purchase!</AppText>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color="white" />
+                        </View>
+                    </LinearGradient>
+                </TouchableOpacity>
 
                 {/* Popular Toppers */}
                 <View style={[styles.sectionHeader, { marginTop: 30 }]}>
@@ -425,6 +460,9 @@ const StudentHome = ({ navigation }) => {
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.toppersList}
+                    initialNumToRender={6}
+                    windowSize={5}
+                    removeClippedSubviews={true}
                     ListEmptyComponent={
                         (toppersLoading || toppersFetching) ? (
                             <ActivityIndicator size="small" color="#00B1FC" style={{ width: width - 40 }} />
@@ -742,6 +780,46 @@ const styles = StyleSheet.create({
     tipDesc: {
         fontSize: 12,
         color: '#94A3B8',
+        lineHeight: 18,
+    },
+    referBanner: {
+        marginHorizontal: 20,
+        marginTop: 25,
+        borderRadius: 24,
+        overflow: 'hidden',
+        elevation: 8,
+        shadowColor: Theme.colors.card,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+    },
+    referGradient: {
+        padding: 20,
+    },
+    referContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 15,
+    },
+    referIconContainer: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    referTextContainer: {
+        flex: 1,
+    },
+    referTitle: {
+        fontSize: 18,
+        color: 'white',
+        marginBottom: 4,
+    },
+    referSubtitle: {
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.8)',
         lineHeight: 18,
     }
 });

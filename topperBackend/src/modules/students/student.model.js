@@ -61,7 +61,8 @@ const studentProfileSchema = new mongoose.Schema(
     stats: {
       totalTimeSpent: { type: Number, default: 0 }, // in seconds
       lastActiveAt: { type: Date, default: Date.now },
-      loginCount: { type: Number, default: 0 }
+      loginCount: { type: Number, default: 0 },
+      streakCount: { type: Number, default: 0 }
     },
     savedNotes: [{
       type: mongoose.Schema.Types.ObjectId,

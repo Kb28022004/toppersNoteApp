@@ -3,7 +3,6 @@ import {
     View,
     StyleSheet,
     Modal,
-    TouchableOpacity,
     Dimensions,
     Animated,
     PanResponder,
@@ -18,28 +17,29 @@ const BottomSheet = ({
     children,
     maxHeight = height * 0.8,
     paddingHorizontal = 24,
+    scrollOffset = { current: 0 }, // Allow children to pass their scroll offset
 }) => {
     const panY = useRef(new Animated.Value(height)).current;
 
-    const resetPositionAnim = Animated.spring(panY, {
-        toValue: 0,
-        useNativeDriver: true,
-        bounciness: 0,
-    });
-
-    const closeAnim = Animated.timing(panY, {
-        toValue: height,
-        duration: 250,
-        useNativeDriver: true,
+    const backdropOpacity = panY.interpolate({
+        inputRange: [0, height],
+        outputRange: [1, 0],
+        extrapolate: 'clamp',
     });
 
     const panResponder = useRef(
         PanResponder.create({
-            onStartShouldSetPanResponder: () => false,
-            onMoveShouldSetPanResponderCapture: (evt, gestureState) => {
-                // Header (handle area) should always trigger close even if children have scroll
-                const isHeaderHandle = evt.nativeEvent.locationY < 80;
-                return isHeaderHandle && gestureState.dy > 5 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
+            onStartShouldSetPanResponder: (evt) => {
+                // If touch starts in the header area (top ~80px), respond immediately
+                return evt.nativeEvent.locationY < 80;
+            },
+            onMoveShouldSetPanResponder: (_, gestureState) => {
+                const { dy, dx } = gestureState;
+                // Capture if pulling down at the top of a scroll list (if provided)
+                return dy > 5 && Math.abs(dy) > Math.abs(dx) && scrollOffset.current <= 5;
+            },
+            onPanResponderGrant: () => {
+                panY.stopAnimation();
             },
             onPanResponderMove: (_, gestureState) => {
                 if (gestureState.dy > 0) {
@@ -47,44 +47,65 @@ const BottomSheet = ({
                 }
             },
             onPanResponderRelease: (_, gestureState) => {
-                if (gestureState.dy > 80 || gestureState.vy > 1.0) {
-                    closeAnim.start(() => {
-                        onClose();
+                if (gestureState.dy > 60 || gestureState.vy > 0.5) {
+                    Animated.timing(panY, {
+                        toValue: height,
+                        duration: 300,
+                        useNativeDriver: true,
+                    }).start(() => {
+                        onClose && onClose();
                     });
                 } else {
-                    resetPositionAnim.start();
+                    Animated.spring(panY, {
+                        toValue: 0,
+                        useNativeDriver: true,
+                        bounciness: 8,
+                    }).start();
                 }
+            },
+            onPanResponderTerminate: () => {
+                Animated.spring(panY, {
+                    toValue: 0,
+                    useNativeDriver: true,
+                }).start();
             },
         })
     ).current;
 
     useEffect(() => {
         if (visible) {
-            resetPositionAnim.start();
-        } else {
             panY.setValue(height);
+            Animated.spring(panY, {
+                toValue: 0,
+                friction: 8,
+                tension: 40,
+                useNativeDriver: true,
+            }).start();
         }
     }, [visible]);
-
-    const handleClose = () => {
-        closeAnim.start(() => {
-            onClose();
-        });
-    };
 
     return (
         <Modal
             transparent={true}
             visible={visible}
             animationType="fade"
-            onRequestClose={handleClose}
+            onRequestClose={onClose}
         >
             <View style={styles.overlay}>
-                <TouchableOpacity
-                    style={StyleSheet.absoluteFill}
-                    activeOpacity={1}
-                    onPress={handleClose}
+                {/* Dynamic Backdrop */}
+                <Animated.View
+                    style={[
+                        StyleSheet.absoluteFill,
+                        {
+                            backgroundColor: 'rgba(0,0,0,0.6)',
+                            opacity: backdropOpacity,
+                        },
+                    ]}
                 />
+
+                {/* Interaction blocker */}
+                <View style={StyleSheet.absoluteFill} />
+
                 <Animated.View
                     {...panResponder.panHandlers}
                     style={[
@@ -110,14 +131,13 @@ const BottomSheet = ({
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
         justifyContent: 'flex-end',
     },
     modalContent: {
         width: '100%',
-        backgroundColor: Theme.colors.background, // Match the app's dark theme
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
+        backgroundColor: Theme.colors.modalBackground,
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
         paddingBottom: 40,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -5 },
@@ -127,16 +147,15 @@ const styles = StyleSheet.create({
     },
     dragArea: {
         width: '100%',
-        height: 32,
+        paddingTop: 15,
+        paddingBottom: 20,
         alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'transparent',
     },
     handle: {
-        width: 40,
-        height: 4,
-        backgroundColor: '#334155',
-        borderRadius: 2,
+        width: 50,
+        height: 6,
+        backgroundColor: '#94A3B8',
+        borderRadius: 3,
     },
     contentContainer: {
         width: '100%',
