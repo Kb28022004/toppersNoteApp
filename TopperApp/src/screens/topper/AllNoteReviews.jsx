@@ -17,6 +17,7 @@ import { useGetNoteReviewsQuery } from '../../features/api/noteApi';
 import useRefresh from '../../hooks/useRefresh';
 import PageHeader from '../../components/PageHeader';
 import { Theme } from '../../theme/Theme';
+import { ReviewSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const AllNoteReviews = ({ route, navigation }) => {
     const { noteId } = route.params;
@@ -25,11 +26,6 @@ const AllNoteReviews = ({ route, navigation }) => {
 
     const reviews = data?.reviews || [];
 
-    if (isLoading) return (
-        <View style={styles.center}>
-            <ActivityIndicator size="large" color="#FFD700" />
-        </View>
-    );
 
     const renderReviewItem = ({ item }) => (
         <TouchableOpacity
@@ -80,7 +76,7 @@ const AllNoteReviews = ({ route, navigation }) => {
 
             {/* List */}
             <FlatList
-                data={reviews}
+                data={isLoading ? [] : reviews}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}
                 refreshControl={
@@ -91,10 +87,18 @@ const AllNoteReviews = ({ route, navigation }) => {
                     />
                 }
                 ListEmptyComponent={
-                    <NoDataFound
-                        message="No reviews yet for this note."
-                        icon="chatbox-outline"
-                    />
+                    isLoading ? (
+                        <View>
+                            {[...Array(6)].map((_, i) => (
+                                <ReviewSkeleton key={i} showNoteInfo={false} />
+                            ))}
+                        </View>
+                    ) : (
+                        <NoDataFound
+                            message="No reviews yet for this note."
+                            icon="chatbox-outline"
+                        />
+                    )
                 }
                 renderItem={renderReviewItem}
             />

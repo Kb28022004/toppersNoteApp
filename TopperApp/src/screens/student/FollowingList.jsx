@@ -20,6 +20,7 @@ import CategoryFilters from '../../components/CategoryFilters';
 import PageHeader from '../../components/PageHeader';
 import NoDataFound from '../../components/NoDataFound';
 import { Theme } from '../../theme/Theme';
+import { FollowingSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const { width } = Dimensions.get('window');
 
@@ -74,6 +75,8 @@ const FollowingList = ({ navigation }) => {
         </TouchableOpacity>
     );
 
+    const dynamicCount = followedToppers?.length > 0 ? followedToppers.length : 8;
+
     return (
         <View style={styles.container}>
             <PageHeader
@@ -91,46 +94,43 @@ const FollowingList = ({ navigation }) => {
                 />
             </View>
 
-            {/* <View style={styles.filterWrapper}>
-                <CategoryFilters
-                    categories={filters}
-                    activeCategory={activeFilter}
-                    setActiveCategory={setActiveFilter}
-                />
-            </View> */}
-
-            {isLoading ? (
-                <View style={styles.center}>
-                    <ActivityIndicator size="large" color="#00B1FC" />
-                </View>
-            ) : (
-                <FlatList
-                    data={followedToppers}
-                    renderItem={renderTopperCard}
-                    keyExtractor={(item) => item.topperId}
-                    contentContainerStyle={styles.listContent}
-                    showsVerticalScrollIndicator={false}
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
-                            tintColor="#00B1FC"
-                            colors={["#00B1FC"]}
-                            backgroundColor={Theme.colors.background}
+            <FlatList
+                data={(isLoading || (isFetching && !followedToppers)) ? [] : followedToppers}
+                renderItem={renderTopperCard}
+                keyExtractor={(item) => item.topperId}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        tintColor="#00B1FC"
+                        colors={["#00B1FC"]}
+                        backgroundColor={Theme.colors.background}
+                    />
+                }
+                ListEmptyComponent={
+                    (isLoading || (isFetching && !followedToppers)) ? (
+                        <View>
+                            {[...Array(dynamicCount)].map((_, i) => (
+                                <FollowingSkeleton key={i} />
+                            ))}
+                        </View>
+                    ) : (
+                        <NoDataFound
+                            message={searchQuery || activeFilter !== 'All'
+                                ? "No toppers found matching your criteria."
+                                : "You haven't followed any toppers yet."}
+                            containerStyle={{ marginTop: 60 }}
                         />
-                    }
-                    ListEmptyComponent={
-                        !isFetching && (
-                            <NoDataFound
-                                message={searchQuery || activeFilter !== 'All'
-                                    ? "No toppers found matching your criteria."
-                                    : "You haven't followed any toppers yet."}
-                                containerStyle={{ marginTop: 60 }}
-                            />
-                        )
-                    }
-                />
-            )}
+                    )
+                }
+                ListFooterComponent={
+                    isFetching && followedToppers?.length > 0 ? (
+                        <ActivityIndicator size="small" color="#00B1FC" style={{ marginVertical: 20 }} />
+                    ) : null
+                }
+            />
         </View>
     );
 };

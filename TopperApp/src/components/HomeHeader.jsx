@@ -5,6 +5,8 @@ import { Ionicons, Feather } from '@expo/vector-icons';
 import { Theme } from '../theme/Theme';
 import { getTodayDate, getGreeting } from '../helpers/dateHelpers';
 
+import { HeaderSkeleton } from './skeletons/HomeSkeletons';
+
 const HomeHeader = ({
     userProfile,
     userType = 'student', // 'student' or 'topper'
@@ -12,8 +14,11 @@ const HomeHeader = ({
     unreadMessagesCount = 0,
     onProfilePress,
     onChatPress,
-    onNotificationPress
+    onNotificationPress,
+    isLoading = false
 }) => {
+    if (isLoading) return <HeaderSkeleton />;
+
     const today = useMemo(() => getTodayDate(), []);
     const greeting = useMemo(() => getGreeting(), []);
 

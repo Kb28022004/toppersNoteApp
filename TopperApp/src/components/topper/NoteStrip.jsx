@@ -10,6 +10,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import AppText from '../AppText';
 import { Theme } from '../../theme/Theme';
+import { NoteStripSkeleton } from '../skeletons/HomeSkeletons';
+
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
     PUBLISHED: { label: 'Approved', bg: 'rgba(16,185,129,0.18)', color: '#10B981' },
@@ -107,7 +109,11 @@ const NoteStrip = ({
         </View>
 
         {isLoading ? (
-            <ActivityIndicator color="#00B1FC" style={styles.loader} />
+            <View style={{ flexDirection: 'row', paddingHorizontal: 20, gap: 12 }}>
+                {[...Array(4)].map((_, i) => (
+                    <NoteStripSkeleton key={i} />
+                ))}
+            </View>
         ) : notes.length === 0 ? (
             <View style={styles.emptyBox}>
                 <Ionicons name="document-text-outline" size={28} color="#334155" />

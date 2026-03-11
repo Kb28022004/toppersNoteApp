@@ -25,6 +25,7 @@ import { useInitializeChatMutation } from '../../features/api/chatApi';
 import useRefresh from '../../hooks/useRefresh';
 import { useAlert } from '../../context/AlertContext';
 import { Theme } from '../../theme/Theme';
+import { ProfileHeaderSkeleton, LibraryNoteSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const { width } = Dimensions.get('window');
 
@@ -35,7 +36,6 @@ const PublicTopperProfile = ({ route, navigation }) => {
     const { refreshing, onRefresh } = useRefresh(refetch);
     const [followTopper, { isLoading: isFollowing }] = useFollowTopperMutation();
     const [initializeChat, { isLoading: isChatLoading }] = useInitializeChatMutation();
-
 
     const [activeTab, setActiveTab] = useState('All Notes');
     const [isBioExpanded, setIsBioExpanded] = useState(false);
@@ -71,8 +71,7 @@ const PublicTopperProfile = ({ route, navigation }) => {
         }
     }, [profile]);
 
-    if (isLoading) return <ScreenLoader />;
-    if (isError || !profile) return (
+    if (isError) return (
         <View style={styles.center}>
             <AppText style={{ color: '#EF4444' }}>Profile not found {topperId}</AppText>
         </View>
@@ -235,145 +234,151 @@ const PublicTopperProfile = ({ route, navigation }) => {
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
             >
 
-                {/* Profile Header */}
-                <View style={styles.profileSection}>
-                    <View style={styles.avatarContainer}>
-                        <Image source={profilePhoto ? { uri: profilePhoto } : require('../../../assets/topper.avif')} style={styles.avatar} />
-                        {verified && (
-                            <View style={styles.verifyBadge}>
-                                <MaterialCommunityIcons name="check-decagram" size={20} color="#00B1FC" />
-                                {/* Using icon directly, white bg added via container style if needed, but icon usually enough */}
-                                <View style={{ position: 'absolute', backgroundColor: 'white', width: 10, height: 10, zIndex: -1, borderRadius: 5, top: 5, left: 5 }} />
-                            </View>
-                        )}
-                    </View>
-
-                    <AppText style={styles.name} weight="bold">{fullName}</AppText>
-
-                    {/* Credentials Pill */}
-                    <View style={styles.credentialsPill}>
-                        <Ionicons name="school" size={14} color="#3B82F6" />
-                        <AppText style={styles.credentialsText}>
-                            {`Class ${expertiseClass || 'N/A'}`}
-                            {stream ? ` • ${stream}` : ''}
-                            {board ? ` • ${board}` : ''}
-                            {yearOfPassing ? ` (${yearOfPassing})` : ''}
-                        </AppText>
-                    </View>
-
-                    {/* Highlights (if any) */}
-                    {highlights && highlights.length > 0 && (
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginBottom: 25 }}>
-                            {highlights.map((h, i) => (
-                                <View key={i} style={styles.highlightPill}>
-                                    <Ionicons name="star" size={12} color="#F59E0B" />
-                                    <AppText style={styles.highlightText}>{h}</AppText>
-                                </View>
-                            ))}
-                        </View>
-                    )}
-
-                    {/* Stats Row */}
-                    <View style={styles.statsContainer}>
-                        <View style={styles.statBox}>
-                            <AppText style={styles.statValue} weight="bold">{(stats?.totalSold || 0) > 1000 ? `${(stats.totalSold / 1000).toFixed(1)}k` : (stats?.totalSold || 0)}</AppText>
-                            <AppText style={styles.statLabel}>SOLD</AppText>
-                        </View>
-                        <View style={styles.statBox}>
-                            <View style={styles.row}>
-                                <AppText style={styles.statValue} weight="bold">{stats?.rating?.average !== undefined ? stats.rating.average : '0.0'}</AppText>
-                                <Ionicons name="star" size={12} color="#FFD700" style={{ marginLeft: 3 }} />
-                            </View>
-                            <AppText style={styles.statLabel}>RATING</AppText>
-                        </View>
-                        <View style={styles.statBox}>
-                            <AppText style={styles.statValue} weight="bold">{(stats?.followers || 0) > 1000 ? `${(stats.followers / 1000).toFixed(1)}k` : (stats?.followers || 0)}</AppText>
-                            <AppText style={styles.statLabel}>FOLLOWERS</AppText>
-                        </View>
-                    </View>
-
-                    {/* Action Buttons */}
-                    {!isPreview && (
-                        <View style={styles.actionButtons}>
-                            <TouchableOpacity style={[styles.followBtn, following && { backgroundColor: '#334155' }]} onPress={handleFollow} disabled={isFollowing}>
-                                <Ionicons name={following ? "checkmark" : "person-add"} size={18} color="white" />
-                                <AppText style={styles.followText}>{following ? 'Following' : 'Follow'}</AppText>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity style={styles.messageBtn} onPress={handleMessage} disabled={isChatLoading}>
-                                {isChatLoading ? (
-                                    <ActivityIndicator size="small" color="#E2E8F0" />
-                                ) : (
-                                    <>
-                                        <MaterialCommunityIcons name="email-outline" size={20} color="#E2E8F0" />
-                                        <AppText style={styles.messageText}>Message</AppText>
-                                    </>
-                                )}
-                            </TouchableOpacity>
-                        </View>
-                    )}
-
-                    {/* Subject Marks & Marksheet ALWAYS VISIBLE */}
-                    {((subjectMarks && subjectMarks.length > 0) || marksheetUrl) && (
-                        <View style={{ width: '100%', marginBottom: 25, backgroundColor: 'rgba(30, 41, 59, 0.4)', borderRadius: 12, padding: 15, borderWidth: 1, borderColor: Theme.colors.border }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 15, gap: 8 }}>
-                                <Ionicons name="ribbon-outline" size={18} color="#00B1FC" />
-                                <AppText weight="bold" style={{ fontSize: 15, color: '#E2E8F0' }}>Academic Verification</AppText>
-                            </View>
-
-                            {subjectMarks && subjectMarks.map((mark, idx) => (
-                                <View key={idx} style={styles.marksRow}>
-                                    <AppText style={styles.marksSubject}>{mark.subject}</AppText>
-                                    <View style={styles.markBadge}>
-                                        <AppText style={styles.markValue}>{mark.marks} / 100</AppText>
+                {isLoading ? (
+                    <ProfileHeaderSkeleton />
+                ) : (
+                    <>
+                        {/* Profile Header */}
+                        <View style={styles.profileSection}>
+                            <View style={styles.avatarContainer}>
+                                <Image source={profilePhoto ? { uri: profilePhoto } : require('../../../assets/topper.avif')} style={styles.avatar} />
+                                {verified && (
+                                    <View style={styles.verifyBadge}>
+                                        <MaterialCommunityIcons name="check-decagram" size={20} color="#00B1FC" />
+                                        {/* Using icon directly, white bg added via container style if needed, but icon usually enough */}
+                                        <View style={{ position: 'absolute', backgroundColor: 'white', width: 10, height: 10, zIndex: -1, borderRadius: 5, top: 5, left: 5 }} />
                                     </View>
-                                </View>
-                            ))}
+                                )}
+                            </View>
 
-                            {marksheetUrl && (
-                                <TouchableOpacity
-                                    style={styles.marksheetBtn}
-                                    onPress={() => Linking.openURL(marksheetUrl)}
-                                >
-                                    <Ionicons name="document-text" size={16} color="white" />
-                                    <AppText style={styles.marksheetText} weight="bold">View Verified Marksheet</AppText>
-                                </TouchableOpacity>
-                            )}
-                        </View>
-                    )}
+                            <AppText style={styles.name} weight="bold">{fullName}</AppText>
 
-                    {/* Accordion / Info */}
-                    <TouchableOpacity style={styles.accordion} onPress={() => setIsBioExpanded(!isBioExpanded)}>
-                        <View style={styles.row}>
-                            <Ionicons name="information-circle" size={18} color="#94A3B8" />
-                            <AppText style={styles.accordionTitle}>About Me & Background</AppText>
-                        </View>
-                        <Ionicons name={isBioExpanded ? "chevron-up" : "chevron-down"} size={18} color="#94A3B8" />
-                    </TouchableOpacity>
-                    {isBioExpanded && (
-                        <View style={styles.bioContent}>
-                            <AppText weight="bold" style={[styles.bioText, { marginBottom: 4, color: 'white' }]}>Bio:</AppText>
-                            <AppText style={styles.bioText}>{about || "No bio available."}</AppText>
+                            {/* Credentials Pill */}
+                            <View style={styles.credentialsPill}>
+                                <Ionicons name="school" size={14} color="#3B82F6" />
+                                <AppText style={styles.credentialsText}>
+                                    {`Class ${expertiseClass || 'N/A'}`}
+                                    {stream ? ` • ${stream}` : ''}
+                                    {board ? ` • ${board}` : ''}
+                                    {yearOfPassing ? ` (${yearOfPassing})` : ''}
+                                </AppText>
+                            </View>
 
-                            {coreSubjects && coreSubjects.length > 0 && (
-                                <>
-                                    <AppText weight="bold" style={[styles.bioText, { marginTop: 15, marginBottom: 4, color: 'white' }]}>Core Subjects:</AppText>
-                                    <AppText style={styles.bioText}>{coreSubjects.join(', ')}</AppText>
-                                </>
-                            )}
-
-                            {achievements && achievements.length > 0 && (
-                                <>
-                                    <AppText weight="bold" style={[styles.bioText, { marginTop: 15, marginBottom: 4, color: 'white' }]}>Achievements:</AppText>
-                                    {achievements.map((ach, idx) => (
-                                        <AppText key={idx} style={styles.bioText}>• {ach}</AppText>
+                            {/* Highlights (if any) */}
+                            {highlights && highlights.length > 0 && (
+                                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginBottom: 25 }}>
+                                    {highlights.map((h, i) => (
+                                        <View key={i} style={styles.highlightPill}>
+                                            <Ionicons name="star" size={12} color="#F59E0B" />
+                                            <AppText style={styles.highlightText}>{h}</AppText>
+                                        </View>
                                     ))}
-                                </>
+                                </View>
                             )}
 
+                            {/* Stats Row */}
+                            <View style={styles.statsContainer}>
+                                <View style={styles.statBox}>
+                                    <AppText style={styles.statValue} weight="bold">{(stats?.totalSold || 0) > 1000 ? `${(stats.totalSold / 1000).toFixed(1)}k` : (stats?.totalSold || 0)}</AppText>
+                                    <AppText style={styles.statLabel}>SOLD</AppText>
+                                </View>
+                                <View style={styles.statBox}>
+                                    <View style={styles.row}>
+                                        <AppText style={styles.statValue} weight="bold">{stats?.rating?.average !== undefined ? stats.rating.average : '0.0'}</AppText>
+                                        <Ionicons name="star" size={12} color="#FFD700" style={{ marginLeft: 3 }} />
+                                    </View>
+                                    <AppText style={styles.statLabel}>RATING</AppText>
+                                </View>
+                                <View style={styles.statBox}>
+                                    <AppText style={styles.statValue} weight="bold">{(stats?.followers || 0) > 1000 ? `${(stats.followers / 1000).toFixed(1)}k` : (stats?.followers || 0)}</AppText>
+                                    <AppText style={styles.statLabel}>FOLLOWERS</AppText>
+                                </View>
+                            </View>
+
+                            {/* Action Buttons */}
+                            {!isPreview && (
+                                <View style={styles.actionButtons}>
+                                    <TouchableOpacity style={[styles.followBtn, following && { backgroundColor: '#334155' }]} onPress={handleFollow} disabled={isFollowing}>
+                                        <Ionicons name={following ? "checkmark" : "person-add"} size={18} color="white" />
+                                        <AppText style={styles.followText}>{following ? 'Following' : 'Follow'}</AppText>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity style={styles.messageBtn} onPress={handleMessage} disabled={isChatLoading}>
+                                        {isChatLoading ? (
+                                            <ActivityIndicator size="small" color="#E2E8F0" />
+                                        ) : (
+                                            <>
+                                                <MaterialCommunityIcons name="email-outline" size={20} color="#E2E8F0" />
+                                                <AppText style={styles.messageText}>Message</AppText>
+                                            </>
+                                        )}
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+
+                            {/* Subject Marks & Marksheet ALWAYS VISIBLE */}
+                            {((subjectMarks && subjectMarks.length > 0) || marksheetUrl) && (
+                                <View style={{ width: '100%', marginBottom: 25, backgroundColor: 'rgba(30, 41, 59, 0.4)', borderRadius: 12, padding: 15, borderWidth: 1, borderColor: Theme.colors.border }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 15, gap: 8 }}>
+                                        <Ionicons name="ribbon-outline" size={18} color="#00B1FC" />
+                                        <AppText weight="bold" style={{ fontSize: 15, color: '#E2E8F0' }}>Academic Verification</AppText>
+                                    </View>
+
+                                    {subjectMarks && subjectMarks.map((mark, idx) => (
+                                        <View key={idx} style={styles.marksRow}>
+                                            <AppText style={styles.marksSubject}>{mark.subject}</AppText>
+                                            <View style={styles.markBadge}>
+                                                <AppText style={styles.markValue}>{mark.marks} / 100</AppText>
+                                            </View>
+                                        </View>
+                                    ))}
+
+                                    {marksheetUrl && (
+                                        <TouchableOpacity
+                                            style={styles.marksheetBtn}
+                                            onPress={() => Linking.openURL(marksheetUrl)}
+                                        >
+                                            <Ionicons name="document-text" size={16} color="white" />
+                                            <AppText style={styles.marksheetText} weight="bold">View Verified Marksheet</AppText>
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                            )}
+
+                            {/* Accordion / Info */}
+                            <TouchableOpacity style={styles.accordion} onPress={() => setIsBioExpanded(!isBioExpanded)}>
+                                <View style={styles.row}>
+                                    <Ionicons name="information-circle" size={18} color="#94A3B8" />
+                                    <AppText style={styles.accordionTitle}>About Me & Background</AppText>
+                                </View>
+                                <Ionicons name={isBioExpanded ? "chevron-up" : "chevron-down"} size={18} color="#94A3B8" />
+                            </TouchableOpacity>
+                            {isBioExpanded && (
+                                <View style={styles.bioContent}>
+                                    <AppText weight="bold" style={[styles.bioText, { marginBottom: 4, color: 'white' }]}>Bio:</AppText>
+                                    <AppText style={styles.bioText}>{about || "No bio available."}</AppText>
+
+                                    {coreSubjects && coreSubjects.length > 0 && (
+                                        <>
+                                            <AppText weight="bold" style={[styles.bioText, { marginTop: 15, marginBottom: 4, color: 'white' }]}>Core Subjects:</AppText>
+                                            <AppText style={styles.bioText}>{coreSubjects.join(', ')}</AppText>
+                                        </>
+                                    )}
+
+                                    {achievements && achievements.length > 0 && (
+                                        <>
+                                            <AppText weight="bold" style={[styles.bioText, { marginTop: 15, marginBottom: 4, color: 'white' }]}>Achievements:</AppText>
+                                            {achievements.map((ach, idx) => (
+                                                <AppText key={idx} style={styles.bioText}>• {ach}</AppText>
+                                            ))}
+                                        </>
+                                    )}
+
+                                </View>
+                            )}
                         </View>
-                    )}
-                </View>
+                    </>
+                )}
 
                 {/* Tabs */}
                 <View style={styles.tabsContainer}>
@@ -396,52 +401,63 @@ const PublicTopperProfile = ({ route, navigation }) => {
                     showsHorizontalScrollIndicator={false}
                     onMomentumScrollEnd={handleScrollEnd}
                 >
-                    {tabs.map((tab, idx) => (
-                        <View key={tab} style={{ width }}>
-                            <View style={styles.uploadsSection}>
-                                <View style={styles.rowBetween}>
-                                    <AppText style={styles.sectionTitle} weight="bold">{idx === 1 ? 'Bundles' : (idx === 2 ? 'Free Uploads' : 'Latest Uploads')}</AppText>
-                                    <TouchableOpacity
-                                        onPress={() => {
-                                            if (isPreview) {
-                                                navigation.navigate('MyUploads');
-                                            } else {
-                                                navigation.navigate('Home', {
-                                                    screen: 'Store',
-                                                    params: {
-                                                        topperId: topperId,
-                                                        sortBy: idx === 2 ? 'price_low' : 'newest',
-                                                    }
-                                                });
-                                            }
-                                        }}
-                                    >
-                                        <AppText style={styles.viewAllText}>View all</AppText>
-                                    </TouchableOpacity>
-                                </View>
+                    {tabs.map((tab, idx) => {
+                        const dynamicCount = stats.totalNotes > 0 ? stats.totalNotes : 4;
+                        return (
+                            <View key={tab} style={{ width }}>
+                                <View style={styles.uploadsSection}>
+                                    <View style={styles.rowBetween}>
+                                        <AppText style={styles.sectionTitle} weight="bold">{idx === 1 ? 'Bundles' : (idx === 2 ? 'Free Uploads' : 'Latest Uploads')}</AppText>
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                if (isPreview) {
+                                                    navigation.navigate('MyUploads');
+                                                } else {
+                                                    navigation.navigate('Home', {
+                                                        screen: 'Store',
+                                                        params: {
+                                                            topperId: topperId,
+                                                            sortBy: idx === 2 ? 'price_low' : 'newest',
+                                                        }
+                                                    });
+                                                }
+                                            }}
+                                        >
+                                            <AppText style={styles.viewAllText}>View all</AppText>
+                                        </TouchableOpacity>
+                                    </View>
 
-                                {idx === 0 ? (
-                                    latestUploads.length > 0 ? (
-                                        latestUploads.map(item => (
-                                            <View key={item.id} style={{ marginBottom: 15 }}>{renderNoteCard({ item })}</View>
-                                        ))
-                                    ) : (
-                                        <View style={{ marginTop: 20, alignItems: 'center' }}>
-                                            <AppText style={{ color: '#94A3B8' }}>No notes available.</AppText>
+                                    {isLoading ? (
+                                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5, marginTop: 15 }}>
+                                            {[...Array(dynamicCount)].map((_, i) => (
+                                                <LibraryNoteSkeleton key={i} />
+                                            ))}
                                         </View>
-                                    )
-                                ) : idx === 1 ? (
-                                    <View style={{ marginTop: 20, alignItems: 'center' }}>
-                                        <AppText style={{ color: '#94A3B8' }}>No bundles found.</AppText>
-                                    </View>
-                                ) : (
-                                    <View style={{ marginTop: 20, alignItems: 'center' }}>
-                                        <AppText style={{ color: '#94A3B8' }}>No free material available.</AppText>
-                                    </View>
-                                )}
+                                    ) : (
+                                        idx === 0 ? (
+                                            latestUploads.length > 0 ? (
+                                                latestUploads.map(item => (
+                                                    <View key={item.id} style={{ marginBottom: 15 }}>{renderNoteCard({ item })}</View>
+                                                ))
+                                            ) : (
+                                                <View style={{ marginTop: 20, alignItems: 'center' }}>
+                                                    <AppText style={{ color: '#94A3B8' }}>No notes available.</AppText>
+                                                </View>
+                                            )
+                                        ) : idx === 1 ? (
+                                            <View style={{ marginTop: 20, alignItems: 'center' }}>
+                                                <AppText style={{ color: '#94A3B8' }}>No bundles found.</AppText>
+                                            </View>
+                                        ) : (
+                                            <View style={{ marginTop: 20, alignItems: 'center' }}>
+                                                <AppText style={{ color: '#94A3B8' }}>No free material available.</AppText>
+                                            </View>
+                                        )
+                                    )}
+                                </View>
                             </View>
-                        </View>
-                    ))}
+                        );
+                    })}
                 </ScrollView>
 
             </ScrollView>

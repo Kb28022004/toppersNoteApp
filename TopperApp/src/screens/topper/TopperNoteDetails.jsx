@@ -22,6 +22,7 @@ import { useGetNoteDetailsQuery, useGetNoteBuyersQuery } from '../../features/ap
 import { useAlert } from '../../context/AlertContext';
 import useRefresh from '../../hooks/useRefresh';
 import { Theme } from '../../theme/Theme';
+import { NoteDetailsSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const { width } = Dimensions.get('window');
 
@@ -36,7 +37,6 @@ const TopperNoteDetails = ({ route, navigation }) => {
     const { showAlert } = useAlert();
     const [optionsModalVisible, setOptionsModalVisible] = useState(false);
 
-    if (isLoading || isBuyersLoading) return <Loader visible />;
     if (isError || !note) return (
         <View style={styles.center}>
             <AppText style={{ color: '#EF4444' }}>Failed to load note details</AppText>
@@ -151,189 +151,195 @@ const TopperNoteDetails = ({ route, navigation }) => {
                 contentContainerStyle={styles.scrollContent}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
             >
-                {/* Status Banner */}
-                <View style={[styles.statusBanner, { backgroundColor: currentStatus.bg }]}>
-                    <View style={styles.statusDotRow}>
-                        <View style={[styles.statusDot, { backgroundColor: currentStatus.color }]} />
-                        <AppText style={[styles.statusLabel, { color: currentStatus.color }]} weight="bold">
-                            {currentStatus.label}
-                        </AppText>
-                    </View>
-                    {normalizedStatus === 'REJECTED' && adminRemark && (
-                        <View style={styles.remarkBox}>
-                            <AppText style={styles.remarkTitle} weight="bold">Admin Feedback:</AppText>
-                            <AppText style={styles.remarkText}>{adminRemark}</AppText>
-                        </View>
-                    )}
-                </View>
-
-                {/* Performance Stats */}
-                <View style={styles.statsCard}>
-                    <View style={styles.statItem}>
-                        <AppText style={styles.statVal} weight="bold">{buyers?.length || salesCount}</AppText>
-                        <AppText style={styles.statLab}>Total Sales</AppText>
-                    </View>
-                    <View style={styles.statDivider} />
-                    <View style={styles.statItem}>
-                        <AppText style={[styles.statVal, { color: '#10B981' }]} weight="bold">₹{((buyers?.length || salesCount) * (price?.current || 0))}</AppText>
-                        <AppText style={styles.statLab}>Revenue</AppText>
-                    </View>
-                    <View style={styles.statDivider} />
-                    <View style={styles.statItem}>
-                        <View style={styles.ratingRowSmall}>
-                            <AppText style={styles.statVal} weight="bold">{avgRating}</AppText>
-                            <Ionicons name="star" size={14} color="#FFD700" style={{ marginLeft: 4 }} />
-                        </View>
-                        <AppText style={styles.statLab}>{reviewCount} Reviews</AppText>
-                    </View>
-                </View>
-
-                {/* Preview Image */}
-                <View style={styles.previewContainer}>
-                    <Image
-                        source={{ uri: previewImages && previewImages.length > 0 ? previewImages[0] : null }}
-                        style={styles.previewImage}
-                        resizeMode="cover"
-                    />
-                    <TouchableOpacity
-                        style={styles.previewBtn}
-                        onPress={() => navigation.navigate('NotePreview', { noteId })}
-                    >
-                        <Ionicons name="eye-outline" size={20} color="white" style={{ marginRight: 8 }} />
-                        <AppText style={styles.previewBtnText}>Check Quality</AppText>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Content Details */}
-                <View style={styles.contentBody}>
-                    <AppText style={styles.title} weight="bold">{title}</AppText>
-                    <AppText style={styles.noteSub}>{subject} • Class {note.class} • {note.board}</AppText>
-
-                    {/* Metadata Grid */}
-                    <View style={styles.metaGrid}>
-                        <View style={styles.metaItem}>
-                            <Ionicons name="document-text-outline" size={20} color="#3B82F6" />
-                            <AppText style={styles.metaText}>{pageCount} Pages</AppText>
-                        </View>
-                        <View style={styles.metaItem}>
-                            <Ionicons name="language-outline" size={20} color="#3B82F6" />
-                            <AppText style={styles.metaText}>{language}</AppText>
-                        </View>
-                        <View style={styles.metaItem}>
-                            <Ionicons name="pricetag-outline" size={20} color="#10B981" />
-                            <AppText style={styles.metaText}>₹{price?.current}</AppText>
-                        </View>
-                    </View>
-
-                    {/* Description */}
-                    <AppText style={styles.sectionTitle} weight="bold">Description</AppText>
-                    <AppText style={styles.descriptionText}>{description || "No description provided."}</AppText>
-
-                    {/* Table of Contents */}
-                    {tableOfContents.length > 0 && (
-                        <>
-                            <AppText style={styles.sectionTitle} weight="bold">Table of Contents</AppText>
-                            <View style={styles.tocList}>
-                                {tableOfContents.map((chapter, index) => (
-                                    <View key={index} style={styles.tocItem}>
-                                        <View style={styles.dot} />
-                                        <AppText style={styles.chapterTitle}>{chapter.title}</AppText>
-                                    </View>
-                                ))}
+                {isLoading || isBuyersLoading ? (
+                    <NoteDetailsSkeleton />
+                ) : (
+                    <>
+                        {/* Status Banner */}
+                        <View style={[styles.statusBanner, { backgroundColor: currentStatus.bg }]}>
+                            <View style={styles.statusDotRow}>
+                                <View style={[styles.statusDot, { backgroundColor: currentStatus.color }]} />
+                                <AppText style={[styles.statusLabel, { color: currentStatus.color }]} weight="bold">
+                                    {currentStatus.label}
+                                </AppText>
                             </View>
-                        </>
-                    )}
-
-                    {/* Buyers History */}
-                    <TouchableOpacity
-                        style={styles.rowBetween}
-                        onPress={() => navigation.navigate('AllNoteBuyers', { noteId })}
-                    >
-                        <AppText style={styles.sectionTitle} weight="bold">Who Purchased</AppText>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            <AppText style={styles.badgeTextCount}>{buyers?.length || 0} Students</AppText>
-                            <Ionicons name="chevron-forward" size={16} color="#3B82F6" />
-                        </View>
-                    </TouchableOpacity>
-
-                    {buyers && buyers.length > 0 ? (
-                        <View style={styles.buyersList}>
-                            {buyers.slice(0, 3).map((buyer, idx) => (
-                                <TouchableOpacity
-                                    key={idx}
-                                    style={styles.buyerCard}
-                                    onPress={() => navigation.navigate('StudentProfileDetail', { studentId: buyer.studentId })}
-                                >
-                                    {buyer.profilePhoto ? (
-                                        <Image source={{ uri: buyer.profilePhoto }} style={styles.buyerAvatar} />
-                                    ) : (
-                                        <View style={[styles.buyerAvatar, { justifyContent: 'center', alignItems: 'center' }]}>
-                                            <AppText style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>
-                                                {buyer.studentName?.charAt(0) || 'S'}
-                                            </AppText>
-                                        </View>
-                                    )}
-                                    <View style={{ flex: 1 }}>
-                                        <AppText style={styles.buyerName} weight="bold">{buyer.studentName}</AppText>
-                                        <AppText style={styles.buyerMeta}>Class {buyer.class} • {buyer.board}</AppText>
-                                    </View>
-                                    <View style={{ alignItems: 'flex-end' }}>
-                                        <AppText style={styles.purchasedDate}>
-                                            {new Date(buyer.purchasedAt).toLocaleDateString()}
-                                        </AppText>
-                                        <AppText style={styles.purchasedTime}>Purchased</AppText>
-                                    </View>
-                                </TouchableOpacity>
-                            ))}
-                            {buyers.length > 3 && (
-                                <TouchableOpacity
-                                    style={styles.seeMoreBuyers}
-                                    onPress={() => navigation.navigate('AllNoteBuyers', { noteId })}
-                                >
-                                    <AppText style={styles.seeMoreText}>View all {buyers.length} buyers</AppText>
-                                </TouchableOpacity>
+                            {normalizedStatus === 'REJECTED' && adminRemark && (
+                                <View style={styles.remarkBox}>
+                                    <AppText style={styles.remarkTitle} weight="bold">Admin Feedback:</AppText>
+                                    <AppText style={styles.remarkText}>{adminRemark}</AppText>
+                                </View>
                             )}
                         </View>
-                    ) : (
-                        <View style={styles.emptySmallBox}>
-                            <AppText style={styles.noDataText}>No purchases yet.</AppText>
+
+                        {/* Performance Stats */}
+                        <View style={styles.statsCard}>
+                            <View style={styles.statItem}>
+                                <AppText style={styles.statVal} weight="bold">{buyers?.length || salesCount}</AppText>
+                                <AppText style={styles.statLab}>Total Sales</AppText>
+                            </View>
+                            <View style={styles.statDivider} />
+                            <View style={styles.statItem}>
+                                <AppText style={[styles.statVal, { color: '#10B981' }]} weight="bold">₹{((buyers?.length || salesCount) * (price?.current || 0))}</AppText>
+                                <AppText style={styles.statLab}>Revenue</AppText>
+                            </View>
+                            <View style={styles.statDivider} />
+                            <View style={styles.statItem}>
+                                <View style={styles.ratingRowSmall}>
+                                    <AppText style={styles.statVal} weight="bold">{avgRating}</AppText>
+                                    <Ionicons name="star" size={14} color="#FFD700" style={{ marginLeft: 4 }} />
+                                </View>
+                                <AppText style={styles.statLab}>{reviewCount} Reviews</AppText>
+                            </View>
                         </View>
-                    )}
 
-                    {/* Reviews */}
-                    <TouchableOpacity
-                        style={[styles.rowBetween, { marginTop: 25 }]}
-                        onPress={() => navigation.navigate('AllNoteReviews', { noteId })}
-                    >
-                        <AppText style={styles.sectionTitle} weight="bold">Recent Reviews</AppText>
-                        <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
-                    </TouchableOpacity>
-
-                    {reviews && reviews.length > 0 ? (
-                        <>
-                            <FlatList
-                                data={reviews.slice(0, 3)}
-                                renderItem={renderReviewItem}
-                                keyExtractor={(item, index) => index.toString()}
-                                scrollEnabled={false}
-                                contentContainerStyle={{ gap: 12 }}
+                        {/* Preview Image */}
+                        <View style={styles.previewContainer}>
+                            <Image
+                                source={{ uri: previewImages && previewImages.length > 0 ? previewImages[0] : null }}
+                                style={styles.previewImage}
+                                resizeMode="cover"
                             />
-                            {reviews.length > 3 && (
-                                <TouchableOpacity
-                                    style={styles.seeMoreBuyers}
-                                    onPress={() => navigation.navigate('AllNoteReviews', { noteId })}
-                                >
-                                    <AppText style={styles.seeMoreText}>View all {reviews.length} reviews</AppText>
-                                </TouchableOpacity>
-                            )}
-                        </>
-                    ) : (
-                        <View style={styles.emptyReviewBox}>
-                            <Ionicons name="chatbox-outline" size={24} color="#334155" />
-                            <AppText style={styles.noReviewsText}>No student reviews yet.</AppText>
+                            <TouchableOpacity
+                                style={styles.previewBtn}
+                                onPress={() => navigation.navigate('NotePreview', { noteId })}
+                            >
+                                <Ionicons name="eye-outline" size={20} color="white" style={{ marginRight: 8 }} />
+                                <AppText style={styles.previewBtnText}>Check Quality</AppText>
+                            </TouchableOpacity>
                         </View>
-                    )}
-                </View>
+
+                        {/* Content Details */}
+                        <View style={styles.contentBody}>
+                            <AppText style={styles.title} weight="bold">{title}</AppText>
+                            <AppText style={styles.noteSub}>{subject} • Class {note.class} • {note.board}</AppText>
+
+                            {/* Metadata Grid */}
+                            <View style={styles.metaGrid}>
+                                <View style={styles.metaItem}>
+                                    <Ionicons name="document-text-outline" size={20} color="#3B82F6" />
+                                    <AppText style={styles.metaText}>{pageCount} Pages</AppText>
+                                </View>
+                                <View style={styles.metaItem}>
+                                    <Ionicons name="language-outline" size={20} color="#3B82F6" />
+                                    <AppText style={styles.metaText}>{language}</AppText>
+                                </View>
+                                <View style={styles.metaItem}>
+                                    <Ionicons name="pricetag-outline" size={20} color="#10B981" />
+                                    <AppText style={styles.metaText}>₹{price?.current}</AppText>
+                                </View>
+                            </View>
+
+                            {/* Description */}
+                            <AppText style={styles.sectionTitle} weight="bold">Description</AppText>
+                            <AppText style={styles.descriptionText}>{description || "No description provided."}</AppText>
+
+                            {/* Table of Contents */}
+                            {tableOfContents.length > 0 && (
+                                <>
+                                    <AppText style={styles.sectionTitle} weight="bold">Table of Contents</AppText>
+                                    <View style={styles.tocList}>
+                                        {tableOfContents.map((chapter, index) => (
+                                            <View key={index} style={styles.tocItem}>
+                                                <View style={styles.dot} />
+                                                <AppText style={styles.chapterTitle}>{chapter.title}</AppText>
+                                            </View>
+                                        ))}
+                                    </View>
+                                </>
+                            )}
+
+                            {/* Buyers History */}
+                            <TouchableOpacity
+                                style={styles.rowBetween}
+                                onPress={() => navigation.navigate('AllNoteBuyers', { noteId })}
+                            >
+                                <AppText style={styles.sectionTitle} weight="bold">Who Purchased</AppText>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                    <AppText style={styles.badgeTextCount}>{buyers?.length || 0} Students</AppText>
+                                    <Ionicons name="chevron-forward" size={16} color="#3B82F6" />
+                                </View>
+                            </TouchableOpacity>
+
+                            {buyers && buyers.length > 0 ? (
+                                <View style={styles.buyersList}>
+                                    {buyers.slice(0, 3).map((buyer, idx) => (
+                                        <TouchableOpacity
+                                            key={idx}
+                                            style={styles.buyerCard}
+                                            onPress={() => navigation.navigate('StudentProfileDetail', { studentId: buyer.studentId })}
+                                        >
+                                            {buyer.profilePhoto ? (
+                                                <Image source={{ uri: buyer.profilePhoto }} style={styles.buyerAvatar} />
+                                            ) : (
+                                                <View style={[styles.buyerAvatar, { justifyContent: 'center', alignItems: 'center' }]}>
+                                                    <AppText style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>
+                                                        {buyer.studentName?.charAt(0) || 'S'}
+                                                    </AppText>
+                                                </View>
+                                            )}
+                                            <View style={{ flex: 1 }}>
+                                                <AppText style={styles.buyerName} weight="bold">{buyer.studentName}</AppText>
+                                                <AppText style={styles.buyerMeta}>Class {buyer.class} • {buyer.board}</AppText>
+                                            </View>
+                                            <View style={{ alignItems: 'flex-end' }}>
+                                                <AppText style={styles.purchasedDate}>
+                                                    {new Date(buyer.purchasedAt).toLocaleDateString()}
+                                                </AppText>
+                                                <AppText style={styles.purchasedTime}>Purchased</AppText>
+                                            </View>
+                                        </TouchableOpacity>
+                                    ))}
+                                    {buyers.length > 3 && (
+                                        <TouchableOpacity
+                                            style={styles.seeMoreBuyers}
+                                            onPress={() => navigation.navigate('AllNoteBuyers', { noteId })}
+                                        >
+                                            <AppText style={styles.seeMoreText}>View all {buyers.length} buyers</AppText>
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                            ) : (
+                                <View style={styles.emptySmallBox}>
+                                    <AppText style={styles.noDataText}>No purchases yet.</AppText>
+                                </View>
+                            )}
+
+                            {/* Reviews */}
+                            <TouchableOpacity
+                                style={[styles.rowBetween, { marginTop: 25 }]}
+                                onPress={() => navigation.navigate('AllNoteReviews', { noteId })}
+                            >
+                                <AppText style={styles.sectionTitle} weight="bold">Recent Reviews</AppText>
+                                <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
+                            </TouchableOpacity>
+
+                            {reviews && reviews.length > 0 ? (
+                                <>
+                                    <FlatList
+                                        data={reviews.slice(0, 3)}
+                                        renderItem={renderReviewItem}
+                                        keyExtractor={(item, index) => index.toString()}
+                                        scrollEnabled={false}
+                                        contentContainerStyle={{ gap: 12 }}
+                                    />
+                                    {reviews.length > 3 && (
+                                        <TouchableOpacity
+                                            style={styles.seeMoreBuyers}
+                                            onPress={() => navigation.navigate('AllNoteReviews', { noteId })}
+                                        >
+                                            <AppText style={styles.seeMoreText}>View all {reviews.length} reviews</AppText>
+                                        </TouchableOpacity>
+                                    )}
+                                </>
+                            ) : (
+                                <View style={styles.emptyReviewBox}>
+                                    <Ionicons name="chatbox-outline" size={24} color="#334155" />
+                                    <AppText style={styles.noReviewsText}>No student reviews yet.</AppText>
+                                </View>
+                            )}
+                        </View>
+                    </>
+                )}
             </ScrollView>
 
             {/* Options Bottom Sheet */}

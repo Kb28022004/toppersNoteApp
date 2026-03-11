@@ -26,6 +26,7 @@ import { Theme } from '../../theme/Theme';
 import { useAlert } from '../../context/AlertContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import SortModal from '../../components/SortModal';
+import { LibraryNoteSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const { width } = Dimensions.get('window');
 
@@ -302,10 +303,12 @@ const MyLibrary = ({ navigation, route }) => {
                             ? (favoritesData?.pagination?.total || 0)
                             : downloadedNotes.length;
 
+                    const dynamicNoteCount = data.length > 0 ? data.length : 4;
+
                     return (
                         <View key={tab} style={{ width }}>
                             <FlatList
-                                data={data}
+                                data={isTabLoading ? [] : data}
                                 renderItem={({ item }) => {
                                     const isOffline = tab === 'Downloaded' || downloadedNotes.some(d => d.id === item._id || d.id === item.id);
                                     return (
@@ -373,7 +376,7 @@ const MyLibrary = ({ navigation, route }) => {
                                 ListHeaderComponent={() => (
                                     <View style={styles.libraryStats}>
                                         <View style={styles.libStatBox}>
-                                            <AppText style={styles.statVal} weight="bold">{totalItems}</AppText>
+                                            <AppText style={styles.statVal} weight="bold">{isTabLoading ? '...' : totalItems}</AppText>
                                             <AppText style={styles.statLab}>Total Resources</AppText>
                                         </View>
                                         <View style={styles.statDivider} />
@@ -385,8 +388,10 @@ const MyLibrary = ({ navigation, route }) => {
                                 )}
                                 ListEmptyComponent={
                                     isTabLoading ? (
-                                        <View style={styles.centerBox}>
-                                            <ActivityIndicator size="large" color="#00B1FC" />
+                                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 }}>
+                                            {[...Array(dynamicNoteCount)].map((_, i) => (
+                                                <LibraryNoteSkeleton key={i} />
+                                            ))}
                                         </View>
                                     ) : (
                                         <NoDataFound

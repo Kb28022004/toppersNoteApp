@@ -25,6 +25,7 @@ import { useAlert } from '../../context/AlertContext';
 import { useSelector } from 'react-redux';
 import { LinearGradient } from 'expo-linear-gradient';
 import ProfilePictureViewer from '../../components/ProfilePictureViewer';
+import { ProfileHeaderSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const { width } = Dimensions.get('window');
 
@@ -119,8 +120,6 @@ const Profile = ({ navigation }) => {
         }
     ];
 
-    if (isLoading) return <ScreenLoader />;
-
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
@@ -143,63 +142,69 @@ const Profile = ({ navigation }) => {
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00B1FC" />
                 }
             >
-                {/* Profile Hero Section */}
-                <View style={styles.heroSection}>
-                    <View style={styles.avatarWrapper}>
-                        <TouchableOpacity onPress={() => setIsImageViewerVisible(true)} activeOpacity={0.8}>
-                            <Image
-                                source={profile?.profilePhoto ? { uri: profile.profilePhoto } : require('../../../assets/student.avif')}
-                                style={styles.avatar}
-                            />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.editBadge} onPress={handleUpdatePhoto}>
-                            <Feather name="camera" size={12} color="white" />
-                        </TouchableOpacity>
-                    </View>
+                {isLoading ? (
+                    <ProfileHeaderSkeleton />
+                ) : (
+                    <>
+                        {/* Profile Hero Section */}
+                        <View style={styles.heroSection}>
+                            <View style={styles.avatarWrapper}>
+                                <TouchableOpacity onPress={() => setIsImageViewerVisible(true)} activeOpacity={0.8}>
+                                    <Image
+                                        source={profile?.profilePhoto ? { uri: profile.profilePhoto } : require('../../../assets/student.avif')}
+                                        style={styles.avatar}
+                                    />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.editBadge} onPress={handleUpdatePhoto}>
+                                    <Feather name="camera" size={12} color="white" />
+                                </TouchableOpacity>
+                            </View>
 
-                    <AppText style={styles.userName} weight="bold">{profile?.fullName || 'Student Name'}</AppText>
-                    <View style={styles.classInfo}>
-                        <AppText style={styles.classText} weight="bold">Class {profile?.class}</AppText>
-                        <View style={styles.dot} />
-                        <AppText style={styles.boardText}>{profile?.board} Board</AppText>
-                    </View>
-                </View>
-
-                {/* Achievement Stats Row */}
-                <View style={styles.statsRow}>
-                    <LinearGradient
-                        colors={['#1E293B', '#111827']}
-                        style={styles.statCard}
-                    >
-                        <View style={styles.statIconBox}>
-                            <Ionicons name="documents" size={20} color="#00B1FC" />
+                            <AppText style={styles.userName} weight="bold">{profile?.fullName || 'Student Name'}</AppText>
+                            <View style={styles.classInfo}>
+                                <AppText style={styles.classText} weight="bold">Class {profile?.class}</AppText>
+                                <View style={styles.dot} />
+                                <AppText style={styles.boardText}>{profile?.board} Board</AppText>
+                            </View>
                         </View>
-                        <AppText style={styles.statValue} weight="bold">{profile?.stats?.notesPurchased || 0}</AppText>
-                        <AppText style={styles.statLabel}>Purchased</AppText>
-                    </LinearGradient>
 
-                    <LinearGradient
-                        colors={['#1E293B', '#111827']}
-                        style={styles.statCard}
-                    >
-                        <View style={[styles.statIconBox, { backgroundColor: '#10B98115' }]}>
-                            <Ionicons name="time" size={20} color="#10B981" />
-                        </View>
-                        <AppText style={styles.statValue} weight="bold">{formatRealTime(profile?.stats?.hoursStudied || 0, sessionSeconds)}</AppText>
-                        <AppText style={styles.statLabel}>Studied</AppText>
-                    </LinearGradient>
+                        {/* Achievement Stats Row */}
+                        <View style={styles.statsRow}>
+                            <LinearGradient
+                                colors={['#1E293B', '#111827']}
+                                style={styles.statCard}
+                            >
+                                <View style={styles.statIconBox}>
+                                    <Ionicons name="documents" size={20} color="#00B1FC" />
+                                </View>
+                                <AppText style={styles.statValue} weight="bold">{profile?.stats?.notesPurchased || 0}</AppText>
+                                <AppText style={styles.statLabel}>Purchased</AppText>
+                            </LinearGradient>
 
-                    <LinearGradient
-                        colors={['#1E293B', '#111827']}
-                        style={styles.statCard}
-                    >
-                        <View style={[styles.statIconBox, { backgroundColor: '#F59E0B15' }]}>
-                            <Ionicons name="people" size={20} color="#F59E0B" />
+                            <LinearGradient
+                                colors={['#1E293B', '#111827']}
+                                style={styles.statCard}
+                            >
+                                <View style={[styles.statIconBox, { backgroundColor: '#10B98115' }]}>
+                                    <Ionicons name="time" size={20} color="#10B981" />
+                                </View>
+                                <AppText style={styles.statValue} weight="bold">{formatRealTime(profile?.stats?.hoursStudied || 0, sessionSeconds)}</AppText>
+                                <AppText style={styles.statLabel}>Studied</AppText>
+                            </LinearGradient>
+
+                            <LinearGradient
+                                colors={['#1E293B', '#111827']}
+                                style={styles.statCard}
+                            >
+                                <View style={[styles.statIconBox, { backgroundColor: '#F59E0B15' }]}>
+                                    <Ionicons name="people" size={20} color="#F59E0B" />
+                                </View>
+                                <AppText style={styles.statValue} weight="bold">{profile?.stats?.followingCount || 0}</AppText>
+                                <AppText style={styles.statLabel}>Following</AppText>
+                            </LinearGradient>
                         </View>
-                        <AppText style={styles.statValue} weight="bold">{profile?.stats?.followingCount || 0}</AppText>
-                        <AppText style={styles.statLabel}>Following</AppText>
-                    </LinearGradient>
-                </View>
+                    </>
+                )}
 
                 {/* Learning Streak Banner */}
                 <View style={styles.streakBanner}>
@@ -218,8 +223,8 @@ const Profile = ({ navigation }) => {
                                     styles.streakProgressFill,
                                     {
                                         width: `${profile?.stats?.streakCount > 0
-                                                ? Math.min((((profile.stats.streakCount - 1) % 7) + 1) / 7 * 100, 100)
-                                                : 0
+                                            ? Math.min((((profile.stats.streakCount - 1) % 7) + 1) / 7 * 100, 100)
+                                            : 0
                                             }%`
                                     }
                                 ]}

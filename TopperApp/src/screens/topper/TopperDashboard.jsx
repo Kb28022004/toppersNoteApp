@@ -17,12 +17,13 @@ import AppText from '../../components/AppText';
 import { useGetProfileQuery } from '../../features/api/topperApi';
 import { useGetMyNotesQuery } from '../../features/api/noteApi';
 import { Theme } from '../../theme/Theme';
+import { RevenueCardSkeleton, ActionGridSkeleton, DashboardNoteSkeleton, HeaderSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const { width } = Dimensions.get('window');
 
 const TopperDashboard = ({ navigation }) => {
-    const { data: profile, refetch: refetchProfile } = useGetProfileQuery();
-    const { data: notes, isLoading, refetch: refetchNotes } = useGetMyNotesQuery();
+    const { data: profile, isLoading: profileLoading, refetch: refetchProfile } = useGetProfileQuery();
+    const { data: notes, isLoading, isFetching, refetch: refetchNotes } = useGetMyNotesQuery();
     const [filter, setFilter] = useState('All');
     const [refreshing, setRefreshing] = useState(false);
 
@@ -119,78 +120,90 @@ const TopperDashboard = ({ navigation }) => {
                 }
             >
                 {/* Modern Header */}
-                <View style={styles.header}>
-                    <View>
-                        <AppText style={styles.greeting}>Hello, Topper! 👋</AppText>
-                        <AppText style={styles.userName} weight="bold">{userData?.fullName || 'Professional'}</AppText>
+                {profileLoading ? (
+                    <HeaderSkeleton style={{ paddingTop: 0, height: 70 }} />
+                ) : (
+                    <View style={styles.header}>
+                        <View>
+                            <AppText style={styles.greeting}>Hello, Topper! 👋</AppText>
+                            <AppText style={styles.userName} weight="bold">{userData?.fullName || 'Professional'}</AppText>
+                        </View>
+                        <TouchableOpacity
+                            style={styles.profileBtn}
+                            onPress={() => navigation.navigate('TopperProfile')}
+                        >
+                            <Image
+                                source={userData?.profilePhoto ? { uri: userData.profilePhoto } : require('../../../assets/topper.avif')}
+                                style={styles.headerAvatar}
+                            />
+                        </TouchableOpacity>
                     </View>
-                    <TouchableOpacity
-                        style={styles.profileBtn}
-                        onPress={() => navigation.navigate('TopperProfile')}
-                    >
-                        <Image
-                            source={userData?.profilePhoto ? { uri: userData.profilePhoto } : require('../../../assets/topper.avif')}
-                            style={styles.headerAvatar}
-                        />
-                    </TouchableOpacity>
-                </View>
+                )}
 
                 {/* Main Earnings Card (Glassmorphism inspired) */}
-                <LinearGradient
-                    colors={[Theme.colors.surface, Theme.colors.background]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.earningsCard}
-                >
-                    <View style={styles.cardHeader}>
-                        <View>
-                            <AppText style={styles.cardLabel}>TOTAL REVENUE</AppText>
-                            <AppText style={styles.cardMainValue} weight="bold">₹{topperStats?.totalEarnings || 0}</AppText>
-                        </View>
-                        <View style={styles.growthBadge}>
-                            <Ionicons name="arrow-up" size={12} color="#10B981" />
-                            <AppText style={styles.growthText}>12.5%</AppText>
-                        </View>
-                    </View>
-
-                    <View style={styles.cardDivider} />
-
-                    <View style={styles.cardStatsRow}>
-                        <View style={styles.cardStatBox}>
-                            <AppText style={styles.cardStatLabel}>This Month</AppText>
-                            <AppText style={styles.cardStatValue} weight="bold">₹{topperStats?.thisMonthEarnings || 0}</AppText>
-                        </View>
-                        <View style={styles.cardStatDivider} />
-                        <View style={styles.cardStatBox}>
-                            <AppText style={styles.cardStatLabel}>Total Sales</AppText>
-                            <AppText style={styles.cardStatValue} weight="bold">{topperStats?.totalSold || 0}</AppText>
-                        </View>
-                    </View>
-
-                    <TouchableOpacity
-                        style={styles.withdrawBtn}
-                        activeOpacity={0.9}
-                        onPress={() => navigation.navigate('EarningsPayouts', { openSettings: true })}
+                {profileLoading ? (
+                    <RevenueCardSkeleton />
+                ) : (
+                    <LinearGradient
+                        colors={[Theme.colors.surface, Theme.colors.background]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.earningsCard}
                     >
-                        <LinearGradient
-                            colors={['#00B1FC', '#007FFF']}
-                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                            style={styles.withdrawGradient}
+                        <View style={styles.cardHeader}>
+                            <View>
+                                <AppText style={styles.cardLabel}>TOTAL REVENUE</AppText>
+                                <AppText style={styles.cardMainValue} weight="bold">₹{topperStats?.totalEarnings || 0}</AppText>
+                            </View>
+                            <View style={styles.growthBadge}>
+                                <Ionicons name="arrow-up" size={12} color="#10B981" />
+                                <AppText style={styles.growthText}>12.5%</AppText>
+                            </View>
+                        </View>
+
+                        <View style={styles.cardDivider} />
+
+                        <View style={styles.cardStatsRow}>
+                            <View style={styles.cardStatBox}>
+                                <AppText style={styles.cardStatLabel}>This Month</AppText>
+                                <AppText style={styles.cardStatValue} weight="bold">₹{topperStats?.thisMonthEarnings || 0}</AppText>
+                            </View>
+                            <View style={styles.cardStatDivider} />
+                            <View style={styles.cardStatBox}>
+                                <AppText style={styles.cardStatLabel}>Total Sales</AppText>
+                                <AppText style={styles.cardStatValue} weight="bold">{topperStats?.totalSold || 0}</AppText>
+                            </View>
+                        </View>
+
+                        <TouchableOpacity
+                            style={styles.withdrawBtn}
+                            activeOpacity={0.9}
+                            onPress={() => navigation.navigate('EarningsPayouts', { openSettings: true })}
                         >
-                            <AppText style={styles.withdrawText} weight="bold">Payout Settings</AppText>
-                            <Ionicons name="chevron-forward" size={18} color="white" />
-                        </LinearGradient>
-                    </TouchableOpacity>
-                </LinearGradient>
+                            <LinearGradient
+                                colors={['#00B1FC', '#007FFF']}
+                                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                                style={styles.withdrawGradient}
+                            >
+                                <AppText style={styles.withdrawText} weight="bold">Payout Settings</AppText>
+                                <Ionicons name="chevron-forward" size={18} color="white" />
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    </LinearGradient>
+                )}
 
                 {/* Quick Actions Section */}
                 <AppText style={styles.sectionTitle} weight="bold">Quick Actions</AppText>
-                <View style={styles.actionsGrid}>
-                    <QuickAction icon="add-circle-outline" label="Add Note" color="#00B1FC" onPress={() => navigation.navigate('UploadNotes')} />
-                    <QuickAction icon="people-outline" label="Followers" color="#A855F7" onPress={() => navigation.navigate('Followers', { userId: userData?.userId })} />
-                    <QuickAction icon="star-outline" label="Reviews" color="#F59E0B" onPress={() => navigation.navigate('TopperReviews', { topperId: userData?.userId })} />
-                    <QuickAction icon="wallet-outline" label="Earnings" color="#10B981" onPress={() => navigation.navigate('EarningsPayouts')} />
-                </View>
+                {profileLoading ? (
+                    <ActionGridSkeleton />
+                ) : (
+                    <View style={styles.actionsGrid}>
+                        <QuickAction icon="add-circle-outline" label="Add Note" color="#00B1FC" onPress={() => navigation.navigate('UploadNotes')} />
+                        <QuickAction icon="people-outline" label="Followers" color="#A855F7" onPress={() => navigation.navigate('Followers', { userId: userData?.userId })} />
+                        <QuickAction icon="star-outline" label="Reviews" color="#F59E0B" onPress={() => navigation.navigate('TopperReviews', { topperId: userData?.userId })} />
+                        <QuickAction icon="wallet-outline" label="Earnings" color="#10B981" onPress={() => navigation.navigate('EarningsPayouts')} />
+                    </View>
+                )}
 
                 {/* My Uploads with Improved Filters */}
                 <View style={styles.sectionHeader}>
@@ -214,8 +227,12 @@ const TopperDashboard = ({ navigation }) => {
                     ))}
                 </View>
 
-                {isLoading ? (
-                    <ActivityIndicator color="#00B1FC" style={{ marginTop: 40 }} />
+                {(isLoading || isFetching) ? (
+                    <View style={{ marginTop: 10 }}>
+                        {[...Array(5)].map((_, i) => (
+                            <DashboardNoteSkeleton key={i} />
+                        ))}
+                    </View>
                 ) : (
                     <FlatList
                         data={filteredNotes.slice(0, 5)}

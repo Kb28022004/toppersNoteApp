@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import PageHeader from '../../components/PageHeader';
 import { Theme } from '../../theme/Theme';
 import { useGetNotificationsQuery, useMarkAsReadMutation, useDeleteNotificationMutation } from '../../features/api/notificationApi';
+import { NotificationSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 export default function Notifications({ navigation }) {
     const [page, setPage] = useState(1);
@@ -97,13 +98,6 @@ export default function Notifications({ navigation }) {
         </TouchableOpacity>
     );
 
-    if (isLoading && page === 1) {
-        return (
-            <View style={styles.centered}>
-                <ActivityIndicator size="large" color="#00B1FC" />
-            </View>
-        );
-    }
 
     return (
         <View style={styles.container}>
@@ -113,22 +107,34 @@ export default function Notifications({ navigation }) {
             />
 
             <FlatList
-                data={notificationsData?.data?.notifications || []}
-                keyExtractor={(item) => item._id}
+                data={(isLoading && page === 1) ? [] : (notificationsData?.data?.notifications || [])}
+                keyExtractor={(item, index) => item._id || index.toString()}
                 renderItem={renderItem}
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.5}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00B1FC" />
                 }
-                ListEmptyComponent={() => (
-                    <View style={styles.emptyContainer}>
-                        <Ionicons name="notifications-off-outline" size={60} color="#64748B" />
-                        <Text style={styles.emptyText}>You're all caught up!</Text>
-                    </View>
-                )}
+                ListEmptyComponent={() => {
+                    if (isLoading && page === 1) {
+                        const dynamicCount = notificationsData?.data?.notifications?.length > 0 ? notificationsData.data.notifications.length : 8;
+                        return (
+                            <View>
+                                {[...Array(dynamicCount)].map((_, i) => (
+                                    <NotificationSkeleton key={i} />
+                                ))}
+                            </View>
+                        );
+                    }
+                    return (
+                        <View style={styles.emptyContainer}>
+                            <Ionicons name="notifications-off-outline" size={60} color="#64748B" />
+                            <Text style={styles.emptyText}>You're all caught up!</Text>
+                        </View>
+                    );
+                }}
                 ListFooterComponent={() => (
-                    isFetching && page > 1 ? <ActivityIndicator style={{ padding: 20 }} color="#00B1FC" /> : null
+                    (isFetching && page > 1) ? <ActivityIndicator style={{ padding: 20 }} color="#00B1FC" /> : null
                 )}
             />
         </View>

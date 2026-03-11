@@ -30,6 +30,8 @@ import PageHeader from '../../components/PageHeader';
 import { Theme } from '../../theme/Theme';
 import { capitalize } from '../../helpers/capitalize';
 
+import { StoreNoteSkeleton, TopperSkeleton } from '../../components/skeletons/HomeSkeletons';
+
 const { width } = Dimensions.get('window');
 
 const Store = ({ navigation, route }) => {
@@ -61,7 +63,7 @@ const Store = ({ navigation, route }) => {
     }, [activeCategory, searchQuery, selectedTopper, sortBy, timeRange, selectedSubject]);
 
     const { data: studentProfile, isLoading: isLoadingProfile, refetch: refetchProfile } = useGetProfileQuery();
-    const { data: toppers, isLoading: isLoadingToppers, refetch: refetchToppers } = useGetAllToppersQuery(undefined);
+    const { data: toppers, isLoading: isLoadingToppers, isFetching: isFetchingToppers, refetch: refetchToppers } = useGetAllToppersQuery(undefined);
 
     const {
         data: notesResponse,
@@ -78,6 +80,8 @@ const Store = ({ navigation, route }) => {
         timeRange: timeRange,
         page: page
     });
+
+    const showPrimaryLoading = (isNotesLoading || isFetching) && page === 1 && !refreshing;
 
     const handleLoadMore = () => {
         const totalPages = notesResponse?.pagination?.totalPages || 0;
@@ -172,8 +176,14 @@ const Store = ({ navigation, route }) => {
                     )}
                 </View>
 
-                {isLoadingToppers ? (
-                    <ActivityIndicator size="small" color="#00B1FC" style={{ marginVertical: 10 }} />
+                {(isLoadingToppers || (isFetchingToppers && !toppers)) ? (
+                    <View style={styles.toppersFlatList}>
+                        <View style={{ flexDirection: 'row' }}>
+                            {[...Array(toppers?.toppers?.length > 0 ? toppers.toppers.length : 5)].map((_, i) => (
+                                <TopperSkeleton key={i} />
+                            ))}
+                        </View>
+                    </View>
                 ) : (
                     <FlatList
                         horizontal
@@ -191,9 +201,7 @@ const Store = ({ navigation, route }) => {
                 <AppText style={styles.totalCount}>{notesResponse?.pagination?.totalNotes || 0} items</AppText>
             </View>
         </View>
-    ), [localSearch, activeCategory, selectedTopper, toppers, isLoadingToppers, sortBy, timeRange, categories, notesResponse]);
-
-    if (isLoadingProfile) return <ScreenLoader />;
+    ), [localSearch, activeCategory, selectedTopper, toppers, isLoadingToppers, isFetchingToppers, sortBy, timeRange, categories, notesResponse]);
 
     const renderItem = useCallback(({ item }) => (
         <NoteCard
@@ -202,12 +210,15 @@ const Store = ({ navigation, route }) => {
         />
     ), [navigation]);
 
+    const notesCount = notesResponse?.notes?.length > 0 ? notesResponse.notes.length : 6;
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
+
             <FlatList
                 ListHeaderComponent={HeaderComponent}
-                data={(isNotesLoading && page === 1 && !refreshing) ? [] : (notesResponse?.notes || [])}
+                data={showPrimaryLoading ? [] : (notesResponse?.notes || [])}
                 keyExtractor={(item) => item._id || item.id}
                 renderItem={renderItem}
                 numColumns={2}
@@ -223,7 +234,13 @@ const Store = ({ navigation, route }) => {
                 windowSize={5}
                 initialNumToRender={6}
                 ListFooterComponent={
-                    ((isFetching && page > 1) || isNotesLoading) ? (
+                    showPrimaryLoading ? (
+                        <View style={styles.skeletonGrid}>
+                            {[...Array(notesCount)].map((_, i) => (
+                                <StoreNoteSkeleton key={i} />
+                            ))}
+                        </View>
+                    ) : (isFetching && page > 1) ? (
                         <ActivityIndicator size="large" color="#00B1FC" style={{ marginVertical: 40 }} />
                     ) : (notesResponse?.notes?.length === 0) ? (
                         <NoDataFound
@@ -350,6 +367,12 @@ const styles = StyleSheet.create({
         color: '#64748B',
     },
     gridRow: {
+        justifyContent: 'space-between',
+        paddingHorizontal: Theme.layout.screenPadding,
+    },
+    skeletonGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
         justifyContent: 'space-between',
         paddingHorizontal: Theme.layout.screenPadding,
     },

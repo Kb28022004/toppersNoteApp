@@ -27,13 +27,14 @@ import { Theme } from '../../theme/Theme';
 import { getTodayDate, getGreeting } from '../../helpers/dateHelpers';
 import { getTopPerformingSubject } from '../../helpers/salesHelpers';
 import HomeHeader from '../../components/HomeHeader';
+import { StatCardSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const { width } = Dimensions.get('window');
 
 const TopperHome = ({ navigation }) => {
     const { showAlert } = useAlert();
-    const { data: profile, refetch: refetchProfile } = useGetProfileQuery();
-    const { data: notesData, isLoading, refetch: refetchNotes } = useGetMyNotesQuery({ sortBy: 'newest', page: 1, limit: 4 });
+    const { data: profile, isLoading: isLoadingProfile, refetch: refetchProfile } = useGetProfileQuery();
+    const { data: notesData, isLoading, isFetching: notesFetching, refetch: refetchNotes } = useGetMyNotesQuery({ sortBy: 'newest', page: 1, limit: 4 });
     const { data: salesData, isFetching: salesFetching, refetch: refetchSales } = useGetMySalesDetailsQuery({ page: 1, limit: 4 });
     const { data: notificationsData } = useGetNotificationsQuery({ page: 1, limit: 1 });
     const notificationUnreadCount = notificationsData?.data?.unreadCount || 0;
@@ -115,6 +116,7 @@ const TopperHome = ({ navigation }) => {
                 onProfilePress={() => navigation.navigate('TopperProfile')}
                 onChatPress={() => navigation.navigate('ChatList')}
                 onNotificationPress={() => navigation.navigate('Notifications')}
+                isLoading={isLoadingProfile}
             />
 
             <ScrollView
@@ -157,16 +159,22 @@ const TopperHome = ({ navigation }) => {
                 </View>
 
                 <View style={styles.statsGrid}>
-                    {stats.map((stat, index) => (
-                        <StatCard
-                            key={index}
-                            icon={stat.icon}
-                            color={stat.color}
-                            bg={stat.bg}
-                            value={stat.value}
-                            label={stat.label}
-                        />
-                    ))}
+                    {salesFetching ? (
+                        [...Array(4)].map((_, i) => (
+                            <StatCardSkeleton key={i} />
+                        ))
+                    ) : (
+                        stats.map((stat, index) => (
+                            <StatCard
+                                key={index}
+                                icon={stat.icon}
+                                color={stat.color}
+                                bg={stat.bg}
+                                value={stat.value}
+                                label={stat.label}
+                            />
+                        ))
+                    )}
                 </View>
 
                 {/* Performance Tip Card */}
@@ -208,7 +216,7 @@ const TopperHome = ({ navigation }) => {
                 <NoteStrip
                     title="Recent Content"
                     notes={notesData?.notes || []}
-                    isLoading={isLoading}
+                    isLoading={isLoading || notesFetching}
                     onSeeAll={() => navigation.navigate('MyUploads')}
                     emptyMessage="You haven't uploaded anything yet."
                 />

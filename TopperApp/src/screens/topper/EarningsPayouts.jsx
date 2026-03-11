@@ -29,6 +29,7 @@ import Loader from '../../components/Loader';
 import NoDataFound from '../../components/NoDataFound';
 import BottomSheet from '../../components/BottomSheet';
 import { Theme } from '../../theme/Theme';
+import { EarningsSummarySkeleton, EarningsTransactionSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const EarningsPayouts = ({ navigation, route }) => {
     const { showAlert } = useAlert();
@@ -258,13 +259,23 @@ const EarningsPayouts = ({ navigation, route }) => {
 
     const renderTransactions = () => (
         <FlatList
-            data={transactionsData?.data?.transactions || transactionsData?.transactions || []}
+            data={(transactionsFetching && transactionsPage === 1) ? [] : (transactionsData?.data?.transactions || transactionsData?.transactions || [])}
             keyExtractor={(item, idx) => item._id || idx.toString()}
-            contentContainerStyle={styles.tabContent}
+            contentContainerStyle={[styles.tabContent, { paddingHorizontal: 20, paddingTop: 20 }]}
             onEndReached={handleLoadMoreTransactions}
             onEndReachedThreshold={0.5}
             ListFooterComponent={transactionsFetching && transactionsPage > 1 ? <ActivityIndicator size="small" color="#00B1FC" /> : null}
-            ListEmptyComponent={!transactionsFetching ? <NoDataFound message="No transactions recorded yet" icon="swap-horizontal-outline" /> : null}
+            ListEmptyComponent={
+                (transactionsFetching && transactionsPage === 1) ? (
+                    <View>
+                        {[...Array(6)].map((_, i) => (
+                            <EarningsTransactionSkeleton key={i} />
+                        ))}
+                    </View>
+                ) : (
+                    <NoDataFound message="No transactions recorded yet" icon="swap-horizontal-outline" />
+                )
+            }
             refreshControl={<RefreshControl refreshing={false} onRefresh={onRefresh} tintColor="#00B1FC" />}
             renderItem={({ item }) => (
                 <View style={styles.transactionCard}>
@@ -289,13 +300,23 @@ const EarningsPayouts = ({ navigation, route }) => {
 
     const renderPayouts = () => (
         <FlatList
-            data={payoutsData?.data?.payouts || payoutsData?.payouts || []}
+            data={(payoutsFetching && payoutsPage === 1) ? [] : (payoutsData?.data?.payouts || payoutsData?.payouts || [])}
             keyExtractor={(item, idx) => item._id || idx.toString()}
-            contentContainerStyle={styles.tabContent}
+            contentContainerStyle={[styles.tabContent, { paddingHorizontal: 20, paddingTop: 20 }]}
             onEndReached={handleLoadMorePayouts}
             onEndReachedThreshold={0.5}
             ListFooterComponent={payoutsFetching && payoutsPage > 1 ? <ActivityIndicator size="small" color="#00B1FC" /> : null}
-            ListEmptyComponent={!payoutsFetching ? <NoDataFound message="No payout history found" icon="cash-outline" /> : null}
+            ListEmptyComponent={
+                (payoutsFetching && payoutsPage === 1) ? (
+                    <View>
+                        {[...Array(6)].map((_, i) => (
+                            <EarningsTransactionSkeleton key={i} />
+                        ))}
+                    </View>
+                ) : (
+                    <NoDataFound message="No payout history found" icon="cash-outline" />
+                )
+            }
             refreshControl={<RefreshControl refreshing={false} onRefresh={onRefresh} tintColor="#00B1FC" />}
             renderItem={({ item }) => (
                 <View style={styles.transactionCard}>
@@ -360,7 +381,7 @@ const EarningsPayouts = ({ navigation, route }) => {
             </LinearGradient>
 
             {summaryLoading && !summaryData ? (
-                <ActivityIndicator size="large" color="#00B1FC" style={{ marginTop: 50 }} />
+                <EarningsSummarySkeleton />
             ) : (
                 <ScrollView
                     ref={scrollRef}

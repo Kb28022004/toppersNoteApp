@@ -19,6 +19,7 @@ import PageHeader from '../../components/PageHeader';
 import useDebounceSearch from '../../hooks/useDebounceSearch';
 import { useGetMySalesDetailsQuery } from '../../features/api/noteApi';
 import { Theme } from '../../theme/Theme';
+import { SoldNoteSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 // ─── Note card ────────────────────────────────────────────────────────────────
 const SoldNoteCard = React.memo(({ item }) => {
@@ -125,7 +126,7 @@ const MySoldNotes = ({ navigation }) => {
             {/* ── Notes list ── */}
             <View style={styles.listWrapper}>
                 <FlatList
-                    data={notes}
+                    data={isFiltering ? [] : notes}
                     renderItem={({ item }) => <SoldNoteCard item={item} />}
                     keyExtractor={(item) => item.noteId}
                     contentContainerStyle={[
@@ -144,7 +145,13 @@ const MySoldNotes = ({ navigation }) => {
                     onEndReached={handleLoadMore}
                     onEndReachedThreshold={0.5}
                     ListEmptyComponent={
-                        !isFiltering ? (
+                        isFiltering ? (
+                            <View>
+                                {[...Array(6)].map((_, i) => (
+                                    <SoldNoteSkeleton key={i} />
+                                ))}
+                            </View>
+                        ) : (
                             <NoDataFound
                                 message={
                                     searchQuery
@@ -154,7 +161,7 @@ const MySoldNotes = ({ navigation }) => {
                                 icon="cart-outline"
                                 containerStyle={{ alignSelf: 'center', marginTop: 40 }}
                             />
-                        ) : null
+                        )
                     }
                     ListFooterComponent={
                         isFetching && page > 1
@@ -163,15 +170,6 @@ const MySoldNotes = ({ navigation }) => {
                     }
                 />
 
-                {/* Overlay spinner */}
-                {isFiltering && (
-                    <View style={styles.overlay} pointerEvents="none">
-                        <View style={styles.overlayInner}>
-                            <ActivityIndicator size="large" color="#10B981" />
-                            <AppText style={styles.overlayText}>Updating...</AppText>
-                        </View>
-                    </View>
-                )}
             </View>
 
             <SortModal

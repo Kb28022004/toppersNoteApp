@@ -21,6 +21,8 @@ import TopperFilterModal from '../../components/TopperFilterModal';
 import PageHeader from '../../components/PageHeader';
 import { Theme } from '../../theme/Theme';
 
+import { TopperListSkeleton } from '../../components/skeletons/HomeSkeletons';
+
 const { width } = Dimensions.get('window');
 
 const AllToppers = ({ navigation }) => {
@@ -47,6 +49,8 @@ const AllToppers = ({ navigation }) => {
     });
 
     const allToppers = toppersResponse?.toppers || [];
+
+    const showPrimaryLoading = (isLoading || isFetching) && page === 1;
 
     const { refreshing, onRefresh: originalRefresh } = useRefresh(refetch);
 
@@ -117,7 +121,7 @@ const AllToppers = ({ navigation }) => {
         </TouchableOpacity>
     );
 
-    if (isLoading && page === 1 && !refreshing) return <ScreenLoader />;
+    const topperCount = allToppers?.length > 0 ? allToppers.length : 5;
 
     return (
         <View style={styles.container}>
@@ -140,7 +144,7 @@ const AllToppers = ({ navigation }) => {
             </View>
 
             <FlatList
-                data={allToppers}
+                data={showPrimaryLoading ? [] : allToppers}
                 renderItem={renderTopperItem}
                 keyExtractor={(item) => item.userId}
                 contentContainerStyle={styles.listContent}
@@ -150,7 +154,7 @@ const AllToppers = ({ navigation }) => {
                 onEndReachedThreshold={0.5}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
-                    !isFetching && !isLoading && (
+                    !showPrimaryLoading && (
                         isError ? (
                             <NoDataFound message="Something went wrong while fetching toppers." icon="alert-circle-outline" />
                         ) : (
@@ -159,7 +163,13 @@ const AllToppers = ({ navigation }) => {
                     )
                 }
                 ListFooterComponent={
-                    isFetching ? (
+                    showPrimaryLoading ? (
+                        <View>
+                            {[...Array(topperCount)].map((_, i) => (
+                                <TopperListSkeleton key={i} />
+                            ))}
+                        </View>
+                    ) : isFetching ? (
                         <View style={{ paddingVertical: 40 }}>
                             <ActivityIndicator size="large" color="#3B82F6" />
                         </View>

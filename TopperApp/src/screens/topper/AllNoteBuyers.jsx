@@ -18,6 +18,7 @@ import { useGetNoteBuyersQuery } from '../../features/api/noteApi';
 import useRefresh from '../../hooks/useRefresh';
 import PageHeader from '../../components/PageHeader';
 import { Theme } from '../../theme/Theme';
+import { BuyerSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const AllNoteBuyers = ({ route, navigation }) => {
     const { noteId } = route.params;
@@ -31,11 +32,6 @@ const AllNoteBuyers = ({ route, navigation }) => {
         b.board?.toLowerCase().includes(search.toLowerCase())
     ) : [];
 
-    if (isLoading) return (
-        <View style={styles.center}>
-            <ActivityIndicator size="large" color="#10B981" />
-        </View>
-    );
 
     return (
         <SafeAreaView style={styles.container}>
@@ -60,7 +56,7 @@ const AllNoteBuyers = ({ route, navigation }) => {
 
             {/* List */}
             <FlatList
-                data={filteredBuyers}
+                data={isLoading ? [] : filteredBuyers}
                 keyExtractor={(item, index) => index.toString()}
                 contentContainerStyle={styles.listContent}
                 refreshControl={
@@ -71,10 +67,18 @@ const AllNoteBuyers = ({ route, navigation }) => {
                     />
                 }
                 ListEmptyComponent={
-                    <NoDataFound
-                        message={search ? "No students match your search" : "No purchases yet for this note."}
-                        icon="people-outline"
-                    />
+                    isLoading ? (
+                        <View>
+                            {[...Array(8)].map((_, i) => (
+                                <BuyerSkeleton key={i} />
+                            ))}
+                        </View>
+                    ) : (
+                        <NoDataFound
+                            message={search ? "No students match your search" : "No purchases yet for this note."}
+                            icon="people-outline"
+                        />
+                    )
                 }
                 renderItem={({ item }) => (
                     <TouchableOpacity

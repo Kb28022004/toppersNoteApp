@@ -19,6 +19,7 @@ import PageHeader from '../../components/PageHeader';
 import { useGetTopperFollowersQuery } from '../../features/api/topperApi';
 import useDebounceSearch from '../../hooks/useDebounceSearch';
 import { Theme } from '../../theme/Theme';
+import { FollowerSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const Followers = ({ route, navigation }) => {
     const { userId, name } = route.params;
@@ -134,7 +135,7 @@ const Followers = ({ route, navigation }) => {
 
             {/* List */}
             <FlatList
-                data={allFollowers}
+                data={isInitialLoading ? [] : allFollowers}
                 keyExtractor={(item, index) => `${item.userId}-${index}`}
                 renderItem={renderFollowerItem}
                 contentContainerStyle={styles.listContent}
@@ -155,22 +156,22 @@ const Followers = ({ route, navigation }) => {
                     ) : null
                 }
                 ListEmptyComponent={
-                    !isInitialLoading ? (
+                    isInitialLoading ? (
+                        <View>
+                            {[...Array(8)].map((_, i) => (
+                                <FollowerSkeleton key={i} />
+                            ))}
+                        </View>
+                    ) : (
                         <NoDataFound
                             style={{ width: '100%' }}
                             message={searchQuery ? `No results for "${searchQuery}"` : "No followers found yet."}
                             icon="people-outline"
                         />
-                    ) : null
+                    )
                 }
             />
 
-            {/* Overlay Loading */}
-            {isInitialLoading && (
-                <View style={styles.overlay}>
-                    <ActivityIndicator size="large" color="#00B1FC" />
-                </View>
-            )}
 
             <SortModal
                 visible={isSortVisible}

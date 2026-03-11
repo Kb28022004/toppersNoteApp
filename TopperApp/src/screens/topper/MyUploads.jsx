@@ -20,6 +20,7 @@ import PageHeader from '../../components/PageHeader';
 import useDebounceSearch from '../../hooks/useDebounceSearch';
 import { useGetMyNotesQuery } from '../../features/api/noteApi';
 import { Theme } from '../../theme/Theme';
+import { UploadNoteSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STATUS_CATEGORIES = ['All', 'Approved', 'Pending', 'Rejected'];
@@ -149,7 +150,7 @@ const MyUploads = ({ navigation }) => {
             {/* ── Notes list ── */}
             <View style={styles.listWrapper}>
                 <FlatList
-                    data={notes}
+                    data={isFiltering ? [] : notes}
                     renderItem={({ item }) => <NoteCard item={item} />}
                     keyExtractor={(item) => item._id}
                     contentContainerStyle={[
@@ -168,7 +169,13 @@ const MyUploads = ({ navigation }) => {
                     onEndReached={handleLoadMore}
                     onEndReachedThreshold={0.5}
                     ListEmptyComponent={
-                        !isFiltering ? (
+                        isFiltering ? (
+                            <View>
+                                {[...Array(6)].map((_, i) => (
+                                    <UploadNoteSkeleton key={i} />
+                                ))}
+                            </View>
+                        ) : (
                             <NoDataFound
                                 message={
                                     searchQuery
@@ -178,7 +185,7 @@ const MyUploads = ({ navigation }) => {
                                 icon="document-text-outline"
                                 containerStyle={{ alignSelf: 'center', marginTop: 40 }}
                             />
-                        ) : null
+                        )
                     }
                     ListFooterComponent={
                         isFetching && page > 1
@@ -187,15 +194,6 @@ const MyUploads = ({ navigation }) => {
                     }
                 />
 
-                {/* Overlay spinner while filter/search is fetching */}
-                {isFiltering && (
-                    <View style={styles.overlay} pointerEvents="none">
-                        <View style={styles.overlayInner}>
-                            <ActivityIndicator size="large" color="#00B1FC" />
-                            <AppText style={styles.overlayText}>Loading...</AppText>
-                        </View>
-                    </View>
-                )}
             </View>
 
             {/* ── Sort Modal ── */}

@@ -20,6 +20,7 @@ import useDebounceSearch from '../../hooks/useDebounceSearch';
 import PageHeader from '../../components/PageHeader';
 import { Theme } from '../../theme/Theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import { TransactionSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const TransactionHistory = ({ navigation }) => {
     const [page, setPage] = useState(1);
@@ -203,40 +204,46 @@ const TransactionHistory = ({ navigation }) => {
                 onMomentumScrollEnd={handleScrollEnd}
                 scrollEventThrottle={16}
             >
-                {statusTabs.map((tab) => (
-                    <View key={tab.value} style={{ width }}>
-                        <FlatList
-                            data={statusFilter === tab.value ? allTransactions : []}
-                            renderItem={renderTransactionItem}
-                            keyExtractor={(item) => item.id}
-                            contentContainerStyle={styles.listContent}
-                            onEndReached={handleLoadMore}
-                            onEndReachedThreshold={0.5}
-                            ListHeaderComponent={statusFilter === tab.value ? HeaderComponent : null}
-                            refreshControl={
-                                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00B1FC" />
-                            }
-                            ListFooterComponent={() => (
-                                isFetching && page > 1 && statusFilter === tab.value ? (
-                                    <ActivityIndicator size="small" color="#00B1FC" style={{ marginVertical: 20 }} />
-                                ) : <View style={{ height: 100 }} />
-                            )}
-                            ListEmptyComponent={() => (
-                                isFetching && statusFilter === tab.value ? (
-                                    <View style={styles.emptyState}>
-                                        <ActivityIndicator size="large" color="#00B1FC" />
-                                        <AppText style={styles.emptyText}>Fetching transactions...</AppText>
-                                    </View>
-                                ) : statusFilter === tab.value ? (
-                                    <View style={styles.emptyState}>
-                                        <MaterialCommunityIcons name="history" size={64} color="#334155" />
-                                        <AppText style={styles.emptyText}>No transactions found</AppText>
-                                    </View>
-                                ) : null
-                            )}
-                        />
-                    </View>
-                ))}
+                {statusTabs.map((tab) => {
+                    const dynamicCount = allTransactions?.length > 0 ? allTransactions.length : 6;
+                    const showLoading = isFetching && page === 1 && statusFilter === tab.value;
+
+                    return (
+                        <View key={tab.value} style={{ width }}>
+                            <FlatList
+                                data={showLoading ? [] : (statusFilter === tab.value ? allTransactions : [])}
+                                renderItem={renderTransactionItem}
+                                keyExtractor={(item) => item.id}
+                                contentContainerStyle={styles.listContent}
+                                onEndReached={handleLoadMore}
+                                onEndReachedThreshold={0.5}
+                                ListHeaderComponent={statusFilter === tab.value ? HeaderComponent : null}
+                                refreshControl={
+                                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00B1FC" />
+                                }
+                                ListFooterComponent={() => (
+                                    isFetching && page > 1 && statusFilter === tab.value ? (
+                                        <ActivityIndicator size="small" color="#00B1FC" style={{ marginVertical: 20 }} />
+                                    ) : <View style={{ height: 100 }} />
+                                )}
+                                ListEmptyComponent={() => (
+                                    showLoading ? (
+                                        <View>
+                                            {[...Array(dynamicCount)].map((_, i) => (
+                                                <TransactionSkeleton key={i} />
+                                            ))}
+                                        </View>
+                                    ) : statusFilter === tab.value ? (
+                                        <View style={styles.emptyState}>
+                                            <MaterialCommunityIcons name="history" size={64} color="#334155" />
+                                            <AppText style={styles.emptyText}>No transactions found</AppText>
+                                        </View>
+                                    ) : null
+                                )}
+                            />
+                        </View>
+                    );
+                })}
             </ScrollView>
 
         </View>

@@ -19,6 +19,7 @@ import { useGetTopperReviewsQuery } from '../../features/api/noteApi';
 import useRefresh from '../../hooks/useRefresh';
 import useDebounceSearch from '../../hooks/useDebounceSearch';
 import { Theme } from '../../theme/Theme';
+import { ReviewSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const { width } = Dimensions.get('window');
 
@@ -184,7 +185,7 @@ const TopperReviews = ({ route, navigation }) => {
 
             {/* Reviews List */}
             <FlatList
-                data={response?.reviews || []}
+                data={(isLoading || (isFetching && page === 1)) ? [] : (response?.reviews || [])}
                 keyExtractor={(item) => item.id || item._id}
                 renderItem={renderReviewItem}
                 contentContainerStyle={styles.listContent}
@@ -201,10 +202,11 @@ const TopperReviews = ({ route, navigation }) => {
                     ) : null
                 }
                 ListEmptyComponent={
-                    isLoading ? (
-                        <View style={styles.loaderBox}>
-                            <ActivityIndicator size="large" color="#00B1FC" />
-                            <AppText style={{ color: '#64748B', marginTop: 15 }}>Loading your feedback...</AppText>
+                    (isLoading || (isFetching && page === 1)) ? (
+                        <View>
+                            {[...Array(4)].map((_, i) => (
+                                <ReviewSkeleton key={i} />
+                            ))}
                         </View>
                     ) : (
                         <NoDataFound

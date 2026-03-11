@@ -1,4 +1,4 @@
-const { admin } = require('../../config/firebase');
+const { admin, isFirebaseInitialized } = require('../../config/firebase');
 const User = require('../users/user.model');
 const TopperProfile = require('../toppers/topper.model');
 const StudentProfile = require('../students/student.model');
@@ -24,6 +24,9 @@ const getUserProfileData = async (userId, role) => {
 };
 
 exports.getOrCreateChat = async (currentUserId, targetUserId) => {
+    if (!isFirebaseInitialized) {
+        throw new Error('Firebase is not initialized. Chat functionality is temporarily unavailable.');
+    }
     const db = admin.firestore();
     
     // Check if both users exist
@@ -80,7 +83,12 @@ exports.getOrCreateChat = async (currentUserId, targetUserId) => {
 
 exports.sendChatMessageNotification = async (senderId, targetUserId, messageText) => {
     try {
+        if (!isFirebaseInitialized) {
+            console.warn('⚠️ Firebase Admin not initialized: skipping chat notification.');
+            return;
+        }
         const sender = await User.findById(senderId);
+
         const senderProfile = await getUserProfileData(senderId, sender.role);
         
         await notificationService.sendToUser(
@@ -99,6 +107,9 @@ exports.sendChatMessageNotification = async (senderId, targetUserId, messageText
 
 exports.getUserChats = async (userId, { search, limit = 50, lastUpdatedAt, sortBy = 'desc' }) => {
     try {
+        if (!isFirebaseInitialized) {
+            throw new Error('Firebase is not initialized. Chat list is unavailable.');
+        }
         const db = admin.firestore();
         console.log(`Fetching chats for user: ${userId}, search: ${search}`);
         
