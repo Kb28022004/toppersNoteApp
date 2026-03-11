@@ -77,7 +77,11 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
 app.use('/api/v1', apiLimiter);
 
 // ─── Health Check (no auth, no rate limit) ───────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+app.get('/health', (_req, res) => res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    deployment: 'CI/CD Pipeline is LIVE! 🚀' 
+}));
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
 app.use('/api/v1', routes);

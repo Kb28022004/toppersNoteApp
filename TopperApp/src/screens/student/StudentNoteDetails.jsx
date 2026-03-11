@@ -524,7 +524,7 @@ const StudentNoteDetails = ({ route, navigation }) => {
                         loading={isReviewing}
                         loadingText="Submitting..."
                         onPress={handleSubmitReview}
-                        style={{ width: 120 }}
+                        style={{ width: 220 }}
                     />
                 </View>
             </BottomSheet>
