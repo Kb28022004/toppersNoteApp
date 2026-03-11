@@ -37,7 +37,7 @@ const topperProfileSchema = new mongoose.Schema(
     // 🎓 ACADEMICS
     expertiseClass: {
       type: String,
-      enum: ['10', '12'],
+      enum: ['9', '10', '11', '12'],
       required: true,
       index: true,
     },
@@ -47,10 +47,10 @@ const topperProfileSchema = new mongoose.Schema(
       enum: ['SCIENCE', 'COMMERCE', 'ARTS'],
       validate: {
         validator: function (value) {
-          if (this.expertiseClass === '12') return Boolean(value);
+          if (this.expertiseClass === '11' || this.expertiseClass === '12') return Boolean(value);
           return value === undefined;
         },
-        message: 'Stream required only for Class 12',
+        message: 'Stream required only for Class 11 and 12',
       },
     },
 

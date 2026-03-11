@@ -30,6 +30,8 @@ const SUBJECTS_DATA = {
         { id: 'sst', name: 'Social Studies', icon: 'earth' },
         { id: 'hindi', name: 'Hindi', icon: 'language' },
         { id: 'sanskrit', name: 'Sanskrit', icon: 'book' },
+        { id: 'computers', name: 'Computers', icon: 'laptop' },
+        { id: 'it', name: 'IT', icon: 'code-slash' },
     ],
     pcmb: [
         { id: 'phy', name: 'Physics', icon: 'flash' },
@@ -38,7 +40,9 @@ const SUBJECTS_DATA = {
         { id: 'bio', name: 'Biology', icon: 'leaf' },
         { id: 'english', name: 'English', icon: 'book' },
         { id: 'cs', name: 'Comp. Sci', icon: 'laptop' },
-        { id: 'pe', name: 'Physical Edu.', icon: 'basketball' },
+        { id: 'ip', name: 'Info. Prac.', icon: 'server' },
+        { id: 'pe', name: 'Phy. Edu.', icon: 'fitness' },
+        { id: 'bt', name: 'Biotech', icon: 'color-filter' },
     ],
     commerce: [
         { id: 'acc', name: 'Accountancy', icon: 'calculator' },
@@ -46,7 +50,8 @@ const SUBJECTS_DATA = {
         { id: 'eco', name: 'Economics', icon: 'cash' },
         { id: 'maths', name: 'Maths', icon: 'calculator' },
         { id: 'english', name: 'English', icon: 'book' },
-        { id: 'ip', name: 'Info. Prac.', icon: 'laptop' },
+        { id: 'ip', name: 'Info. Prac.', icon: 'server' },
+        { id: 'pe', name: 'Phy. Edu.', icon: 'fitness' },
     ],
     arts: [
         { id: 'hist', name: 'History', icon: 'time' },
@@ -55,8 +60,13 @@ const SUBJECTS_DATA = {
         { id: 'eco', name: 'Economics', icon: 'cash' },
         { id: 'english', name: 'English', icon: 'book' },
         { id: 'psych', name: 'Psychology', icon: 'brain' },
+        { id: 'soc', name: 'Sociology', icon: 'globe' },
+        { id: 'fine', name: 'Fine Arts', icon: 'brush' },
+        { id: 'home', name: 'Home Science', icon: 'home' },
+        { id: 'pe', name: 'Phy. Edu.', icon: 'fitness' },
     ]
 };
+
 
 const StudentProfileSetup = ({ navigation }) => {
     const { showAlert } = useAlert();

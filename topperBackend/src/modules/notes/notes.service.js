@@ -15,10 +15,11 @@ const { convertPdfToImages } = require("../../utils/pdfToImages");
 const redis = require("../../config/redis");
 
 const STREAM_SUBJECTS = {
-  SCIENCE: ["Physics", "Chemistry", "Maths", "Biology"],
-  COMMERCE: ["Accountancy", "Business Studies", "Economics", "Maths"],
-  ARTS: ["History", "Political Science", "Geography", "Economics"],
+  SCIENCE: ["Physics", "Chemistry", "Maths", "Biology", "Comp. Sci", "Info. Prac.", "English", "Phy. Edu.", "Biotech"],
+  COMMERCE: ["Accountancy", "Business Studies", "Economics", "Maths", "English", "Info. Prac.", "Phy. Edu."],
+  ARTS: ["History", "Political Science", "Geography", "Economics", "Sociology", "Psychology", "Fine Arts", "Home Science", "English", "Phy. Edu."],
 };
+
 
 /**
  * ===============================
@@ -36,8 +37,8 @@ exports.uploadNote = async (userId, data, files, req) => {
     throw new Error("Only verified toppers can upload notes");
   }
 
-  // 2️⃣ Subject validation (Class 12 stream rule)
-  if (topper.expertiseClass === "12") {
+  // 2️⃣ Subject validation (Class 11 & 12 stream rule)
+  if (topper.expertiseClass === "11" || topper.expertiseClass === "12") {
     const allowedSubjects = STREAM_SUBJECTS[topper.stream] || [];
     if (!allowedSubjects.includes(data.subject)) {
       throw new Error(
@@ -45,6 +46,7 @@ exports.uploadNote = async (userId, data, files, req) => {
       );
     }
   }
+
 
   // 3️⃣ PDF required
   if (!files?.pdf?.[0]) {

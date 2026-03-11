@@ -18,17 +18,20 @@ import { useAlert } from '../../context/AlertContext';
 import useInitialLoad from '../../hooks/useInitialLoad';
 
 // Constants
-const CLASSES = ['10', '12'];
+const CLASSES = ['9', '10', '11', '12'];
 const BOARDS = ['CBSE', 'ICSE', 'STATE'];
 const STREAMS = ['SCIENCE', 'COMMERCE', 'ARTS'];
 
 const SUBJECTS_DATA = {
-    '10': [
+    '9_10': [
         { id: 'Maths', name: 'Maths', icon: 'calculator' },
         { id: 'Science', name: 'Science', icon: 'flask' },
         { id: 'English', name: 'English', icon: 'book' },
         { id: 'SST', name: 'Social Studies', icon: 'earth' },
         { id: 'Hindi', name: 'Hindi', icon: 'language' },
+        { id: 'Sanskrit', name: 'Sanskrit', icon: 'journal' },
+        { id: 'Computers', name: 'Computers', icon: 'laptop' },
+        { id: 'IT', name: 'IT', icon: 'code-slash' },
     ],
     'SCIENCE': [
         { id: 'Physics', name: 'Physics', icon: 'flash' },
@@ -36,20 +39,34 @@ const SUBJECTS_DATA = {
         { id: 'Maths', name: 'Maths', icon: 'calculator' },
         { id: 'Biology', name: 'Biology', icon: 'leaf' },
         { id: 'Comp. Sci', name: 'Comp. Sci', icon: 'laptop' },
+        { id: 'Info. Prac.', name: 'Info. Prac.', icon: 'server' },
+        { id: 'English', name: 'English', icon: 'book' },
+        { id: 'Phy. Edu.', name: 'Phy. Edu.', icon: 'fitness' },
+        { id: 'Biotechnology', name: 'Biotech', icon: 'color-filter' },
     ],
     'COMMERCE': [
         { id: 'Accountancy', name: 'Accountancy', icon: 'calculator' },
         { id: 'Business Studies', name: 'Business Studies', icon: 'briefcase' },
         { id: 'Economics', name: 'Economics', icon: 'cash' },
         { id: 'Maths', name: 'Maths', icon: 'calculator' },
+        { id: 'English', name: 'English', icon: 'book' },
+        { id: 'Info. Prac.', name: 'Info. Prac.', icon: 'server' },
+        { id: 'Phy. Edu.', name: 'Phy. Edu.', icon: 'fitness' },
     ],
     'ARTS': [
         { id: 'History', name: 'History', icon: 'time' },
         { id: 'Political Science', name: 'Pol. Science', icon: 'people' },
         { id: 'Geography', name: 'Geography', icon: 'earth' },
         { id: 'Economics', name: 'Economics', icon: 'cash' },
+        { id: 'Sociology', name: 'Sociology', icon: 'globe' },
+        { id: 'Psychology', name: 'Psychology', icon: 'brain' },
+        { id: 'Fine Arts', name: 'Fine Arts', icon: 'brush' },
+        { id: 'Home Science', name: 'Home Science', icon: 'home' },
+        { id: 'English', name: 'English', icon: 'book' },
+        { id: 'Phy. Edu.', name: 'Phy. Edu.', icon: 'fitness' },
     ]
 };
+
 
 const TopperProfileSetup = ({ navigation }) => {
     const { showAlert } = useAlert();
@@ -90,12 +107,13 @@ const TopperProfileSetup = ({ navigation }) => {
 
     useEffect(() => {
         let subjects = [];
-        if (expertiseClass === '10') {
-            subjects = SUBJECTS_DATA['10'];
-        } else if (expertiseClass === '12' && stream) {
+        if (expertiseClass === '9' || expertiseClass === '10') {
+            subjects = SUBJECTS_DATA['9_10'];
+        } else if ((expertiseClass === '11' || expertiseClass === '12') && stream) {
             subjects = SUBJECTS_DATA[stream] || [];
         }
         setDisplayedSubjects(subjects);
+
         setSelectedSubjects([]);
         // Clear stream error when class changes
         if (submitted) validateForm({ expertiseClass, stream: expertiseClass === '12' ? stream : 'ok' });
@@ -114,7 +132,7 @@ const TopperProfileSetup = ({ navigation }) => {
         if (!v.firstName.trim()) e.firstName = 'First name is required';
         if (!v.lastName.trim()) e.lastName = 'Last name is required';
         if (!v.expertiseClass) e.expertiseClass = 'Please select a class';
-        if (v.expertiseClass === '12' && !v.stream) e.stream = 'Please select a stream';
+        if ((v.expertiseClass === '11' || v.expertiseClass === '12') && !v.stream) e.stream = 'Please select a stream';
         if (!v.board) e.board = 'Please select a board';
         if (selectedSubjects.length < 1) e.subjects = 'Select at least one core subject';
         if (achievements.length === 0) e.achievements = 'Add at least one achievement';
@@ -182,7 +200,7 @@ const TopperProfileSetup = ({ navigation }) => {
         if (shortBio) formData.append("shortBio", shortBio);
         formData.append("expertiseClass", expertiseClass);
         formData.append("board", board);
-        if (expertiseClass === '12') formData.append("stream", stream);
+        if (expertiseClass === '11' || expertiseClass === '12') formData.append("stream", stream);
         selectedSubjects.forEach(sub => formData.append("coreSubjects[]", sub));
         achievements.forEach(ach => formData.append("achievements[]", ach));
 
@@ -296,8 +314,8 @@ const TopperProfileSetup = ({ navigation }) => {
                             />
                         </FormField>
 
-                        {/* Stream (Conditionally for Class 12) */}
-                        {expertiseClass === '12' && (
+                        {/* Stream (Conditionally for Class 11 & 12) */}
+                        {(expertiseClass === '11' || expertiseClass === '12') && (
                             <FormField label="Stream" required error={errors.stream}>
                                 <CustomDropdown
                                     options={STREAMS}
