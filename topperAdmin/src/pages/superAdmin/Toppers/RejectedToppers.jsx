@@ -56,7 +56,9 @@ const RejectedToppers = () => {
             type: 'select',
             width: 4,
             options: [
+                { label: 'Class 9', value: '9' },
                 { label: 'Class 10', value: '10' },
+                { label: 'Class 11', value: '11' },
                 { label: 'Class 12', value: '12' }
             ]
         }
@@ -84,7 +86,20 @@ const RejectedToppers = () => {
             render: (row) => (
                 <Box>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>Class {row.expertiseClass}</Typography>
-                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>{row.stream || "General"}</Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>{row.stream || "General"}</Typography>
+                    <Box sx={{ mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {row.coreSubjects?.map((sub, i) => (
+                            <Typography key={i} variant="caption" sx={{
+                                bgcolor: 'error.main',
+                                color: 'white',
+                                px: 0.5,
+                                borderRadius: 0.5,
+                                fontSize: '0.65rem'
+                            }}>
+                                {sub}
+                            </Typography>
+                        ))}
+                    </Box>
                 </Box>
             )
         },

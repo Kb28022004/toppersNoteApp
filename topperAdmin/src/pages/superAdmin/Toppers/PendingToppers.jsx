@@ -131,7 +131,9 @@ const PendingToppers = () => {
             type: 'select',
             width: 3,
             options: [
+                { label: 'Class 9', value: '9' },
                 { label: 'Class 10', value: '10' },
+                { label: 'Class 11', value: '11' },
                 { label: 'Class 12', value: '12' }
             ]
         },
@@ -170,7 +172,20 @@ const PendingToppers = () => {
             render: (row) => (
                 <Box>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>Class {row.expertiseClass}</Typography>
-                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>{row.stream || "General"}</Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>{row.stream || "General"}</Typography>
+                    <Box sx={{ mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {row.coreSubjects?.map((sub, i) => (
+                            <Typography key={i} variant="caption" sx={{
+                                bgcolor: 'primary.main',
+                                color: 'white',
+                                px: 0.5,
+                                borderRadius: 0.5,
+                                fontSize: '0.65rem'
+                            }}>
+                                {sub}
+                            </Typography>
+                        ))}
+                    </Box>
                 </Box>
             )
         },
@@ -178,8 +193,8 @@ const PendingToppers = () => {
             id: 'marks',
             label: 'Academic Performance',
             render: (row) => (
-                <Stack direction="row" spacing={1} flexWrap="wrap">
-                    {row.subjectMarks?.slice(0, 3).map((sub, index) => (
+                <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
+                    {row.subjectMarks?.map((sub, index) => (
                         <Chip
                             key={index}
                             label={`${sub.subject}: ${sub.marks}`}
@@ -187,7 +202,6 @@ const PendingToppers = () => {
                             sx={{ bgcolor: alpha(theme.palette.divider, 0.05), border: '1px solid', borderColor: alpha(theme.palette.divider, 0.1), fontSize: '0.7rem' }}
                         />
                     ))}
-                    {row.subjectMarks?.length > 3 && <Typography variant="caption">+{row.subjectMarks.length - 3} more</Typography>}
                 </Stack>
             )
         },
