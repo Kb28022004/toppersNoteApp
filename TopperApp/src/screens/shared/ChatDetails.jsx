@@ -10,7 +10,10 @@ import {
   Keyboard,
   Image,
   ActivityIndicator,
+  KeyboardEvent,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import {
   collection,
   query,
@@ -29,21 +32,26 @@ import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { db, storage } from "../../config/firebase";
 import AppText from "../../components/AppText";
-import { Theme } from "../../theme/Theme";
+import useTheme from "../../hooks/useTheme";
+import { useMemo } from "react";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSendChatNotificationMutation } from "../../features/api/chatApi";
 
 const ChatDetails = ({ route, navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const { chatId, otherUser } = route.params;
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [currentUserId, setCurrentUserId] = useState(null);
   const [isOtherTyping, setIsOtherTyping] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [sendNotification] = useSendChatNotificationMutation();
+
   const flatListRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const insets = useSafeAreaInsets();
+
 
   useEffect(() => {
     const loadUser = async () => {
@@ -126,66 +134,8 @@ const ChatDetails = ({ route, navigation }) => {
     }, 3000);
   };
 
-  const uploadFile = async (uri, type) => {
-    const response = await fetch(uri);
-    const blob = await response.blob();
-    const filename = `${chatId}/${Date.now()}_${uri.split('/').pop()}`;
-    const storageRef = ref(storage, filename);
-    await uploadBytes(storageRef, blob);
-    return await getDownloadURL(storageRef);
-  };
-
-  const handlePickMedia = async (mediaType) => {
-    try {
-      let result;
-      if (mediaType === 'image' || mediaType === 'video') {
-        result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: mediaType === 'image' ? ImagePicker.MediaTypeOptions.Images : ImagePicker.MediaTypeOptions.Videos,
-          quality: 0.7,
-        });
-      } else {
-        result = await DocumentPicker.getDocumentAsync({
-          type: "*/*",
-        });
-      }
-
-      if (!result.canceled) {
-        setIsUploading(true);
-        const asset = result.assets[0];
-        const url = await uploadFile(asset.uri, mediaType);
-
-        const messageData = {
-          text: mediaType === 'doc' ? asset.name : (mediaType === 'image' ? "Sent an image" : "Sent a video"),
-          senderId: currentUserId,
-          createdAt: serverTimestamp(),
-          status: "sent",
-          type: mediaType,
-          mediaUrl: url,
-        };
-
-        await addDoc(collection(db, "chats", chatId, "messages"), messageData);
-        await updateDoc(doc(db, "chats", chatId), {
-          lastMessage: messageData,
-          updatedAt: serverTimestamp(),
-        });
-
-        // Trigger Notification
-        if (otherUser?.id) {
-          sendNotification({
-            targetUserId: otherUser.id,
-            messageText: messageData.text
-          });
-        }
-
-        setIsUploading(false);
-      }
-    } catch (error) {
-      console.error("Media upload failed", error);
-      setIsUploading(false);
-    }
-  };
-
   const handleSendMessage = async () => {
+
     if (!newMessage.trim() || !currentUserId || !db) return;
 
     const textObj = {
@@ -222,6 +172,13 @@ const ChatDetails = ({ route, navigation }) => {
     }
   };
 
+  const scrollToBottom = () => {
+    if (flatListRef.current) {
+      flatListRef.current.scrollToOffset({ offset: 0, animated: true });
+    }
+  };
+
+
   const renderMessage = ({ item }) => {
     const isMyMsg = item.senderId === currentUserId;
     const time = item.createdAt
@@ -249,7 +206,7 @@ const ChatDetails = ({ route, navigation }) => {
           </View>
         ) : item.type === 'doc' ? (
           <View style={styles.docRow}>
-            <Ionicons name="document" size={24} color="#3B82F6" />
+            <Ionicons name="document" size={24} color={theme.colors.primary} />
             <AppText style={styles.docName} numberOfLines={1}>{item.text}</AppText>
           </View>
         ) : (
@@ -262,7 +219,7 @@ const ChatDetails = ({ route, navigation }) => {
             <Ionicons
               name="checkmark-done"
               size={14}
-              color={item.status === 'seen' ? "#10B981" : "#94A3B8"}
+              color={item.status === 'seen' ? theme.colors.success : theme.colors.textMuted}
               style={{ marginLeft: 4 }}
             />
           )}
@@ -272,17 +229,13 @@ const ChatDetails = ({ route, navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 25}
-    >
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20), paddingBottom: 15 }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.iconBtn}
         >
-          <Ionicons name="chevron-back" size={24} color="white" />
+          <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
         <AppText style={styles.headerTitle} weight="bold" numberOfLines={1}>
           {otherUser?.name}
@@ -290,85 +243,92 @@ const ChatDetails = ({ route, navigation }) => {
         <View style={{ width: 40 }} />
       </View>
 
-      <FlatList
-        ref={flatListRef}
-        data={messages}
+
+      <KeyboardAvoidingView
         style={{ flex: 1 }}
-        keyExtractor={(item) => item.id}
-        renderItem={renderMessage}
-        inverted
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContainer}
-        ListHeaderComponent={isOtherTyping ? (
-          <View style={styles.typingContainer}>
-            <AppText style={styles.typingText}>{otherUser?.name} is typing...</AppText>
-          </View>
-        ) : null}
-      />
-
-      {isUploading && (
-        <View style={styles.uploadingOverlay}>
-          <ActivityIndicator size="small" color="#3B82F6" />
-          <AppText style={styles.uploadText}>Sending file...</AppText>
-        </View>
-      )}
-
-      <View style={styles.inputContainer}>
-        <TouchableOpacity style={styles.attachBtn} onPress={() => handlePickMedia('image')}>
-          <Ionicons name="image-outline" size={24} color="#94A3B8" />
-        </TouchableOpacity>
-        <TouchableOpacity style={{ marginRight: 10 }} onPress={() => handlePickMedia('doc')}>
-          <Ionicons name="document-outline" size={24} color="#94A3B8" />
-        </TouchableOpacity>
-
-        <TextInput
-          style={styles.textInput}
-          placeholder="Type a message..."
-          placeholderTextColor="#94A3B8"
-          value={newMessage}
-          onChangeText={handeInputChange}
-          multiline
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      >
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          style={{ flex: 1 }}
+          keyExtractor={(item) => item.id}
+          renderItem={renderMessage}
+          inverted
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[styles.listContainer, { paddingBottom: 10 }]}
+          ListHeaderComponent={isOtherTyping ? (
+            <View style={styles.typingContainer}>
+              <AppText style={styles.typingText}>{otherUser?.name} is typing...</AppText>
+            </View>
+          ) : null}
+          onContentSizeChange={scrollToBottom}
         />
-        <TouchableOpacity
-          style={[styles.sendBtn, !newMessage.trim() && { opacity: 0.5 }]}
-          onPress={handleSendMessage}
-          disabled={!newMessage.trim()}
-        >
-          <Ionicons name="send" size={20} color="white" />
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+
+
+
+        <View style={[
+          styles.inputWrapper,
+          { paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom, 15) : 15 }
+        ]}>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Type a message..."
+              placeholderTextColor={theme.colors.textMuted}
+              value={newMessage}
+              onChangeText={handeInputChange}
+              multiline
+              onFocus={scrollToBottom}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.sendBtn, !newMessage.trim() && { opacity: 0.5, backgroundColor: theme.colors.border }]}
+            onPress={handleSendMessage}
+            disabled={!newMessage.trim()}
+          >
+            <Ionicons name="send" size={18} color="white" />
+          </TouchableOpacity>
+        </View>
+
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
-const styles = StyleSheet.create({
+
+
+const createStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Theme.colors.background,
+    backgroundColor: theme.colors.background,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: Theme.colors.card,
+    paddingHorizontal: 15,
+    backgroundColor: theme.colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: "#334155",
+    borderBottomColor: theme.colors.border + '40',
     zIndex: 10,
   },
+
   iconBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Theme.colors.card,
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border + '40',
   },
   headerTitle: {
     fontSize: 18,
-    color: "white",
+    color: theme.colors.text,
     flex: 1,
     textAlign: "center",
     marginHorizontal: 15,
@@ -384,18 +344,18 @@ const styles = StyleSheet.create({
   },
   myBubble: {
     alignSelf: "flex-end",
-    backgroundColor: "#3B82F6",
+    backgroundColor: theme.colors.primary,
     borderBottomRightRadius: 4,
   },
   theirBubble: {
     alignSelf: "flex-start",
-    backgroundColor: Theme.colors.card,
+    backgroundColor: theme.colors.card,
     borderBottomLeftRadius: 4,
     borderWidth: 1,
-    borderColor: "#334155",
+    borderColor: theme.colors.border + '40',
   },
   messageText: {
-    color: "white",
+    color: theme.colors.textInverse || 'white',
     fontSize: 15,
     lineHeight: 22,
   },
@@ -406,46 +366,52 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   timeText: {
-    color: "#E2E8F0",
+    color: theme.colors.textMuted,
     fontSize: 10,
     opacity: 0.8,
   },
-  inputContainer: {
+  inputWrapper: {
     flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    backgroundColor: Theme.colors.card,
-    borderTopWidth: 1,
-    borderTopColor: "#334155",
+    alignItems: "flex-end",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: theme.colors.background,
+    gap: 8,
+  },
+  inputContainer: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    backgroundColor: theme.colors.card,
+    borderRadius: 25,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: theme.colors.border + '40',
   },
   attachBtn: {
-    marginRight: 10,
+    padding: 8,
   },
   textInput: {
     flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    color: "white",
-    paddingHorizontal: 15,
-    paddingTop: Platform.OS === "ios" ? 14 : 10,
-    paddingBottom: Platform.OS === "ios" ? 14 : 10,
-    borderRadius: 20,
-    fontSize: 15,
-    minHeight: 45,
-    maxHeight: 100,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-    textAlignVertical: "center",
+    color: theme.colors.text,
+    fontSize: 16,
+    paddingHorizontal: 8,
+    paddingTop: Platform.OS === "ios" ? 10 : 8,
+    paddingBottom: Platform.OS === "ios" ? 10 : 8,
+    minHeight: 40,
+    maxHeight: 120,
   },
+
   sendBtn: {
-    width: 45,
-    height: 45,
-    borderRadius: 22.5,
-    backgroundColor: "#3B82F6",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.primary,
     justifyContent: "center",
     alignItems: "center",
-    marginLeft: 10,
   },
+
   messageImage: {
     width: 200,
     height: 150,
@@ -455,7 +421,7 @@ const styles = StyleSheet.create({
   mediaPlaceholder: {
     width: 200,
     height: 100,
-    backgroundColor: "#334155",
+    backgroundColor: theme.colors.border + '40',
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
@@ -469,7 +435,7 @@ const styles = StyleSheet.create({
   docRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#334155",
+    backgroundColor: theme.colors.border + '20',
     padding: 10,
     borderRadius: 8,
     marginBottom: 5,
@@ -485,27 +451,11 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   typingText: {
-    color: "#94A3B8",
+    color: theme.colors.textMuted,
     fontSize: 12,
     fontStyle: "italic",
   },
-  uploadingOverlay: {
-    position: "absolute",
-    bottom: 80,
-    left: 20,
-    right: 20,
-    backgroundColor: "rgba(30, 41, 59, 0.9)",
-    padding: 10,
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    zIndex: 100,
-  },
-  uploadText: {
-    color: "white",
-    fontSize: 12,
-  },
+
 });
 
 export default ChatDetails;

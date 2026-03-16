@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import {
     View,
     StyleSheet,
@@ -7,7 +7,6 @@ import {
     Image,
     RefreshControl,
     StatusBar,
-    ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,16 +15,17 @@ import NoDataFound from '../../components/NoDataFound';
 import { useGetNoteReviewsQuery } from '../../features/api/noteApi';
 import useRefresh from '../../hooks/useRefresh';
 import PageHeader from '../../components/PageHeader';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 import { ReviewSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const AllNoteReviews = ({ route, navigation }) => {
     const { noteId } = route.params;
-    const { data, isLoading, isError, refetch } = useGetNoteReviewsQuery(noteId);
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+    const { data, isLoading, refetch } = useGetNoteReviewsQuery(noteId);
     const { refreshing, onRefresh } = useRefresh(refetch);
 
     const reviews = data?.reviews || [];
-
 
     const renderReviewItem = ({ item }) => (
         <TouchableOpacity
@@ -36,23 +36,15 @@ const AllNoteReviews = ({ route, navigation }) => {
                 {item.profilePhoto ? (
                     <Image source={{ uri: item.profilePhoto }} style={styles.reviewerAvatar} />
                 ) : (
-                    <View style={[styles.reviewerAvatar, { justifyContent: 'center', alignItems: 'center' }]}>
-                        <AppText style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>
+                    <View style={[styles.reviewerAvatar, styles.avatarFallback]}>
+                        <AppText style={styles.avatarInitial}>
                             {item.user?.charAt(0) || 'S'}
                         </AppText>
                     </View>
                 )}
                 <View style={{ flex: 1 }}>
                     <AppText style={styles.reviewerName} weight="bold">{item.user}</AppText>
-                    <View style={styles.row}>
-                        <AppText style={styles.reviewDate}>{item.daysAgo}</AppText>
-                        {/* {item.verifiedPurchase && (
-                            <View style={styles.verifiedBadge}>
-                                <Ionicons name="checkmark-seal" size={12} color="#10B981" />
-                                <AppText style={styles.verifiedText}>Verified Learner</AppText>
-                            </View>
-                        )} */}
-                    </View>
+                    <AppText style={styles.reviewDate}>{item.daysAgo}</AppText>
                 </View>
                 <View style={styles.ratingBox}>
                     <Ionicons name="star" size={14} color="#FFD700" />
@@ -64,17 +56,15 @@ const AllNoteReviews = ({ route, navigation }) => {
     );
 
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" />
+        <SafeAreaView style={styles.container} edges={['bottom']}>
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
-            {/* Header */}
             <PageHeader
                 title="Student Reviews"
                 subtitle={`${data?.total || 0} Total Feedback`}
                 onBackPress={() => navigation.goBack()}
             />
 
-            {/* List */}
             <FlatList
                 data={isLoading ? [] : reviews}
                 keyExtractor={(item) => item.id}
@@ -84,6 +74,7 @@ const AllNoteReviews = ({ route, navigation }) => {
                         refreshing={refreshing}
                         onRefresh={onRefresh}
                         tintColor="#FFD700"
+                        backgroundColor="transparent"
                     />
                 }
                 ListEmptyComponent={
@@ -106,16 +97,10 @@ const AllNoteReviews = ({ route, navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
-    },
-    center: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     listContent: {
         paddingHorizontal: 20,
@@ -124,12 +109,12 @@ const styles = StyleSheet.create({
         flexGrow: 1,
     },
     reviewCard: {
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         borderRadius: 20,
         padding: 16,
         marginBottom: 16,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     reviewHeader: {
         flexDirection: 'row',
@@ -141,36 +126,30 @@ const styles = StyleSheet.create({
         height: 40,
         borderRadius: 20,
         marginRight: 12,
-        backgroundColor: '#334155',
+    },
+    avatarFallback: {
+        backgroundColor: theme.colors.surface,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    avatarInitial: {
+        color: theme.colors.text,
+        fontSize: 18,
+        fontWeight: 'bold',
     },
     reviewerName: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 15,
         marginBottom: 2,
     },
-    row: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
     reviewDate: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         fontSize: 12,
-    },
-    verifiedBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 3,
-    },
-    verifiedText: {
-        color: '#10B981',
-        fontSize: 10,
-        fontWeight: 'bold',
     },
     ratingBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 215, 0, 0.1)',
+        backgroundColor: 'rgba(255, 215, 0, 0.12)',
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 8,
@@ -181,10 +160,10 @@ const styles = StyleSheet.create({
         fontSize: 13,
     },
     reviewComment: {
-        color: '#CBD5E1',
+        color: theme.colors.textMuted,
         fontSize: 14,
         lineHeight: 22,
-    }
+    },
 });
 
 export default AllNoteReviews;

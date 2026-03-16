@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useCallback, useRef, useEff
 import { View, Modal, StyleSheet, TouchableOpacity, Text, Dimensions, Animated } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import useTheme from '../hooks/useTheme';
+import { useMemo } from 'react';
 
 // Create Context
 const AlertContext = createContext();
@@ -13,6 +15,7 @@ const { width } = Dimensions.get('window');
  * Custom Alert Component (Internal)
  */
 const AlertModal = ({ config, onClose, onConfirm }) => {
+    const { theme: appTheme } = useTheme();
     if (!config.visible) return null;
 
     // Define styles based on type
@@ -60,7 +63,7 @@ const AlertModal = ({ config, onClose, onConfirm }) => {
             onRequestClose={onClose}
         >
             <View style={styles.overlay}>
-                <View style={styles.alertBox}>
+                <View style={[styles.alertBox, { backgroundColor: appTheme.colors.card, borderColor: appTheme.colors.border }]}>
 
                     {/* Icon Header */}
                     <View style={[styles.iconContainer, { backgroundColor: theme.bg, borderColor: theme.color }]}>
@@ -68,8 +71,8 @@ const AlertModal = ({ config, onClose, onConfirm }) => {
                     </View>
 
                     {/* Content */}
-                    <Text style={styles.title}>{config.title}</Text>
-                    <Text style={styles.message}>{config.message}</Text>
+                    <Text style={[styles.title, { color: appTheme.colors.text }]}>{config.title}</Text>
+                    <Text style={[styles.message, { color: appTheme.colors.textMuted }]}>{config.message}</Text>
 
                     {/* Actions */}
                     <View style={styles.actions}>
@@ -79,7 +82,7 @@ const AlertModal = ({ config, onClose, onConfirm }) => {
                                 style={styles.cancelBtn}
                                 activeOpacity={0.7}
                             >
-                                <Text style={styles.cancelText}>{config.cancelText || "Cancel"}</Text>
+                                <Text style={[styles.cancelText, { color: appTheme.colors.textMuted }]}>{config.cancelText || "Cancel"}</Text>
                             </TouchableOpacity>
                         )}
 
@@ -108,6 +111,7 @@ const AlertModal = ({ config, onClose, onConfirm }) => {
  * Toast Notification (Internal)
  */
 const ToastNotification = ({ config, hideToast }) => {
+    const { theme: appTheme } = useTheme();
     const translateY = useRef(new Animated.Value(-150)).current;
 
     useEffect(() => {
@@ -137,7 +141,7 @@ const ToastNotification = ({ config, hideToast }) => {
     return (
         <Animated.View style={[styles.toastContainer, { transform: [{ translateY }] }]}>
             <TouchableOpacity
-                style={styles.toastContent}
+                style={[styles.toastContent, { backgroundColor: appTheme.colors.card, borderColor: appTheme.colors.border }]}
                 activeOpacity={0.8}
                 onPress={() => {
                     if (config.onPress) config.onPress();
@@ -148,11 +152,11 @@ const ToastNotification = ({ config, hideToast }) => {
                     <Ionicons name="chatbubbles" size={20} color="white" />
                 </View>
                 <View style={styles.toastTextContainer}>
-                    <Text style={styles.toastTitle} numberOfLines={1}>{config.title}</Text>
-                    <Text style={styles.toastMessage} numberOfLines={1}>{config.message}</Text>
+                    <Text style={[styles.toastTitle, { color: appTheme.colors.text }]} numberOfLines={1}>{config.title}</Text>
+                    <Text style={[styles.toastMessage, { color: appTheme.colors.textMuted }]} numberOfLines={1}>{config.message}</Text>
                 </View>
                 <TouchableOpacity onPress={hideToast} style={{ padding: 5 }}>
-                    <Ionicons name="close" size={20} color="#94A3B8" />
+                    <Ionicons name="close" size={20} color={appTheme.colors.textMuted} />
                 </TouchableOpacity>
             </TouchableOpacity>
         </Animated.View>

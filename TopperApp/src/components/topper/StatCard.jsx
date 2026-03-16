@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AppText from '../AppText';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 
 const StatCard = ({ icon, color, bg, value, label }) => {
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
     return (
         <View style={styles.statCard}>
             <View style={[styles.statIconBox, { backgroundColor: bg }]}>
@@ -18,17 +21,17 @@ const StatCard = ({ icon, color, bg, value, label }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     statCard: {
         width: '48%',
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         borderRadius: 20,
         padding: 16,
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 15,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     statIconBox: {
         width: 40,
@@ -40,11 +43,11 @@ const styles = StyleSheet.create({
     },
     statValue: {
         fontSize: 16,
-        color: Theme.colors.text,
+        color: theme.colors.text,
     },
     statLabel: {
         fontSize: 11,
-        color: Theme.colors.textSubtle,
+        color: theme.colors.textSubtle,
     },
 });
 

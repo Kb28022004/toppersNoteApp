@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import AppText from './AppText';
-import { Ionicons, Feather } from '@expo/vector-icons';
-import { Theme } from '../theme/Theme';
+import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import useTheme from '../hooks/useTheme';
 import { getTodayDate, getGreeting } from '../helpers/dateHelpers';
 
 import { HeaderSkeleton } from './skeletons/HomeSkeletons';
@@ -17,10 +17,13 @@ const HomeHeader = ({
     onNotificationPress,
     isLoading = false
 }) => {
-    if (isLoading) return <HeaderSkeleton />;
+    const { theme, isDarkMode, toggleTheme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     const today = useMemo(() => getTodayDate(), []);
     const greeting = useMemo(() => getGreeting(), []);
+
+    if (isLoading) return <HeaderSkeleton />;
 
     // Set fallback avatar based on userType
     const profileImage = userType === 'topper'
@@ -32,7 +35,7 @@ const HomeHeader = ({
         : (userProfile?.fullName?.split(' ')[0] || 'Student');
 
     return (
-        <View style={Theme.header.container}>
+        <View style={theme.header.container}>
             <View style={styles.headerLeft}>
                 <TouchableOpacity
                     style={styles.profileCircle}
@@ -53,6 +56,16 @@ const HomeHeader = ({
                 <View style={styles.actionGroup}>
                     <TouchableOpacity
                         style={styles.actionIconButton}
+                        onPress={toggleTheme}
+                    >
+                        <MaterialCommunityIcons
+                            name={isDarkMode ? "weather-sunny" : "weather-night"}
+                            size={theme.header.iconSize}
+                            color={theme.colors.text}
+                        />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.actionIconButton}
                         onPress={onChatPress}
                     >
                         {unreadMessagesCount > 0 && (
@@ -62,14 +75,14 @@ const HomeHeader = ({
                                 </AppText>
                             </View>
                         )}
-                        <Ionicons name="chatbubble-ellipses-outline" size={Theme.header.iconSize} color="white" />
+                        <Ionicons name="chatbubble-ellipses-outline" size={theme.header.iconSize} color={theme.colors.text} />
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.actionIconButton}
                         onPress={onNotificationPress}
                     >
                         {unreadCount > 0 && <View style={styles.notifDot} />}
-                        <Feather name="bell" size={Theme.header.iconSize} color="white" />
+                        <Feather name="bell" size={theme.header.iconSize} color={theme.colors.text} />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -77,7 +90,7 @@ const HomeHeader = ({
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     headerLeft: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -88,14 +101,14 @@ const styles = StyleSheet.create({
     },
     dateText: {
         fontSize: 12,
-        color: '#64748B',
+        color: theme.colors.textMuted,
         textTransform: 'uppercase',
         letterSpacing: 1.2,
     },
     greetingText: {
-        fontSize: 20, // standardized font size
-        color: 'white',
+        fontSize: 20,
         marginTop: 2,
+        color: theme.colors.text,
     },
     headerRight: {
         flexDirection: 'row',
@@ -121,16 +134,16 @@ const styles = StyleSheet.create({
         width: 8,
         height: 8,
         borderRadius: 4,
-        backgroundColor: '#EF4444',
+        backgroundColor: theme.colors.danger,
         borderWidth: 2,
-        borderColor: '#1E293B',
+        borderColor: theme.colors.background,
         zIndex: 1,
     },
     msgBadge: {
         position: 'absolute',
         top: 2,
         right: 0,
-        backgroundColor: '#3B82F6',
+        backgroundColor: theme.colors.primary,
         minWidth: 16,
         height: 16,
         borderRadius: 8,
@@ -139,18 +152,18 @@ const styles = StyleSheet.create({
         paddingHorizontal: 4,
         zIndex: 1,
         borderWidth: 1.5,
-        borderColor: '#1E293B',
+        borderColor: theme.colors.background,
     },
     msgBadgeText: {
-        color: 'white',
+        color: theme.colors.textInverse,
         fontSize: 9,
         fontWeight: 'bold',
     },
     profileCircle: {
         borderWidth: 2,
-        borderColor: '#10B981',
         borderRadius: 25,
         padding: 2,
+        borderColor: theme.colors.primary,
     },
     avatar: {
         width: 44,

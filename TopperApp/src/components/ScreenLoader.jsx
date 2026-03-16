@@ -1,12 +1,13 @@
 import React, { memo } from 'react';
 import { View, StyleSheet, StatusBar } from 'react-native';
 import Loader from './Loader';
-import { Theme } from '../theme/Theme';
+import useTheme from '../hooks/useTheme';
 
 const ScreenLoader = () => {
+    const { theme, isDarkMode } = useTheme();
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
             <Loader visible={true} />
         </View>
     );
@@ -15,7 +16,6 @@ const ScreenLoader = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
         justifyContent: 'center',
         alignItems: 'center',
     },

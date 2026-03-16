@@ -1,13 +1,15 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, StatusBar } from 'react-native';
 import AppText from '../../components/AppText';
 import { Ionicons } from "@expo/vector-icons";
 import ReusableButton from '../../components/ReausableButton';
 import { useGetProfileQuery } from '../../features/api/topperApi';
 import { useFocusEffect } from '@react-navigation/native';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 
 const TopperApprovalPending = ({ navigation }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { data: profileData, isLoading, refetch, isFetching } = useGetProfileQuery();
 
     useFocusEffect(
@@ -23,7 +25,7 @@ const TopperApprovalPending = ({ navigation }) => {
         if (isLoading) {
             return (
                 <View style={styles.center}>
-                    <ActivityIndicator size="large" color="#ed8936" />
+                    <ActivityIndicator size="large" color={theme.colors.warning} />
                 </View>
             );
         }
@@ -32,8 +34,8 @@ const TopperApprovalPending = ({ navigation }) => {
             case 'APPROVED':
                 return (
                     <>
-                        <View style={[styles.iconContainer, { backgroundColor: 'rgba(72, 187, 120, 0.1)' }]}>
-                            <Ionicons name="checkmark-circle" size={80} color="#48bb78" />
+                        <View style={[styles.iconContainer, { backgroundColor: theme.colors.success + '18' }]}>
+                            <Ionicons name="checkmark-circle" size={80} color={theme.colors.success} />
                         </View>
                         <AppText style={styles.title}>Account Approved!</AppText>
                         <AppText style={styles.subtitle}>
@@ -45,7 +47,7 @@ const TopperApprovalPending = ({ navigation }) => {
                                 index: 0,
                                 routes: [{ name: 'Home' }],
                             })}
-                            style={[styles.button, { backgroundColor: '#48bb78' }]}
+                            style={[styles.button, { backgroundColor: theme.colors.success }]}
                             icon="speedometer"
                         />
                     </>
@@ -54,27 +56,27 @@ const TopperApprovalPending = ({ navigation }) => {
             case 'REJECTED':
                 return (
                     <>
-                        <View style={[styles.iconContainer, { backgroundColor: 'rgba(245, 101, 101, 0.1)' }]}>
-                            <Ionicons name="close-circle" size={80} color="#f56565" />
+                        <View style={[styles.iconContainer, { backgroundColor: theme.colors.danger + '18' }]}>
+                            <Ionicons name="close-circle" size={80} color={theme.colors.danger} />
                         </View>
                         <AppText style={styles.title}>Verification Failed</AppText>
                         <AppText style={styles.subtitle}>
                             Unfortunately, your request could not be approved at this time.
                         </AppText>
 
-                        <View style={styles.reasonBox}>
-                            <AppText style={styles.reasonLabel}>Reason for Rejection:</AppText>
-                            <AppText style={styles.reasonText}>{remark}</AppText>
+                        <View style={[styles.reasonBox, { borderColor: theme.colors.danger + '40', backgroundColor: theme.colors.danger + '08' }]}>
+                            <AppText style={[styles.reasonLabel, { color: theme.colors.danger }]}>Reason for Rejection:</AppText>
+                            <AppText style={[styles.reasonText, { color: theme.colors.textMuted }]}>{remark}</AppText>
                         </View>
 
                         <ReusableButton
                             title="Update & Re-verify"
                             onPress={() => navigation.navigate('TopperVerification')}
-                            style={[styles.button, { backgroundColor: '#f56565' }]}
+                            style={[styles.button, { backgroundColor: theme.colors.danger }]}
                             icon="refresh"
                         />
                         <TouchableOpacity onPress={refetch} style={{ marginTop: 20 }}>
-                            <AppText style={styles.refreshText}>I've updated my profile</AppText>
+                            <AppText style={[styles.refreshText, { color: theme.colors.primary }]}>I've updated my profile</AppText>
                         </TouchableOpacity>
                     </>
                 );
@@ -82,17 +84,17 @@ const TopperApprovalPending = ({ navigation }) => {
             default: // PENDING
                 return (
                     <>
-                        <View style={styles.iconContainer}>
-                            <Ionicons name="time" size={80} color="#ed8936" />
+                        <View style={[styles.iconContainer, { backgroundColor: theme.colors.warning + '18' }]}>
+                            <Ionicons name="time" size={80} color={theme.colors.warning} />
                         </View>
                         <AppText style={styles.title}>Approval Pending</AppText>
                         <AppText style={styles.subtitle}>
                             Your profile is currently under review by our admin team.
                             This usually takes 24-48 hours.
                         </AppText>
-                        <View style={styles.infoBox}>
-                            <Ionicons name="information-circle" size={24} color="#63b3ed" />
-                            <AppText style={styles.infoText}>
+                        <View style={[styles.infoBox, { backgroundColor: theme.colors.primary + '12' }]}>
+                            <Ionicons name="information-circle" size={24} color={theme.colors.primary} />
+                            <AppText style={[styles.infoText, { color: theme.colors.primary }]}>
                                 You will be notified once your profile is verified. Please check back later.
                             </AppText>
                         </View>
@@ -111,30 +113,25 @@ const TopperApprovalPending = ({ navigation }) => {
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
             <View style={styles.content}>
                 {renderContent()}
-
-                {/* {status !== 'APPROVED' && (
-                    <TouchableOpacity onPress={() => navigation.replace('Home')} style={{ marginTop: 25 }}>
-                        <AppText style={styles.backHome}>Back to Home (Viewer Mode)</AppText>
-                    </TouchableOpacity>
-                )} */}
             </View>
         </ScrollView>
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flexGrow: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
         justifyContent: 'center',
         padding: 20,
     },
     center: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
     },
     content: {
         width: '100%',
@@ -142,73 +139,62 @@ const styles = StyleSheet.create({
     },
     iconContainer: {
         marginBottom: 30,
-        backgroundColor: 'rgba(237, 137, 54, 0.1)',
         padding: 30,
         borderRadius: 100,
     },
     title: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 15,
         textAlign: 'center',
     },
     subtitle: {
         fontSize: 16,
-        color: '#a0aec0',
+        color: theme.colors.textMuted,
         textAlign: 'center',
         marginBottom: 40,
         lineHeight: 24,
     },
     infoBox: {
         flexDirection: 'row',
-        backgroundColor: 'rgba(99, 179, 237, 0.1)',
         padding: 20,
-        borderRadius: 12,
+        borderRadius: 16,
         alignItems: 'center',
         gap: 15,
         marginBottom: 40,
+        borderWidth: 1,
+        borderColor: theme.colors.primary + '30',
     },
     infoText: {
         flex: 1,
-        color: '#63b3ed',
         fontSize: 14,
         lineHeight: 20,
     },
     reasonBox: {
         width: '100%',
-        backgroundColor: 'rgba(245, 101, 101, 0.05)',
         padding: 20,
-        borderRadius: 12,
+        borderRadius: 16,
         borderWidth: 1,
-        borderColor: 'rgba(245, 101, 101, 0.2)',
         marginBottom: 30,
     },
     reasonLabel: {
-        color: '#f56565',
         fontWeight: 'bold',
         fontSize: 14,
         marginBottom: 5,
     },
     reasonText: {
-        color: '#cbd5e0',
         fontSize: 14,
         lineHeight: 20,
     },
     button: {
         width: '100%',
-        backgroundColor: '#ed8936',
-    },
-    backHome: {
-        color: '#718096',
-        fontSize: 14,
-        fontWeight: '600'
+        backgroundColor: theme.colors.warning,
     },
     refreshText: {
-        color: '#63b3ed',
         fontSize: 14,
-        fontWeight: '600'
-    }
+        fontWeight: '600',
+    },
 });
 
 export default TopperApprovalPending;

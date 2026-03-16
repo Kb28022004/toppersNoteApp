@@ -6,9 +6,10 @@ import {
     ScrollView,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import AppText from './AppText';
-import { Theme } from '../theme/Theme';
+import useTheme from '../hooks/useTheme';
+import { useMemo } from 'react';
 import BottomSheet from './BottomSheet';
+import AppText from './AppText';
 
 const DEFAULT_SORT_OPTIONS = [
     { label: 'Newest First', value: 'newest', icon: 'clock-outline' },
@@ -40,6 +41,8 @@ const SortModal = ({
     sortOptions = DEFAULT_SORT_OPTIONS,
     timeOptions = DEFAULT_TIME_OPTIONS,
 }) => {
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const scrollOffset = useRef(0);
 
     return (
@@ -217,16 +220,16 @@ const SortModal = ({
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     header: {
         marginBottom: 15,
     },
     headerTitle: {
         fontSize: 18,
-        color: 'white',
+        color: theme.colors.text,
     },
     sectionLabel: {
-        color: '#64748B',
+        color: theme.colors.textSubtle,
         fontSize: 11,
         letterSpacing: 1.5,
         marginBottom: 10,
@@ -241,12 +244,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         borderRadius: 12,
         marginBottom: 6,
-        backgroundColor: Theme.colors.modalItem,
+        backgroundColor: theme.colors.modalItem,
     },
     selectedItem: {
-        backgroundColor: 'rgba(59,130,246,0.1)',
+        backgroundColor: theme.colors.primary + '15',
         borderWidth: 1,
-        borderColor: '#3B82F6',
+        borderColor: theme.colors.primary,
     },
     itemContent: {
         flexDirection: 'row',
@@ -255,19 +258,20 @@ const styles = StyleSheet.create({
     },
     itemLabel: {
         fontSize: 14,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
     },
     selectedLabel: {
-        color: '#3B82F6',
+        color: theme.colors.primary,
     },
     separator: {
         height: 1,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: theme.colors.border,
         marginVertical: 15,
         marginHorizontal: 10,
+        opacity: 0.5,
     },
     applyBtn: {
-        backgroundColor: '#3B82F6',
+        backgroundColor: theme.colors.primary,
         paddingVertical: 15,
         borderRadius: 12,
         alignItems: 'center',
@@ -288,18 +292,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 12,
-        backgroundColor: Theme.colors.modalItem,
+        backgroundColor: theme.colors.modalItem,
     },
     selectedSubjectTag: {
-        backgroundColor: 'rgba(59,130,246,0.1)',
-        borderColor: '#3B82F6',
+        backgroundColor: theme.colors.primary + '15',
+        borderWidth: 1,
+        borderColor: theme.colors.primary,
     },
     subjectTagText: {
         fontSize: 13,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
     },
     selectedSubjectTagText: {
-        color: '#3B82F6',
+        color: theme.colors.primary,
         fontWeight: 'bold',
     },
 });

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
+import useTheme from '../hooks/useTheme';
 
 const SearchBar = ({
     value,
@@ -10,14 +11,17 @@ const SearchBar = ({
     isFilterActive = false,
     style
 }) => {
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
     return (
         <View style={[styles.container, style]}>
             <View style={styles.inputWrapper}>
-                <Feather name="search" size={20} color="#94A3B8" />
+                <Feather name="search" size={20} color={theme.colors.textSubtle} />
                 <TextInput
                     style={styles.input}
                     placeholder={placeholder}
-                    placeholderTextColor="#64748B"
+                    placeholderTextColor={theme.colors.textMuted}
                     value={value}
                     onChangeText={onChangeText}
                     returnKeyType="search"
@@ -31,7 +35,7 @@ const SearchBar = ({
                     <Ionicons
                         name="options-outline"
                         size={24}
-                        color={isFilterActive ? '#fff' : '#00B1FC'}
+                        color={isFilterActive ? theme.colors.textInverse : theme.colors.primary}
                     />
                     {isFilterActive && <View style={styles.activeDot} />}
                 </TouchableOpacity>
@@ -40,7 +44,7 @@ const SearchBar = ({
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -50,35 +54,35 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.inputBackground || theme.colors.surface,
         borderRadius: 12,
         paddingHorizontal: 15,
         height: 50,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     input: {
         flex: 1,
         marginLeft: 10,
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 14,
         height: '100%',
     },
     filterBtn: {
         width: 50,
         height: 50,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.inputBackground || theme.colors.surface,
         borderRadius: 12,
         marginLeft: 10,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
         position: 'relative',
     },
     filterBtnActive: {
-        backgroundColor: '#3B82F6',
-        borderColor: '#3B82F6',
+        backgroundColor: theme.colors.primary,
+        borderColor: theme.colors.primary,
     },
     activeDot: {
         position: 'absolute',
@@ -87,9 +91,9 @@ const styles = StyleSheet.create({
         width: 8,
         height: 8,
         borderRadius: 4,
-        backgroundColor: '#FBBF24',
+        backgroundColor: theme.colors.warning,
         borderWidth: 1.5,
-        borderColor: '#3B82F6',
+        borderColor: theme.colors.primary,
     },
 });
 

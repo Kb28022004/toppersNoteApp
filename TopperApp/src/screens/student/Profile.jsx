@@ -19,7 +19,7 @@ import AppText from '../../components/AppText';
 import Loader from '../../components/Loader';
 import ScreenLoader from '../../components/ScreenLoader';
 import PageHeader from '../../components/PageHeader';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAlert } from '../../context/AlertContext';
 import { useSelector } from 'react-redux';
@@ -30,6 +30,8 @@ import { ProfileHeaderSkeleton } from '../../components/skeletons/HomeSkeletons'
 const { width } = Dimensions.get('window');
 
 const Profile = ({ navigation }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { showAlert } = useAlert();
     const { data: profile, isLoading, refetch } = useGetProfileQuery();
     const { refreshing, onRefresh } = useRefresh(refetch);
@@ -95,34 +97,34 @@ const Profile = ({ navigation }) => {
         }
     };
 
-    const sections = [
+    const sections = useMemo(() => [
         {
             title: 'Learning Journey',
             items: [
-                { title: 'My Library', icon: 'library-outline', screen: 'MyLibrary', params: { initialTab: 'Purchases' }, color: '#00B1FC' },
-                { title: 'My Following', icon: 'people-outline', screen: 'FollowingList', color: '#A855F7' },
-                { title: 'Favourite Notes', icon: 'heart-outline', screen: 'MyLibrary', params: { initialTab: 'Favorites' }, color: '#F43F5E' },
-                { title: 'Refer & Earn', icon: 'gift-outline', screen: 'ReferAndEarn', color: '#F59E0B' },
+                { title: 'My Library', icon: 'library-outline', screen: 'MyLibrary', params: { initialTab: 'Purchases' }, color: theme.colors.primary },
+                { title: 'My Following', icon: 'people-outline', screen: 'FollowingList', color: theme.colors.primary },
+                { title: 'Favourite Notes', icon: 'heart-outline', screen: 'MyLibrary', params: { initialTab: 'Favorites' }, color: theme.colors.danger },
+                { title: 'Refer & Earn', icon: 'gift-outline', screen: 'ReferAndEarn', color: theme.colors.warning },
             ]
         },
         {
             title: 'Payments & History',
             items: [
-                { title: 'Transaction History', icon: 'receipt-outline', screen: 'TransactionHistory', color: '#10B981' },
-                { title: 'Purchase Methods', icon: 'card-outline', color: '#F43F5E' },
+                { title: 'Transaction History', icon: 'receipt-outline', screen: 'TransactionHistory', color: theme.colors.success },
+                { title: 'Purchase Methods', icon: 'card-outline', color: theme.colors.danger },
             ]
         },
         {
             title: 'Personal Info',
             items: [
-                { title: 'Edit Profile', icon: 'person-outline', screen: 'AccountSettings', color: '#6366F1' },
+                { title: 'Edit Profile', icon: 'person-outline', screen: 'AccountSettings', color: theme.colors.primary },
             ]
         }
-    ];
+    ], [theme]);
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
             <PageHeader
                 title="Settings"
@@ -130,7 +132,7 @@ const Profile = ({ navigation }) => {
                 iconName="chevron-back"
                 rightComponent={
                     <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
-                        <Feather name="log-out" size={18} color="#EF4444" />
+                        <Feather name="log-out" size={18} color={theme.colors.danger} />
                     </TouchableOpacity>
                 }
             />
@@ -139,7 +141,7 @@ const Profile = ({ navigation }) => {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00B1FC" />
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />
                 }
             >
                 {isLoading ? (
@@ -156,7 +158,7 @@ const Profile = ({ navigation }) => {
                                     />
                                 </TouchableOpacity>
                                 <TouchableOpacity style={styles.editBadge} onPress={handleUpdatePhoto}>
-                                    <Feather name="camera" size={12} color="white" />
+                                    <Feather name="camera" size={12} color={theme.colors.textInverse} />
                                 </TouchableOpacity>
                             </View>
 
@@ -171,33 +173,33 @@ const Profile = ({ navigation }) => {
                         {/* Achievement Stats Row */}
                         <View style={styles.statsRow}>
                             <LinearGradient
-                                colors={['#1E293B', '#111827']}
+                                colors={isDarkMode ? [theme.colors.card, theme.colors.background] : [theme.colors.surface, theme.colors.background]}
                                 style={styles.statCard}
                             >
                                 <View style={styles.statIconBox}>
-                                    <Ionicons name="documents" size={20} color="#00B1FC" />
+                                    <Ionicons name="documents" size={20} color={theme.colors.primary} />
                                 </View>
                                 <AppText style={styles.statValue} weight="bold">{profile?.stats?.notesPurchased || 0}</AppText>
                                 <AppText style={styles.statLabel}>Purchased</AppText>
                             </LinearGradient>
 
                             <LinearGradient
-                                colors={['#1E293B', '#111827']}
+                                colors={isDarkMode ? [theme.colors.card, theme.colors.background] : [theme.colors.surface, theme.colors.background]}
                                 style={styles.statCard}
                             >
-                                <View style={[styles.statIconBox, { backgroundColor: '#10B98115' }]}>
-                                    <Ionicons name="time" size={20} color="#10B981" />
+                                <View style={[styles.statIconBox, { backgroundColor: theme.colors.success + '15' }]}>
+                                    <Ionicons name="time" size={20} color={theme.colors.success} />
                                 </View>
                                 <AppText style={styles.statValue} weight="bold">{formatRealTime(profile?.stats?.hoursStudied || 0, sessionSeconds)}</AppText>
                                 <AppText style={styles.statLabel}>Studied</AppText>
                             </LinearGradient>
 
                             <LinearGradient
-                                colors={['#1E293B', '#111827']}
+                                colors={isDarkMode ? [theme.colors.card, theme.colors.background] : [theme.colors.surface, theme.colors.background]}
                                 style={styles.statCard}
                             >
-                                <View style={[styles.statIconBox, { backgroundColor: '#F59E0B15' }]}>
-                                    <Ionicons name="people" size={20} color="#F59E0B" />
+                                <View style={[styles.statIconBox, { backgroundColor: theme.colors.warning + '15' }]}>
+                                    <Ionicons name="people" size={20} color={theme.colors.warning} />
                                 </View>
                                 <AppText style={styles.statValue} weight="bold">{profile?.stats?.followingCount || 0}</AppText>
                                 <AppText style={styles.statLabel}>Following</AppText>
@@ -209,7 +211,7 @@ const Profile = ({ navigation }) => {
                 {/* Learning Streak Banner */}
                 <View style={styles.streakBanner}>
                     <View style={styles.streakIcon}>
-                        <MaterialCommunityIcons name="fire" size={20} color={profile?.stats?.streakCount > 0 ? "#EF4444" : "#94A3B8"} />
+                        <MaterialCommunityIcons name="fire" size={20} color={profile?.stats?.streakCount > 0 ? theme.colors.danger : theme.colors.textMuted} />
                     </View>
                     <View style={{ flex: 1, marginLeft: 12 }}>
                         <AppText style={styles.streakTitle} weight="bold">
@@ -231,7 +233,7 @@ const Profile = ({ navigation }) => {
                             />
                         </View>
                         {profile?.stats?.streakCount > 0 && (
-                            <AppText style={{ fontSize: 10, color: '#94A3B8', marginTop: 4 }}>
+                            <AppText style={{ fontSize: 10, color: theme.colors.textMuted, marginTop: 4 }}>
                                 {profile.stats.streakCount % 7 === 0
                                     ? "🔥 Weekly Milestone Reached!"
                                     : `${7 - (profile.stats.streakCount % 7)} more days to a 7-day milestone!`}
@@ -255,7 +257,7 @@ const Profile = ({ navigation }) => {
                                         <Ionicons name={item.icon} size={20} color={item.color} />
                                     </View>
                                     <AppText style={styles.menuLabel} weight="medium">{item.title}</AppText>
-                                    <Feather name="chevron-right" size={18} color="#475569" />
+                                    <Feather name="chevron-right" size={18} color={theme.colors.textSubtle} />
                                 </TouchableOpacity>
                             ))}
                         </View>
@@ -278,16 +280,16 @@ const Profile = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     logoutBtn: {
         width: 36,
         height: 36,
         borderRadius: 12,
-        backgroundColor: '#EF444415',
+        backgroundColor: theme.colors.danger + '15',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -307,49 +309,49 @@ const styles = StyleSheet.create({
         height: 100,
         borderRadius: 50,
         borderWidth: 3,
-        borderColor: '#1E293B',
+        borderColor: theme.colors.card,
     },
     editBadge: {
         position: 'absolute',
         bottom: 2,
         right: 2,
-        backgroundColor: '#00B1FC',
+        backgroundColor: theme.colors.primary,
         width: 28,
         height: 28,
         borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 3,
-        borderColor: '#0F172A',
+        borderColor: theme.colors.background,
     },
     userName: {
         fontSize: 24,
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 6,
     },
     classInfo: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     classText: {
-        color: '#00B1FC',
+        color: theme.colors.primary,
         fontSize: 13,
     },
     dot: {
         width: 4,
         height: 4,
         borderRadius: 2,
-        backgroundColor: '#475569',
+        backgroundColor: theme.colors.border,
         marginHorizontal: 10,
     },
     boardText: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 13,
     },
     statsRow: {
@@ -364,77 +366,77 @@ const styles = StyleSheet.create({
         borderRadius: 22,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#33415550',
+        borderColor: theme.colors.border + '50',
     },
     statIconBox: {
         width: 36,
         height: 36,
         borderRadius: 12,
-        backgroundColor: '#00B1FC15',
+        backgroundColor: theme.colors.primary + '15',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 10,
     },
     statValue: {
         fontSize: 18,
-        color: 'white',
+        color: theme.colors.text,
     },
     statLabel: {
         fontSize: 10,
-        color: '#64748B',
+        color: theme.colors.textSubtle,
         marginTop: 2,
     },
     streakBanner: {
         marginHorizontal: 20,
-        backgroundColor: '#EF444410',
+        backgroundColor: theme.colors.danger + '10',
         padding: 16,
         borderRadius: 20,
         flexDirection: 'row',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#EF444420',
+        borderColor: theme.colors.danger + '20',
         marginBottom: 30,
     },
     streakIcon: {
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#EF444420',
+        backgroundColor: theme.colors.danger + '20',
         justifyContent: 'center',
         alignItems: 'center',
     },
     streakTitle: {
         fontSize: 14,
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 8,
     },
     streakProgressBg: {
         height: 4,
-        backgroundColor: '#EF444420',
+        backgroundColor: theme.colors.danger + '20',
         borderRadius: 2,
         overflow: 'hidden',
     },
     streakProgressFill: {
         height: '100%',
-        backgroundColor: '#EF4444',
+        backgroundColor: theme.colors.danger,
     },
     menuSection: {
         marginBottom: 30,
     },
     sectionLabel: {
         fontSize: 12,
-        color: '#475569',
+        color: theme.colors.textMuted,
         textTransform: 'uppercase',
         letterSpacing: 1.5,
         marginLeft: 24,
         marginBottom: 12,
     },
     menuGroup: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         marginHorizontal: 20,
         borderRadius: 24,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
         overflow: 'hidden',
     },
     menuItem: {
@@ -442,7 +444,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#33415540',
+        borderBottomColor: theme.colors.border + '40',
     },
     menuIconBox: {
         width: 38,
@@ -455,21 +457,21 @@ const styles = StyleSheet.create({
     menuLabel: {
         flex: 1,
         fontSize: 15,
-        color: 'white',
+        color: theme.colors.text,
     },
     dangerBtn: {
         marginHorizontal: 20,
         paddingVertical: 18,
         borderRadius: 22,
-        backgroundColor: '#EF444410',
+        backgroundColor: theme.colors.danger + '10',
         borderWidth: 1,
-        borderColor: '#EF444430',
+        borderColor: theme.colors.danger + '30',
         alignItems: 'center',
         marginTop: 10,
         marginBottom: 35,
     },
     dangerText: {
-        color: '#EF4444',
+        color: theme.colors.danger,
         fontSize: 15,
     },
 });

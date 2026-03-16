@@ -24,12 +24,15 @@ import { useToggleFavoriteNoteMutation } from '../../features/api/noteApi';
 import { useInitializeChatMutation } from '../../features/api/chatApi';
 import useRefresh from '../../hooks/useRefresh';
 import { useAlert } from '../../context/AlertContext';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
+import { useMemo } from 'react';
 import { ProfileHeaderSkeleton, LibraryNoteSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const { width } = Dimensions.get('window');
 
 const PublicTopperProfile = ({ route, navigation }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { showAlert } = useAlert();
     const { topperId, isPreview = false } = route.params;
     const { data: profile, isLoading, isError, refetch } = useGetPublicProfileQuery(topperId);
@@ -73,7 +76,7 @@ const PublicTopperProfile = ({ route, navigation }) => {
 
     if (isError) return (
         <View style={styles.center}>
-            <AppText style={{ color: '#EF4444' }}>Profile not found {topperId}</AppText>
+            <AppText style={{ color: theme.colors.danger }}>Profile not found {topperId}</AppText>
         </View>
     );
 
@@ -174,7 +177,7 @@ const PublicTopperProfile = ({ route, navigation }) => {
                         <Ionicons
                             name={item.isFavorite ? "heart" : "heart-outline"}
                             size={16}
-                            color={item.isFavorite ? "#F43F5E" : "white"}
+                            color={item.isFavorite ? theme.colors.danger : "white"}
                         />
                     </TouchableOpacity>
                 )}
@@ -191,7 +194,7 @@ const PublicTopperProfile = ({ route, navigation }) => {
                     </View>
                     <View style={styles.ratingRow}>
                         <AppText style={styles.ratingText}>{item.rating !== undefined ? item.rating : 'N/A'}</AppText>
-                        <Ionicons name="star" size={10} color="#FFD700" />
+                        <Ionicons name="star" size={10} color={theme.colors.warning || "#FFD700"} />
                     </View>
                 </View>
 
@@ -231,7 +234,7 @@ const PublicTopperProfile = ({ route, navigation }) => {
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
             >
 
                 {isLoading ? (
@@ -244,7 +247,7 @@ const PublicTopperProfile = ({ route, navigation }) => {
                                 <Image source={profilePhoto ? { uri: profilePhoto } : require('../../../assets/topper.avif')} style={styles.avatar} />
                                 {verified && (
                                     <View style={styles.verifyBadge}>
-                                        <MaterialCommunityIcons name="check-decagram" size={20} color="#00B1FC" />
+                                        <MaterialCommunityIcons name="check-decagram" size={20} color={theme.colors.primary} />
                                         {/* Using icon directly, white bg added via container style if needed, but icon usually enough */}
                                         <View style={{ position: 'absolute', backgroundColor: 'white', width: 10, height: 10, zIndex: -1, borderRadius: 5, top: 5, left: 5 }} />
                                     </View>
@@ -255,7 +258,7 @@ const PublicTopperProfile = ({ route, navigation }) => {
 
                             {/* Credentials Pill */}
                             <View style={styles.credentialsPill}>
-                                <Ionicons name="school" size={14} color="#3B82F6" />
+                                <Ionicons name="school" size={14} color={theme.colors.primary} />
                                 <AppText style={styles.credentialsText}>
                                     {`Class ${expertiseClass || 'N/A'}`}
                                     {stream ? ` • ${stream}` : ''}
@@ -269,7 +272,7 @@ const PublicTopperProfile = ({ route, navigation }) => {
                                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginBottom: 25 }}>
                                     {highlights.map((h, i) => (
                                         <View key={i} style={styles.highlightPill}>
-                                            <Ionicons name="star" size={12} color="#F59E0B" />
+                                            <Ionicons name="star" size={12} color={theme.colors.warning || "#F59E0B"} />
                                             <AppText style={styles.highlightText}>{h}</AppText>
                                         </View>
                                     ))}
@@ -285,7 +288,7 @@ const PublicTopperProfile = ({ route, navigation }) => {
                                 <View style={styles.statBox}>
                                     <View style={styles.row}>
                                         <AppText style={styles.statValue} weight="bold">{stats?.rating?.average !== undefined ? stats.rating.average : '0.0'}</AppText>
-                                        <Ionicons name="star" size={12} color="#FFD700" style={{ marginLeft: 3 }} />
+                                        <Ionicons name="star" size={12} color={theme.colors.warning || "#FFD700"} style={{ marginLeft: 3 }} />
                                     </View>
                                     <AppText style={styles.statLabel}>RATING</AppText>
                                 </View>
@@ -298,9 +301,9 @@ const PublicTopperProfile = ({ route, navigation }) => {
                             {/* Action Buttons */}
                             {!isPreview && (
                                 <View style={styles.actionButtons}>
-                                    <TouchableOpacity style={[styles.followBtn, following && { backgroundColor: '#334155' }]} onPress={handleFollow} disabled={isFollowing}>
-                                        <Ionicons name={following ? "checkmark" : "person-add"} size={18} color="white" />
-                                        <AppText style={styles.followText}>{following ? 'Following' : 'Follow'}</AppText>
+                                    <TouchableOpacity style={[styles.followBtn, following && { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.primary }]} onPress={handleFollow} disabled={isFollowing}>
+                                        <Ionicons name={following ? "checkmark" : "person-add"} size={18} color={following ? theme.colors.primary : "white"} />
+                                        <AppText style={[styles.followText, following && { color: theme.colors.primary }]}>{following ? 'Following' : 'Follow'}</AppText>
                                     </TouchableOpacity>
 
                                     <TouchableOpacity style={styles.messageBtn} onPress={handleMessage} disabled={isChatLoading}>
@@ -308,7 +311,7 @@ const PublicTopperProfile = ({ route, navigation }) => {
                                             <ActivityIndicator size="small" color="#E2E8F0" />
                                         ) : (
                                             <>
-                                                <MaterialCommunityIcons name="email-outline" size={20} color="#E2E8F0" />
+                                                <MaterialCommunityIcons name="email-outline" size={20} color={theme.colors.textSubtle || "#E2E8F0"} />
                                                 <AppText style={styles.messageText}>Message</AppText>
                                             </>
                                         )}
@@ -318,10 +321,10 @@ const PublicTopperProfile = ({ route, navigation }) => {
 
                             {/* Subject Marks & Marksheet ALWAYS VISIBLE */}
                             {((subjectMarks && subjectMarks.length > 0) || marksheetUrl) && (
-                                <View style={{ width: '100%', marginBottom: 25, backgroundColor: 'rgba(30, 41, 59, 0.4)', borderRadius: 12, padding: 15, borderWidth: 1, borderColor: Theme.colors.border }}>
+                                <View style={{ width: '100%', marginBottom: 25, backgroundColor: theme.colors.card + '60', borderRadius: 12, padding: 15, borderWidth: 1, borderColor: theme.colors.border }}>
                                     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 15, gap: 8 }}>
-                                        <Ionicons name="ribbon-outline" size={18} color="#00B1FC" />
-                                        <AppText weight="bold" style={{ fontSize: 15, color: '#E2E8F0' }}>Academic Verification</AppText>
+                                        <Ionicons name="ribbon-outline" size={18} color={theme.colors.primary} />
+                                        <AppText weight="bold" style={{ fontSize: 15, color: theme.colors.text }}>Academic Verification</AppText>
                                     </View>
 
                                     {subjectMarks && subjectMarks.map((mark, idx) => (
@@ -348,10 +351,10 @@ const PublicTopperProfile = ({ route, navigation }) => {
                             {/* Accordion / Info */}
                             <TouchableOpacity style={styles.accordion} onPress={() => setIsBioExpanded(!isBioExpanded)}>
                                 <View style={styles.row}>
-                                    <Ionicons name="information-circle" size={18} color="#94A3B8" />
+                                    <Ionicons name="information-circle" size={18} color={theme.colors.textMuted} />
                                     <AppText style={styles.accordionTitle}>About Me & Background</AppText>
                                 </View>
-                                <Ionicons name={isBioExpanded ? "chevron-up" : "chevron-down"} size={18} color="#94A3B8" />
+                                <Ionicons name={isBioExpanded ? "chevron-up" : "chevron-down"} size={18} color={theme.colors.textMuted} />
                             </TouchableOpacity>
                             {isBioExpanded && (
                                 <View style={styles.bioContent}>
@@ -441,7 +444,7 @@ const PublicTopperProfile = ({ route, navigation }) => {
                                                 ))
                                             ) : (
                                                 <View style={{ marginTop: 20, alignItems: 'center' }}>
-                                                    <AppText style={{ color: '#94A3B8' }}>No notes available.</AppText>
+                                                    <AppText style={{ color: theme.colors.textMuted }}>No notes available.</AppText>
                                                 </View>
                                             )
                                         ) : idx === 1 ? (
@@ -450,7 +453,7 @@ const PublicTopperProfile = ({ route, navigation }) => {
                                             </View>
                                         ) : (
                                             <View style={{ marginTop: 20, alignItems: 'center' }}>
-                                                <AppText style={{ color: '#94A3B8' }}>No free material available.</AppText>
+                                                <AppText style={{ color: theme.colors.textMuted }}>No free material available.</AppText>
                                             </View>
                                         )
                                     )}
@@ -466,7 +469,7 @@ const PublicTopperProfile = ({ route, navigation }) => {
                 <View style={[styles.modalHeader, { paddingBottom: 15 }]}>
                     <AppText style={styles.modalTitle} weight="bold">Profile Options</AppText>
                     <TouchableOpacity onPress={() => setIsOptionsVisible(false)}>
-                        <Ionicons name="close" size={24} color="#64748B" />
+                        <Ionicons name="close" size={24} color={theme.colors.textMuted} />
                     </TouchableOpacity>
                 </View>
 
@@ -485,32 +488,26 @@ const PublicTopperProfile = ({ route, navigation }) => {
                 </TouchableOpacity>
 
                 <TouchableOpacity style={[styles.optionBtn, styles.deleteOptionBtn]} onPress={handleReport}>
-                    <View style={[styles.optionIconContainer, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
-                        <Ionicons name="flag-outline" size={22} color="#EF4444" />
+                    <View style={[styles.optionIconContainer, { backgroundColor: theme.colors.danger + '20' }]}>
+                        <Ionicons name="flag-outline" size={22} color={theme.colors.danger} />
                     </View>
-                    <AppText style={[styles.optionText, { color: '#EF4444' }]} weight="medium">Report Profile</AppText>
+                    <AppText style={[styles.optionText, { color: theme.colors.danger }]} weight="medium">Report Profile</AppText>
                 </TouchableOpacity>
             </BottomSheet>
         </View>
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     center: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: Theme.colors.background,
-    },
-    center: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     headerActions: {
         flexDirection: 'row',
@@ -536,7 +533,7 @@ const styles = StyleSheet.create({
         height: 100,
         borderRadius: 50,
         borderWidth: 3,
-        borderColor: Theme.colors.card,
+        borderColor: theme.colors.card,
     },
     verifyBadge: {
         position: 'absolute',
@@ -544,38 +541,38 @@ const styles = StyleSheet.create({
         right: 5,
     },
     name: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 22,
         marginBottom: 8,
     },
     credentialsPill: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(59, 130, 246, 0.15)', // Better than the hardcoded dark blue
+        backgroundColor: theme.colors.primary + '20',
         paddingHorizontal: 15,
         paddingVertical: 6,
         borderRadius: 20,
         gap: 6,
-        marginBottom: 10, // Reduced from 25 to make room for highlights
+        marginBottom: 10,
     },
     credentialsText: {
-        color: '#60A5FA', // Light Blue
+        color: theme.colors.primary,
         fontSize: 12,
         fontWeight: '600',
     },
     highlightPill: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+        backgroundColor: theme.colors.warning + '10',
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: 'rgba(245, 158, 11, 0.2)',
+        borderColor: theme.colors.warning + '20',
         gap: 4,
     },
     highlightText: {
-        color: '#FBBF24',
+        color: theme.colors.warning,
         fontSize: 11,
         fontWeight: 'bold',
     },
@@ -588,21 +585,21 @@ const styles = StyleSheet.create({
     },
     statBox: {
         flex: 1,
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         paddingVertical: 15,
         borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     statValue: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 18,
         marginBottom: 4,
     },
     statLabel: {
-        color: Theme.colors.textSubtle,
+        color: theme.colors.textSubtle,
         fontSize: 10,
         fontWeight: 'bold',
         letterSpacing: 0.5,
@@ -615,7 +612,7 @@ const styles = StyleSheet.create({
     },
     followBtn: {
         flex: 1,
-        backgroundColor: Theme.colors.primary,
+        backgroundColor: theme.colors.primary,
         paddingVertical: 12,
         borderRadius: 12,
         flexDirection: 'row',
@@ -630,9 +627,9 @@ const styles = StyleSheet.create({
     },
     messageBtn: {
         flex: 1,
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
         paddingVertical: 12,
         borderRadius: 12,
         flexDirection: 'row',
@@ -641,7 +638,7 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     messageText: {
-        color: '#E2E8F0',
+        color: theme.colors.textSubtle,
         fontWeight: '600',
         fontSize: 16,
     },
@@ -650,30 +647,30 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         padding: 15,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     accordionTitle: {
-        color: '#E2E8F0',
+        color: theme.colors.text,
         fontSize: 14,
         fontWeight: '500',
         marginLeft: 8,
     },
     bioContent: {
         width: '100%',
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         padding: 15,
         borderBottomLeftRadius: 12,
         borderBottomRightRadius: 12,
         marginTop: 2,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     bioText: {
-        color: Theme.colors.textSubtle,
+        color: theme.colors.textSubtle,
         fontSize: 14,
         lineHeight: 20,
     },
@@ -681,35 +678,35 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: 'rgba(30, 41, 59, 0.5)',
+        backgroundColor: theme.colors.surface + '80',
         paddingHorizontal: 15,
         paddingVertical: 10,
         borderRadius: 8,
         marginBottom: 6,
         borderWidth: 1,
-        borderColor: 'rgba(51, 65, 85, 0.5)',
+        borderColor: theme.colors.border + '40',
     },
     marksSubject: {
-        color: '#E2E8F0',
+        color: theme.colors.text,
         fontSize: 13,
         fontWeight: '500',
     },
     markBadge: {
-        backgroundColor: '#10B981',
-        paddingHorizontal: 8,
+        backgroundColor: theme.colors.success,
+        paddingHorizontal: 6,
         paddingVertical: 2,
-        borderRadius: 12,
+        borderRadius: 8,
     },
     markValue: {
         color: 'white',
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: 'bold',
     },
     marksheetBtn: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#3B82F6',
+        backgroundColor: theme.colors.primary,
         paddingVertical: 12,
         borderRadius: 12,
         marginTop: 20,
@@ -720,7 +717,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     emptyText: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 14,
         marginTop: 10,
     },
@@ -732,14 +729,14 @@ const styles = StyleSheet.create({
     },
     modalTitle: {
         fontSize: 18,
-        color: 'white',
+        color: theme.colors.text,
     },
     optionBtn: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: 15,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+        borderBottomColor: theme.colors.border + '20',
     },
     deleteOptionBtn: {
         borderBottomWidth: 0,
@@ -749,14 +746,16 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: theme.colors.card,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 15,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
     },
     optionText: {
         fontSize: 16,
-        color: 'white',
+        color: theme.colors.text,
     },
     tabsContainer: {
         flexDirection: 'row',
@@ -768,16 +767,16 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         paddingVertical: 8,
         borderRadius: 20,
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     activeTab: {
-        backgroundColor: Theme.colors.primary,
-        borderColor: Theme.colors.primary,
+        backgroundColor: theme.colors.primary,
+        borderColor: theme.colors.primary,
     },
     tabText: {
-        color: Theme.colors.textSubtle,
+        color: theme.colors.textSubtle,
         fontSize: 12,
         fontWeight: '500',
     },
@@ -789,11 +788,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     sectionTitle: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 18,
     },
     viewAllText: {
-        color: Theme.colors.primary,
+        color: theme.colors.primary,
         fontSize: 12,
     },
     rowBetween: {
@@ -808,12 +807,12 @@ const styles = StyleSheet.create({
     },
     noteCard: {
         flexDirection: 'row',
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         borderRadius: 12,
         padding: 10,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     noteThumbnail: {
         width: 80,
@@ -851,13 +850,13 @@ const styles = StyleSheet.create({
         marginBottom: 6,
     },
     subjectTag: {
-        backgroundColor: 'rgba(234, 88, 12, 0.2)', // Orange tint
+        backgroundColor: theme.colors.warning + '20',
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 4,
     },
     subjectText: {
-        color: '#FB923C', // Orange
+        color: theme.colors.warning,
         fontSize: 10,
         fontWeight: 'bold',
     },
@@ -867,12 +866,12 @@ const styles = StyleSheet.create({
         gap: 2,
     },
     ratingText: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 12,
         fontWeight: 'bold',
     },
     noteTitle: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 14,
         fontWeight: '600',
         marginBottom: 8,
@@ -884,12 +883,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     strikePrice: {
-        color: Theme.colors.textSubtle,
+        color: theme.colors.textSubtle,
         fontSize: 10,
         textDecorationLine: 'line-through',
     },
     price: {
-        color: Theme.colors.primary,
+        color: theme.colors.primary,
         fontSize: 16,
         fontWeight: 'bold',
     },
@@ -897,7 +896,7 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: Theme.colors.border,
+        backgroundColor: theme.colors.border,
         justifyContent: 'center',
         alignItems: 'center',
     },

@@ -29,7 +29,7 @@ import NoDataFound from '../../components/NoDataFound';
 import SortModal from '../../components/SortModal';
 import HomeHeader from '../../components/HomeHeader';
 import { useAlert } from '../../context/AlertContext';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 
 import PromoBanners from './studentHome/PromoBanners';
 import TrendingNotes from './studentHome/TrendingNotes';
@@ -40,6 +40,8 @@ import ProTipCard from './studentHome/ProTipCard';
 const { width } = Dimensions.get('window');
 
 const StudentHome = ({ navigation }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { showAlert } = useAlert();
     const { searchQuery, localSearch, setLocalSearch } = useDebounceSearch();
     const [activeCategory, setActiveCategory] = useState('All');
@@ -136,8 +138,7 @@ const StudentHome = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            {/* <Loader visible={notesFetching && !refreshing} /> */}
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
             {/* Header */}
             <HomeHeader
@@ -158,9 +159,9 @@ const StudentHome = ({ navigation }) => {
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={onRefresh}
-                        tintColor="#00B1FC"
-                        colors={["#00B1FC"]}
-                        backgroundColor={Theme.colors.background}
+                        tintColor={theme.colors.primary}
+                        colors={[theme.colors.primary]}
+                        backgroundColor="transparent"
                     />
                 }
             >
@@ -226,10 +227,10 @@ const StudentHome = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     scrollContent: {
         paddingTop: 10,
@@ -251,16 +252,16 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 18,
-        color: 'white',
+        color: theme.colors.text,
     },
     sectionSub: {
         fontSize: 12,
-        color: '#64748B',
+        color: theme.colors.textMuted,
         marginTop: 2,
     },
     seeAllText: {
         fontSize: 14,
-        color: '#00B1FC',
+        color: theme.colors.primary,
         fontWeight: 'bold',
     },
 });

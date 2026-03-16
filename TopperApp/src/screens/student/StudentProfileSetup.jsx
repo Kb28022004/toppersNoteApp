@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
+import { useMemo,useState,useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image, Platform, ScrollView } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import * as ImagePicker from 'expo-image-picker';
@@ -69,6 +69,8 @@ const SUBJECTS_DATA = {
 
 
 const StudentProfileSetup = ({ navigation }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { showAlert } = useAlert();
 
     const [fullName, setFullName] = useState('');
@@ -191,7 +193,7 @@ const StudentProfileSetup = ({ navigation }) => {
                         onBackPress={handleBack}
                         paddingHorizontal={20}
                     />
-                    <View style={{ paddingHorizontal: Theme.layout.screenPadding }}>
+                    <View style={{ paddingHorizontal: theme.layout.screenPadding }}>
                         <Stepper currentStep={3} totalSteps={3} />
                     </View>
 
@@ -311,7 +313,7 @@ const StudentProfileSetup = ({ navigation }) => {
                                                 style={[styles.subjectChip, isSelected && styles.subjectChipSelected]}
                                                 onPress={() => toggleSubject(sub.id)}
                                             >
-                                                <Ionicons name={sub.icon} size={18} color={isSelected ? "white" : "#a0aec0"} />
+                                                <Ionicons name={sub.icon} size={18} color={isSelected ? "white" : theme.colors.textSubtle} />
                                                 <AppText style={[styles.subjectText, isSelected && styles.subjectTextSelected]}>
                                                     {sub.name}
                                                 </AppText>
@@ -337,31 +339,51 @@ const StudentProfileSetup = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     mainContainer: { flex: 1 },
-    container: { flex: 1 },
-    scrollContent: { paddingBottom: 40, paddingHorizontal: Theme.layout.screenPadding },
+    container: { flex: 1, backgroundColor: theme.colors.background },
+    scrollContent: { paddingBottom: 40, paddingHorizontal: theme.layout.screenPadding },
     profileSection: { alignItems: 'center', marginVertical: 20 },
     avatarContainer: { position: 'relative' },
-    avatar: { width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: '#4377d8ff' },
-    editIcon: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#4377d8ff', padding: 8, borderRadius: 20, borderWidth: 2, borderColor: '#1a202c' },
-    uploadText: { color: '#4377d8ff', marginTop: 10, fontSize: 14, fontWeight: '600' },
+    avatar: { width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: theme.colors.primary },
+    editIcon: { position: 'absolute', bottom: 0, right: 0, backgroundColor: theme.colors.primary, padding: 8, borderRadius: 20, borderWidth: 2, borderColor: theme.colors.background },
+    uploadText: { color: theme.colors.primary, marginTop: 10, fontSize: 14, fontWeight: '600' },
     formGroup: { marginBottom: 20 },
     labelRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-    label: { fontSize: 14, fontWeight: '600', color: '#E2E8F0' },
-    required: { fontSize: 15, color: '#EF4444', fontWeight: '700' },
-    subLabel: { fontSize: 12, color: '#a0aec0', marginBottom: 10 },
+    label: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
+    required: { fontSize: 15, color: theme.colors.danger, fontWeight: '700' },
+    subLabel: { fontSize: 12, color: theme.colors.textMuted, marginBottom: 10 },
     row: { flexDirection: 'row', gap: 10 },
-    chip: { width: 50, height: 50, borderRadius: 12, backgroundColor: 'rgba(58, 60, 63, 0.5)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)', marginRight: 10 },
-    chipSelected: { backgroundColor: '#4377d8ff', borderColor: '#4377d8ff' },
-    chipText: { color: '#a0aec0', fontSize: 16, fontWeight: 'bold' },
+    chip: {
+        width: 50,
+        height: 50,
+        borderRadius: 12,
+        backgroundColor: theme.colors.card,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        marginRight: 10
+    },
+    chipSelected: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+    chipText: { color: theme.colors.textMuted, fontSize: 16, fontWeight: 'bold' },
     chipTextSelected: { color: 'white' },
     rowBetween: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 0 },
     halfWidth: { width: '48%' },
     subjectsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-    subjectChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(58, 60, 63, 0.5)', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)', gap: 8 },
-    subjectChipSelected: { backgroundColor: '#4377d8ff', borderColor: '#4377d8ff' },
-    subjectText: { color: '#a0aec0', fontSize: 14 },
+    subjectChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: theme.colors.card,
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        gap: 8
+    },
+    subjectChipSelected: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+    subjectText: { color: theme.colors.textMuted, fontSize: 14 },
     subjectTextSelected: { color: 'white', fontWeight: '600' },
     saveButton: { marginTop: 10, marginBottom: 30 },
 });

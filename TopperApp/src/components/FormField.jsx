@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
 import AppText from './AppText';
-import { Theme } from '../theme/Theme';
+import useTheme from '../hooks/useTheme';
 
 /**
  * Reusable FormField component
@@ -24,6 +24,8 @@ const FormField = ({
     style,
     ...rest
 }) => {
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const hasError = !!error;
 
     return (
@@ -48,7 +50,7 @@ const FormField = ({
                         hasError && styles.inputError,
                         inputStyle,
                     ]}
-                    placeholderTextColor="#64748B"
+                    placeholderTextColor={theme.colors.textMuted}
                     {...rest}
                 />
             )}
@@ -63,7 +65,7 @@ const FormField = ({
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     wrapper: {
         marginBottom: 20,
     },
@@ -75,28 +77,28 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#E2E8F0',
+        color: theme.colors.text,
     },
     required: {
         fontSize: 15,
-        color: '#EF4444',
+        color: theme.colors.danger,
         fontWeight: '700',
         lineHeight: 18,
     },
     input: {
-        backgroundColor: Theme.colors.inputBackground,
+        backgroundColor: theme.colors.inputBackground || theme.colors.surface,
         borderRadius: 12,
         paddingVertical: 13,
         paddingHorizontal: 15,
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 15,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderColor: theme.colors.border,
     },
     inputError: {
-        borderColor: '#EF4444',
+        borderColor: theme.colors.danger,
         borderWidth: 1.5,
-        backgroundColor: 'rgba(239, 68, 68, 0.07)',
+        backgroundColor: theme.colors.danger + '12',
     },
     // For wrapping non-TextInput children (Dropdown, chips) with error border
     childWrapper: {
@@ -106,7 +108,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     errorBorder: {
-        borderColor: '#EF4444',
+        borderColor: theme.colors.danger,
         borderWidth: 1.5,
     },
     errorRow: {
@@ -117,7 +119,7 @@ const styles = StyleSheet.create({
     },
     errorText: {
         fontSize: 12,
-        color: '#EF4444',
+        color: theme.colors.danger,
     },
 });
 

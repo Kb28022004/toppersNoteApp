@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import {
     View,
     StyleSheet,
@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AppText from './AppText';
-import { Theme } from '../theme/Theme';
+import useTheme from '../hooks/useTheme';
 
 const { height } = Dimensions.get('window');
 
@@ -28,24 +28,26 @@ const CustomAlert = ({
     showCancel = true,
     isLoading = false,
 }) => {
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const panY = useRef(new Animated.Value(height)).current;
 
     // Type Config
     const getIcon = () => {
         switch (type) {
             case 'success': return { name: 'checkmark-circle', color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)' };
-            case 'error': return { name: 'alert-circle', color: '#EF4444', bg: 'rgba(239, 68, 68, 0.1)' };
+            case 'error': return { name: 'alert-circle', color: theme.colors.danger, bg: theme.colors.danger + '1A' };
             case 'warning': return { name: 'warning', color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' };
-            default: return { name: 'information-circle', color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)' };
+            default: return { name: 'information-circle', color: theme.colors.primary, bg: theme.colors.primary + '1A' };
         }
     };
 
     const gradientColors = () => {
         switch (type) {
             case 'success': return ['#10B981', '#059669'];
-            case 'error': return ['#EF4444', '#DC2626'];
+            case 'error': return [theme.colors.danger, '#DC2626'];
             case 'warning': return ['#F59E0B', '#D97706'];
-            default: return ['#3B82F6', '#2563EB'];
+            default: return [theme.colors.primary, '#2563EB'];
         }
     };
 
@@ -170,7 +172,7 @@ const CustomAlert = ({
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     overlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -178,7 +180,7 @@ const styles = StyleSheet.create({
     },
     modalContent: {
         width: '100%',
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
         paddingTop: 12,
         borderTopLeftRadius: 30,
         borderTopRightRadius: 30,
@@ -199,7 +201,7 @@ const styles = StyleSheet.create({
     handle: {
         width: 40,
         height: 4,
-        backgroundColor: '#334155',
+        backgroundColor: theme.colors.border,
         borderRadius: 2,
     },
     contentContainer: {
@@ -216,13 +218,13 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 22,
-        color: 'white',
+        color: theme.colors.text,
         textAlign: 'center',
         marginBottom: 10,
     },
     message: {
         fontSize: 15,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         textAlign: 'center',
         lineHeight: 22,
         marginBottom: 32,
@@ -238,15 +240,15 @@ const styles = StyleSheet.create({
         height: 52,
     },
     cancelBtn: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
         borderRadius: 14,
         alignItems: 'center',
         justifyContent: 'center',
     },
     cancelText: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 16,
     },
     confirmBtnContainer: {

@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import AppText from '../../../components/AppText';
-import { Theme } from '../../../theme/Theme';
+import useTheme from '../../../hooks/useTheme';
+import { TopperSkeleton } from '../../../components/skeletons/HomeSkeletons';
 
 const { width } = Dimensions.get('window');
 
-const TopperCircle = ({ item, onNavigate }) => (
+const TopperCircle = ({ item, onNavigate, styles }) => (
     <TouchableOpacity
         style={styles.topperCard}
         activeOpacity={0.8}
@@ -31,9 +32,9 @@ const TopperCircle = ({ item, onNavigate }) => (
     </TouchableOpacity>
 );
 
-import { TopperSkeleton } from '../../../components/skeletons/HomeSkeletons';
-
 const MeetToppers = ({ toppers, loading, fetching, navigation }) => {
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const showLoading = loading || fetching;
     const toppersCount = toppers?.length > 0 ? toppers.length : 5;
 
@@ -58,7 +59,7 @@ const MeetToppers = ({ toppers, loading, fetching, navigation }) => {
             ) : (
                 <FlatList
                     data={toppers}
-                    renderItem={({ item }) => <TopperCircle item={item} onNavigate={navigation.navigate} />}
+                    renderItem={({ item }) => <TopperCircle item={item} onNavigate={navigation.navigate} styles={styles} />}
                     keyExtractor={(item) => item.userId}
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -73,7 +74,7 @@ const MeetToppers = ({ toppers, loading, fetching, navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         marginBottom: 10,
     },
@@ -86,16 +87,16 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 18,
-        color: 'white',
+        color: theme.colors.text,
     },
     sectionSub: {
         fontSize: 12,
-        color: '#64748B',
+        color: theme.colors.textMuted,
         marginTop: 2,
     },
     seeAllText: {
         fontSize: 14,
-        color: '#00B1FC',
+        color: theme.colors.primary,
         fontWeight: 'bold',
     },
     toppersList: {
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
         height: 68,
         borderRadius: 34,
         borderWidth: 2,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     topperStatusDot: {
         position: 'absolute',
@@ -126,40 +127,28 @@ const styles = StyleSheet.create({
         width: 14,
         height: 14,
         borderRadius: 7,
-        backgroundColor: '#10B981',
+        backgroundColor: theme.colors.success,
         borderWidth: 3,
-        borderColor: Theme.colors.background,
+        borderColor: theme.colors.background,
     },
     topperName: {
         fontSize: 13,
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 4,
     },
     topperExpertiseBadge: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         paddingHorizontal: 8,
         paddingVertical: 2,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     topperExpertiseText: {
         fontSize: 9,
-        color: '#64748B',
+        color: theme.colors.textMuted,
         textTransform: 'uppercase',
         fontWeight: 'bold',
-    },
-    updatingRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        marginTop: 4,
-    },
-    updatingText: {
-        fontSize: 10,
-        color: '#00B1FC',
-        fontWeight: 'bold',
-        textTransform: 'uppercase',
     },
 });
 

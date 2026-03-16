@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import {
     View,
     StyleSheet,
@@ -16,12 +16,15 @@ import * as Sharing from 'expo-sharing';
 
 import AppText from '../../components/AppText';
 import ScreenLoader from '../../components/ScreenLoader';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 import { useGetReferralStatsQuery, useGetReferralHistoryQuery } from '../../features/api/referralApi';
 
 const { width } = Dimensions.get('window');
 
 const ReferAndEarn = ({ navigation }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
+
     const { data: stats, isLoading: isStatsLoading } = useGetReferralStatsQuery();
     const { data: history, isLoading: isHistoryLoading } = useGetReferralHistoryQuery();
 
@@ -50,14 +53,14 @@ const ReferAndEarn = ({ navigation }) => {
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
             <LinearGradient
-                colors={['#00B1FC', '#0072FF']}
+                colors={[theme.colors.primary, theme.colors.primary + 'cc']}
                 style={styles.header}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
             >
                 <View style={styles.navRow}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                        <Ionicons name="chevron-back" size={24} color="white" />
+                        <Ionicons name="chevron-back" size={24} color={theme.colors.textInverse} />
                     </TouchableOpacity>
                     <AppText style={styles.headerTitle} weight="bold">Refer & Earn</AppText>
                     <View style={{ width: 40 }} />
@@ -65,7 +68,7 @@ const ReferAndEarn = ({ navigation }) => {
 
                 <View style={styles.headerContent}>
                     <View style={styles.iconContainer}>
-                        <MaterialCommunityIcons name="gift-outline" size={60} color="white" />
+                        <MaterialCommunityIcons name="gift-outline" size={60} color={theme.colors.textInverse} />
                     </View>
                     <AppText style={styles.earnText} weight="bold">Earn Passive Income</AppText>
                     <AppText style={styles.subEarnText}>Invite friends and get 10% commission on every purchase they make!</AppText>
@@ -75,14 +78,14 @@ const ReferAndEarn = ({ navigation }) => {
             <View style={styles.content}>
                 {/* Stats Row */}
                 <View style={styles.statsRow}>
-                    <BlurView intensity={20} tint="light" style={styles.statBox}>
+                    <View style={styles.statBox}>
                         <AppText style={styles.statVal} weight="bold">{totalReferrals}</AppText>
                         <AppText style={styles.statLabel}>Total Referrals</AppText>
-                    </BlurView>
-                    <BlurView intensity={20} tint="light" style={styles.statBox}>
+                    </View>
+                    <View style={styles.statBox}>
                         <AppText style={styles.statVal} weight="bold">₹{walletBalance}</AppText>
                         <AppText style={styles.statLabel}>Total Earned</AppText>
-                    </BlurView>
+                    </View>
                 </View>
 
                 {/* Referral Code Section */}
@@ -93,12 +96,12 @@ const ReferAndEarn = ({ navigation }) => {
                             <AppText style={styles.codeText} weight="bold">{referralCode}</AppText>
                         </View>
                         <TouchableOpacity style={styles.copyBtn} onPress={copyToClipboard}>
-                            <Ionicons name="copy-outline" size={20} color="white" />
+                            <Ionicons name="copy-outline" size={20} color={theme.colors.textInverse} />
                         </TouchableOpacity>
                     </View>
                     <TouchableOpacity style={styles.shareBtn} onPress={onShare}>
                         <AppText style={styles.shareBtnText} weight="bold">Share with Friends</AppText>
-                        <Ionicons name="share-social-outline" size={20} color="white" />
+                        <Ionicons name="share-social-outline" size={20} color={theme.colors.textInverse} />
                     </TouchableOpacity>
                 </View>
 
@@ -107,8 +110,8 @@ const ReferAndEarn = ({ navigation }) => {
                     <AppText style={styles.sectionTitle} weight="bold">How it Works</AppText>
 
                     <View style={styles.stepRow}>
-                        <View style={[styles.stepIcon, { backgroundColor: '#F0F9FF' }]}>
-                            <Ionicons name="share-outline" size={20} color="#00B1FC" />
+                        <View style={[styles.stepIcon, { backgroundColor: theme.colors.primary + '20' }]}>
+                            <Ionicons name="share-outline" size={20} color={theme.colors.primary} />
                         </View>
                         <View style={styles.stepTextContent}>
                             <AppText style={styles.stepTitle} weight="bold">Share Code</AppText>
@@ -117,8 +120,8 @@ const ReferAndEarn = ({ navigation }) => {
                     </View>
 
                     <View style={styles.stepRow}>
-                        <View style={[styles.stepIcon, { backgroundColor: '#F0FDF4' }]}>
-                            <Ionicons name="person-add-outline" size={20} color="#10B981" />
+                        <View style={[styles.stepIcon, { backgroundColor: theme.colors.success + '20' }]}>
+                            <Ionicons name="person-add-outline" size={20} color={theme.colors.success} />
                         </View>
                         <View style={styles.stepTextContent}>
                             <AppText style={styles.stepTitle} weight="bold">They Register</AppText>
@@ -127,8 +130,8 @@ const ReferAndEarn = ({ navigation }) => {
                     </View>
 
                     <View style={styles.stepRow}>
-                        <View style={[styles.stepIcon, { backgroundColor: '#FFF7ED' }]}>
-                            <Ionicons name="cash-outline" size={20} color="#F59E0B" />
+                        <View style={[styles.stepIcon, { backgroundColor: theme.colors.warning + '20' }]}>
+                            <Ionicons name="cash-outline" size={20} color={theme.colors.warning} />
                         </View>
                         <View style={styles.stepTextContent}>
                             <AppText style={styles.stepTitle} weight="bold">Earn Commission</AppText>
@@ -148,11 +151,11 @@ const ReferAndEarn = ({ navigation }) => {
                         history.data.slice(0, 5).map((item, index) => (
                             <View key={index} style={styles.historyItem}>
                                 <View style={styles.historyLeft}>
-                                    <View style={[styles.hIcon, { backgroundColor: item.type === 'PURCHASE' ? '#10B98120' : '#00B1FC20' }]}>
+                                    <View style={[styles.hIcon, { backgroundColor: item.type === 'PURCHASE' ? theme.colors.success + '20' : theme.colors.primary + '20' }]}>
                                         <Ionicons
                                             name={item.type === 'PURCHASE' ? "cart-outline" : "person-outline"}
                                             size={18}
-                                            color={item.type === 'PURCHASE' ? "#10B981" : "#00B1FC"}
+                                            color={item.type === 'PURCHASE' ? theme.colors.success : theme.colors.primary}
                                         />
                                     </View>
                                     <View>
@@ -162,7 +165,7 @@ const ReferAndEarn = ({ navigation }) => {
                                         <AppText style={styles.hDate}>{new Date(item.createdAt).toDateString()}</AppText>
                                     </View>
                                 </View>
-                                <AppText style={[styles.hAmount, { color: '#10B981' }]} weight="bold">+ ₹{item.pointsEarned}</AppText>
+                                <AppText style={[styles.hAmount, { color: theme.colors.success }]} weight="bold">+ ₹{item.pointsEarned}</AppText>
                             </View>
                         ))
                     ) : (
@@ -176,10 +179,10 @@ const ReferAndEarn = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme, isDarkMode) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     header: {
         paddingTop: 60,
@@ -203,7 +206,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     headerTitle: {
-        color: 'white',
+        color: theme.colors.textInverse,
         fontSize: 18,
     },
     headerContent: {
@@ -219,7 +222,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     earnText: {
-        color: 'white',
+        color: theme.colors.textInverse,
         fontSize: 24,
         textAlign: 'center',
         marginBottom: 10,
@@ -243,34 +246,34 @@ const styles = StyleSheet.create({
     },
     statBox: {
         flex: 1,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         padding: 20,
         borderRadius: 20,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
         overflow: 'hidden',
     },
     statVal: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 20,
         marginBottom: 5,
     },
     statLabel: {
-        color: '#94A3B8',
+        color: theme.colors.textSubtle,
         fontSize: 12,
     },
     codeCard: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         padding: 25,
         borderRadius: 25,
         alignItems: 'center',
         marginBottom: 30,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     codeLabel: {
-        color: '#94A3B8',
+        color: theme.colors.textSubtle,
         fontSize: 14,
         marginBottom: 15,
     },
@@ -281,21 +284,21 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     codeContainer: {
-        backgroundColor: '#0F172A',
+        backgroundColor: isDarkMode ? theme.colors.background : theme.colors.inputBackground,
         paddingHorizontal: 30,
         paddingVertical: 15,
         borderRadius: 15,
         borderStyle: 'dashed',
         borderWidth: 2,
-        borderColor: '#00B1FC',
+        borderColor: theme.colors.primary,
     },
     codeText: {
-        color: '#00B1FC',
+        color: theme.colors.primary,
         fontSize: 22,
         letterSpacing: 2,
     },
     copyBtn: {
-        backgroundColor: '#00B1FC',
+        backgroundColor: theme.colors.primary,
         width: 50,
         height: 50,
         borderRadius: 15,
@@ -303,7 +306,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     shareBtn: {
-        backgroundColor: '#00B1FC',
+        backgroundColor: theme.colors.primary,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
@@ -313,14 +316,14 @@ const styles = StyleSheet.create({
         borderRadius: 15,
     },
     shareBtnText: {
-        color: 'white',
+        color: theme.colors.textInverse,
         fontSize: 16,
     },
     infoSection: {
         marginBottom: 30,
     },
     sectionTitle: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 18,
         marginBottom: 20,
     },
@@ -340,21 +343,21 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     stepTitle: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 15,
         marginBottom: 2,
     },
     stepDesc: {
-        color: '#94A3B8',
+        color: theme.colors.textSubtle,
         fontSize: 13,
         lineHeight: 18,
     },
     historySection: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         padding: 20,
         borderRadius: 25,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     historyItem: {
         flexDirection: 'row',
@@ -362,7 +365,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#334155',
+        borderBottomColor: theme.colors.border + '80', // Slightly transparent border for list items
     },
     historyLeft: {
         flexDirection: 'row',
@@ -377,11 +380,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     hTitle: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 14,
     },
     hDate: {
-        color: '#64748B',
+        color: theme.colors.textSubtle,
         fontSize: 11,
     },
     hAmount: {
@@ -392,7 +395,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     noHistoryText: {
-        color: '#64748B',
+        color: theme.colors.textSubtle,
         fontSize: 13,
     }
 });

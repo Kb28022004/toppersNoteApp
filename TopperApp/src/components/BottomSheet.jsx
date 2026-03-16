@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import {
     View,
     StyleSheet,
@@ -7,7 +7,7 @@ import {
     Animated,
     PanResponder,
 } from 'react-native';
-import { Theme } from '../theme/Theme';
+import useTheme from '../hooks/useTheme';
 
 const { height } = Dimensions.get('window');
 
@@ -19,6 +19,8 @@ const BottomSheet = ({
     paddingHorizontal = 24,
     scrollOffset = { current: 0 }, // Allow children to pass their scroll offset
 }) => {
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const panY = useRef(new Animated.Value(height)).current;
 
     const backdropOpacity = panY.interpolate({
@@ -128,14 +130,14 @@ const BottomSheet = ({
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     overlay: {
         flex: 1,
         justifyContent: 'flex-end',
     },
     modalContent: {
         width: '100%',
-        backgroundColor: Theme.colors.modalBackground,
+        backgroundColor: theme.colors.card,
         borderTopLeftRadius: 32,
         borderTopRightRadius: 32,
         paddingBottom: 40,
@@ -154,7 +156,7 @@ const styles = StyleSheet.create({
     handle: {
         width: 50,
         height: 6,
-        backgroundColor: '#94A3B8',
+        backgroundColor: theme.colors.border,
         borderRadius: 3,
     },
     contentContainer: {

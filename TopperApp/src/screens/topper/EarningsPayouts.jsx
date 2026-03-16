@@ -28,11 +28,16 @@ import { useAlert } from '../../context/AlertContext';
 import Loader from '../../components/Loader';
 import NoDataFound from '../../components/NoDataFound';
 import BottomSheet from '../../components/BottomSheet';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
+import { useMemo } from 'react';
 import { EarningsSummarySkeleton, EarningsTransactionSkeleton } from '../../components/skeletons/HomeSkeletons';
 
+
 const EarningsPayouts = ({ navigation, route }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { showAlert } = useAlert();
+
     const [activeTab, setActiveTab] = useState(route?.params?.initialTab || 'summary'); // 'summary', 'transactions', 'payouts'
     const [showWithdrawModal, setShowWithdrawModal] = useState(false);
     const [showSettingsModal, setShowSettingsModal] = useState(route?.params?.openSettings || false);
@@ -346,8 +351,9 @@ const EarningsPayouts = ({ navigation, route }) => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
-            <LinearGradient colors={[Theme.colors.surface, Theme.colors.background]} style={styles.header}>
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+            <LinearGradient colors={[theme.colors.surface, theme.colors.background]} style={styles.header}>
+
                 <View style={styles.navRow}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                         <Ionicons name="chevron-back" size={24} color="white" />
@@ -543,10 +549,10 @@ const EarningsPayouts = ({ navigation, route }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     header: {
         paddingTop: 60,
@@ -563,13 +569,13 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.surface,
         justifyContent: 'center',
         alignItems: 'center',
     },
     headerTitle: {
         fontSize: 18,
-        color: 'white',
+        color: theme.colors.text,
     },
     helpBtn: {
         width: 40,
@@ -588,10 +594,10 @@ const styles = StyleSheet.create({
         borderRadius: 20,
     },
     activeTab: {
-        backgroundColor: '#00B1FC',
+        backgroundColor: theme.colors.primary,
     },
     tabText: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 14,
     },
     activeTabText: {
@@ -649,36 +655,36 @@ const styles = StyleSheet.create({
     },
     subStatCard: {
         flex: 1,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 20,
         padding: 16,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     subStatLabel: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         fontSize: 12,
         marginBottom: 4,
     },
     subStatValue: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 20,
     },
     settingsCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#1E293B60',
+        backgroundColor: theme.colors.card,
         borderRadius: 20,
         padding: 16,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
         marginBottom: 20,
     },
     settingsIconBox: {
         width: 44,
         height: 44,
         borderRadius: 14,
-        backgroundColor: '#00B1FC15',
+        backgroundColor: theme.colors.primary + '15',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 16,
@@ -687,11 +693,11 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     settingsTitle: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 15,
     },
     settingsSub: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         fontSize: 12,
         marginTop: 2,
     },
@@ -701,18 +707,18 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
     },
     policyText: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         fontSize: 12,
         lineHeight: 18,
         flex: 1,
     },
     transactionCard: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 20,
         padding: 16,
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     transHeader: {
         flexDirection: 'row',
@@ -723,7 +729,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 12,
-        backgroundColor: '#10B98115',
+        backgroundColor: theme.colors.success + '15',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
@@ -732,17 +738,17 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     transTitle: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 14,
     },
     transDate: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         fontSize: 11,
         marginTop: 2,
     },
     transAmount: {
         fontSize: 16,
-        color: '#10B981',
+        color: theme.colors.success,
     },
     transFooter: {
         flexDirection: 'row',
@@ -750,10 +756,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingTop: 12,
         borderTopWidth: 1,
-        borderTopColor: '#334155',
+        borderTopColor: theme.colors.border,
     },
     transBuyer: {
-        color: '#94A3B8',
+        color: theme.colors.textSubtle,
         fontSize: 12,
     },
     badge: {
@@ -766,26 +772,14 @@ const styles = StyleSheet.create({
     },
     remarksContainer: {
         marginTop: 10,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.surface,
         padding: 10,
         borderRadius: 8,
     },
     remarksText: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 11,
         fontStyle: 'italic',
-    },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        justifyContent: 'flex-end',
-    },
-    modalContent: {
-        backgroundColor: '#1E293B',
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
-        padding: 24,
-        paddingBottom: 40,
     },
     modalHeader: {
         flexDirection: 'row',
@@ -795,26 +789,26 @@ const styles = StyleSheet.create({
     },
     modalTitle: {
         fontSize: 20,
-        color: 'white',
+        color: theme.colors.text,
     },
     availableBox: {
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.surface,
         padding: 16,
         borderRadius: 16,
         alignItems: 'center',
         marginBottom: 24,
     },
     availableLabel: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         fontSize: 12,
         marginBottom: 4,
     },
     availableValue: {
-        color: '#00B1FC',
+        color: theme.colors.primary,
         fontSize: 24,
     },
     inputLabel: {
-        color: '#94A3B8',
+        color: theme.colors.textSubtle,
         fontSize: 13,
         marginBottom: 10,
         marginLeft: 4,
@@ -822,27 +816,27 @@ const styles = StyleSheet.create({
     amountInputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.surface,
         borderRadius: 16,
         paddingHorizontal: 20,
         marginBottom: 30,
         height: 64,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     currencyPrefix: {
         fontSize: 24,
-        color: 'white',
+        color: theme.colors.text,
         marginRight: 10,
     },
     amountInput: {
         flex: 1,
         fontSize: 24,
-        color: 'white',
+        color: theme.colors.text,
         fontWeight: 'bold',
     },
     confirmBtn: {
-        backgroundColor: '#00B1FC',
+        backgroundColor: theme.colors.primary,
         height: 56,
         borderRadius: 16,
         justifyContent: 'center',
@@ -855,7 +849,7 @@ const styles = StyleSheet.create({
     },
     methodToggle: {
         flexDirection: 'row',
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.surface,
         borderRadius: 14,
         padding: 4,
         marginBottom: 24,
@@ -867,31 +861,32 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     activeMethod: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     methodText: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         fontSize: 14,
     },
     activeMethodText: {
-        color: 'white',
+        color: theme.colors.text,
         fontWeight: 'bold',
     },
     inputGroup: {
         marginBottom: 30,
     },
     textInput: {
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.surface,
         borderRadius: 14,
         paddingHorizontal: 16,
         paddingVertical: 14,
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 15,
         borderWidth: 1,
-        borderColor: '#334155',
-    }
+        borderColor: theme.colors.border,
+    },
 });
 
 export default EarningsPayouts;
+

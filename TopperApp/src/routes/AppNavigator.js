@@ -1,4 +1,4 @@
-import { NavigationContainer, DarkTheme } from '@react-navigation/native';
+import { NavigationContainer, DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar, View, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -46,14 +46,15 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { GlobalChatListener } from '../components/GlobalChatListener';
 
-import { Theme } from '../theme/Theme';
+import useTheme from '../hooks/useTheme';
 
 const Stack = createNativeStackNavigator();
 
 function GradientWrapper({ children }) {
+    const { theme } = useTheme();
     return (
       <LinearGradient
-        colors={Theme.colors.backgroundGradient}
+        colors={theme.colors.backgroundGradient}
         style={styles.gradient}
       >
         {children}
@@ -64,19 +65,20 @@ function GradientWrapper({ children }) {
 const Tab = createBottomTabNavigator();
 
 function TopperTabNavigator() {
+  const { theme } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#0F172A',
+          backgroundColor: theme.colors.surface,
           borderTopWidth: 1,
-          borderTopColor: '#1E293B',
+          borderTopColor: theme.colors.border,
           height: 70,
           paddingBottom: 10,
         },
         tabBarActiveTintColor: '#00B1FC',
-        tabBarInactiveTintColor: '#64748B',
+        tabBarInactiveTintColor: theme.colors.textMuted,
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
           if (route.name === 'TopperHome') iconName = focused ? 'home' : 'home-outline';
@@ -96,19 +98,20 @@ function TopperTabNavigator() {
 }
 
 function StudentTabNavigator() {
+  const { theme } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#0F172A',
+          backgroundColor: theme.colors.surface,
           borderTopWidth: 1,
-          borderTopColor: '#1E293B',
+          borderTopColor: theme.colors.border,
           height: 70,
           paddingBottom: 10,
         },
         tabBarActiveTintColor: '#00B1FC',
-        tabBarInactiveTintColor: '#64748B',
+        tabBarInactiveTintColor: theme.colors.textMuted,
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
           if (route.name === 'StudentHome') iconName = focused ? 'home' : 'home-outline';
@@ -144,23 +147,25 @@ function DashboardWrapper(props) {
   return <StudentTabNavigator />;
 }
 
-const AppTheme = {
-  ...DarkTheme,
-  colors: {
-    ...DarkTheme.colors,
-    primary: Theme.colors.primary,
-    background: Theme.colors.background,
-    card: Theme.colors.card,
-    text: Theme.colors.text,
-    border: Theme.colors.border,
-    notification: Theme.colors.primary,
-  },
-};
-
 export default function AppNavigator() {
+  const { theme, isDarkMode } = useTheme();
+
+  const AppTheme = {
+    ...(isDarkMode ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDarkMode ? DarkTheme.colors : DefaultTheme.colors),
+      primary: theme.colors.primary,
+      background: theme.colors.background,
+      card: theme.colors.card,
+      text: theme.colors.text,
+      border: theme.colors.border,
+      notification: theme.colors.primary,
+    },
+  };
+
   return (
     <NavigationContainer theme={AppTheme}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
       <GlobalChatListener />
 
       <Stack.Navigator
@@ -169,10 +174,10 @@ export default function AppNavigator() {
           headerStyle: {
             backgroundColor: "transparent",
           },
-          headerTintColor: "#fff",
+          headerTintColor: theme.colors.text,
           headerTransparent: true,
           contentStyle: {
-            backgroundColor: Theme.colors.background,
+            backgroundColor: theme.colors.background,
           },
           headerShown: false,
         }}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     View,
     StyleSheet,
@@ -29,12 +29,15 @@ import { useAlert } from '../../context/AlertContext';
 import useRefresh from '../../hooks/useRefresh';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { downloadNote, isNoteDownloaded, getDownloadedNotes } from '../../helpers/downloadService';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 import PaymentConfirmationModal from '../../components/PaymentConfirmationModal';
+import { StatusBar } from 'expo-status-bar';
 
 const { width } = Dimensions.get('window');
 
 const StudentNoteDetails = ({ route, navigation }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { noteId } = route.params;
     const { data: note, isLoading, isError, refetch } = useGetNoteDetailsQuery(noteId);
     const { refreshing, onRefresh } = useRefresh(refetch);
@@ -104,7 +107,7 @@ const StudentNoteDetails = ({ route, navigation }) => {
     if (isLoading) return <NoteDetailsSkeleton />;
     if (isError) return (
         <View style={styles.center}>
-            <AppText style={{ color: '#EF4444' }}>Failed to load note details</AppText>
+            <AppText style={{ color: theme.colors.danger }}>Failed to load note details</AppText>
             <ReusableButton title="Retry" onPress={refetch} style={{ marginTop: 20, width: 120 }} />
         </View>
     );
@@ -255,7 +258,7 @@ const StudentNoteDetails = ({ route, navigation }) => {
                 </View>
                 <View style={styles.ratingRow}>
                     {[1, 2, 3, 4, 5].map((star) => (
-                        <Ionicons key={star} name={star <= item.rating ? "star" : "star-outline"} size={12} color="#FFD700" />
+                        <Ionicons key={star} name={star <= item.rating ? "star" : "star-outline"} size={12} color={theme.colors.warning} />
                     ))}
                 </View>
             </View>
@@ -275,7 +278,7 @@ const StudentNoteDetails = ({ route, navigation }) => {
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
             >
 
                 {/* Preview Image */}
@@ -295,7 +298,7 @@ const StudentNoteDetails = ({ route, navigation }) => {
                     />
                     <View style={styles.gradientOverlay}>
                         <LinearGradient
-                            colors={['transparent', 'rgba(15, 23, 42, 0.8)']}
+                            colors={['transparent', theme.colors.background + 'cc']}
                             style={StyleSheet.absoluteFill}
                         />
                     </View>
@@ -318,7 +321,7 @@ const StudentNoteDetails = ({ route, navigation }) => {
                     {/* Title & Rating */}
                     <AppText style={styles.title} weight="bold">{title}</AppText>
                     <View style={styles.ratingMeta}>
-                        <Ionicons name="star" size={16} color="#FFD700" />
+                        <Ionicons name="star" size={16} color={theme.colors.warning} />
                         <AppText style={styles.ratingValue} weight="bold">{avgRating || '0.0'}</AppText>
                         <View style={styles.dot} />
                         <AppText style={styles.reviewCount}>{reviewCount || 0} Reviews</AppText>
@@ -329,7 +332,7 @@ const StudentNoteDetails = ({ route, navigation }) => {
                         {topper?.profilePhoto ? (
                             <Image source={{ uri: topper.profilePhoto }} style={styles.topperImage} />
                         ) : (
-                            <View style={[styles.topperImage, { backgroundColor: '#3B82F6', justifyContent: 'center', alignItems: 'center' }]}>
+                            <View style={[styles.topperImage, { backgroundColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center' }]}>
                                 <AppText style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>
                                     {topper?.name?.charAt(0) || 'T'}
                                 </AppText>
@@ -339,11 +342,11 @@ const StudentNoteDetails = ({ route, navigation }) => {
                             <View style={styles.row}>
                                 <AppText style={styles.topperName} weight="bold">{topper?.name}</AppText>
                                 <TouchableOpacity
-                                    style={[styles.badge, following ? { backgroundColor: '#334155' } : { backgroundColor: '#3B82F6' }]}
+                                    style={[styles.badge, { backgroundColor: following ? theme.colors.surface : theme.colors.primary }, following && { borderWidth: 1, borderColor: theme.colors.primary }]}
                                     onPress={handleFollow}
                                     disabled={isFollowLoading}
                                 >
-                                    <AppText style={styles.badgeText}>
+                                    <AppText style={[styles.badgeText, following && { color: theme.colors.primary }]}>
                                         {following ? "Following" : "Follow"}
                                     </AppText>
                                 </TouchableOpacity>
@@ -358,20 +361,20 @@ const StudentNoteDetails = ({ route, navigation }) => {
                     {/* Stats Row */}
                     <View style={styles.statsRow}>
                         <View style={styles.statBox}>
-                            <Ionicons name="document-text-outline" size={24} color="#3B82F6" />
+                            <Ionicons name="document-text-outline" size={24} color={theme.colors.primary} />
                             <AppText style={styles.statValue} weight="bold">{pageCount || 0}</AppText>
                             <AppText style={styles.statLabel}>Pages</AppText>
                         </View>
                         {language && (
                             <View style={styles.statBox}>
-                                <MaterialCommunityIcons name="translate" size={24} color="#3B82F6" />
+                                <MaterialCommunityIcons name="translate" size={24} color={theme.colors.primary} />
                                 <AppText style={styles.statValue} weight="bold">{language}</AppText>
                                 <AppText style={styles.statLabel}>Language</AppText>
                             </View>
                         )}
                         {pdfSize && (
                             <View style={styles.statBox}>
-                                <MaterialCommunityIcons name="file-pdf-box" size={24} color="#3B82F6" />
+                                <MaterialCommunityIcons name="file-pdf-box" size={24} color={theme.colors.primary} />
                                 <AppText style={styles.statValue} weight="bold">{pdfSize}</AppText>
                                 <AppText style={styles.statLabel}>PDF Size</AppText>
                             </View>
@@ -406,7 +409,7 @@ const StudentNoteDetails = ({ route, navigation }) => {
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
                             {isPurchased && (
                                 <TouchableOpacity onPress={() => setReviewModalVisible(true)} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <Ionicons name="create-outline" size={16} color="#3B82F6" style={{ marginRight: 4 }} />
+                                    <Ionicons name="create-outline" size={16} color={theme.colors.primary} style={{ marginRight: 4 }} />
                                     <AppText style={styles.seeAllText}>Write Review</AppText>
                                 </TouchableOpacity>
                             )}
@@ -437,7 +440,7 @@ const StudentNoteDetails = ({ route, navigation }) => {
 
                 {isPurchased ? (
                     <TouchableOpacity
-                        style={[styles.downloadBtnLarge, isDownloaded && { backgroundColor: '#10B981' }]}
+                        style={[styles.downloadBtnLarge, isDownloaded && { backgroundColor: theme.colors.success }]}
                         onPress={handleDownload}
                         disabled={isDownloading}
                     >
@@ -457,7 +460,7 @@ const StudentNoteDetails = ({ route, navigation }) => {
                         disabled={isCreatingOrder || isVerifyingPayment}
                     >
                         <LinearGradient
-                            colors={['#3B82F6', '#2563EB']}
+                            colors={[theme.colors.primary, theme.colors.primary + 'CC']}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
                             style={styles.unlockGradient}
@@ -476,17 +479,19 @@ const StudentNoteDetails = ({ route, navigation }) => {
             </View>
 
             <View style={styles.header}>
+                <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
                 <PageHeader
                     title="Note Details"
                     onBackPress={() => navigation.goBack()}
                     iconName="chevron-back"
+                    style={{ backgroundColor: isDarkMode ? 'transparent' : theme.colors.background }}
                     rightComponent={
                         <View style={styles.rightIcons}>
                             <TouchableOpacity onPress={handleToggleFavorite} style={styles.iconBtn}>
-                                <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={22} color={isFavorite ? "#F43F5E" : "white"} />
+                                <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={22} color={isFavorite ? theme.colors.danger : (isDarkMode ? "white" : theme.colors.text)} />
                             </TouchableOpacity>
                             <TouchableOpacity onPress={handleShare} style={styles.iconBtn}>
-                                <Ionicons name="share-social-outline" size={22} color="white" />
+                                <Ionicons name="share-social-outline" size={22} color={isDarkMode ? "white" : theme.colors.text} />
                             </TouchableOpacity>
                         </View>
                     }
@@ -502,14 +507,14 @@ const StudentNoteDetails = ({ route, navigation }) => {
                 <View style={styles.starsRow}>
                     {[1, 2, 3, 4, 5].map(star => (
                         <TouchableOpacity key={star} onPress={() => setRating(star)}>
-                            <Ionicons name={star <= rating ? "star" : "star-outline"} size={32} color="#FFD700" />
+                            <Ionicons name={star <= rating ? "star" : "star-outline"} size={32} color={theme.colors.warning} />
                         </TouchableOpacity>
                     ))}
                 </View>
                 <TextInput
                     style={styles.commentInput}
                     placeholder="Share your feedback..."
-                    placeholderTextColor="#64748B"
+                    placeholderTextColor={theme.colors.textMuted}
                     multiline
                     numberOfLines={4}
                     value={comment}
@@ -517,7 +522,7 @@ const StudentNoteDetails = ({ route, navigation }) => {
                 />
                 <View style={styles.modalActions}>
                     <TouchableOpacity onPress={() => setReviewModalVisible(false)} style={styles.cancelBtn}>
-                        <AppText style={{ color: '#94A3B8' }}>Cancel</AppText>
+                        <AppText style={{ color: theme.colors.textMuted }}>Cancel</AppText>
                     </TouchableOpacity>
                     <ReusableButton
                         title="Submit"
@@ -541,16 +546,16 @@ const StudentNoteDetails = ({ route, navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     center: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     header: {
         position: 'absolute',
@@ -567,17 +572,16 @@ const styles = StyleSheet.create({
         padding: 8,
     },
     scrollContent: {
-        paddingTop: 90, // Make space for header
+        paddingTop: 0, // Header is absolute but we want image at top
         paddingBottom: 120, // Make space for footer
     },
     previewContainer: {
         height: 380,
-        width: width - 40,
-        marginHorizontal: 20,
-        borderRadius: 20,
+        width: width,
+        borderRadius: 0,
         overflow: 'hidden',
         position: 'relative',
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         marginBottom: 25,
     },
     previewImage: {
@@ -596,14 +600,14 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 20,
         right: 30,
-        backgroundColor: '#3B82F6',
+        backgroundColor: theme.colors.primary,
         paddingHorizontal: 15,
         paddingVertical: 6,
         borderRadius: 15,
         zIndex: 2,
     },
     bestSellerText: {
-        color: 'white',
+        color: theme.colors.textInverse,
         fontSize: 10,
         fontWeight: 'bold',
     },
@@ -613,15 +617,16 @@ const styles = StyleSheet.create({
         right: 20,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(15, 23, 42, 0.8)',
+        backgroundColor: theme.colors.overlay,
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderColor: theme.colors.borderLight,
+        zIndex: 5,
     },
     previewBtnText: {
-        color: 'white',
+        color: theme.colors.textInverse,
         fontWeight: '600',
         fontSize: 14,
     },
@@ -630,7 +635,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 24,
-        color: 'white',
+        color: theme.colors.text,
         lineHeight: 32,
         marginBottom: 10,
     },
@@ -640,7 +645,7 @@ const styles = StyleSheet.create({
         marginBottom: 25,
     },
     ratingValue: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 14,
         marginLeft: 6,
     },
@@ -648,22 +653,22 @@ const styles = StyleSheet.create({
         width: 4,
         height: 4,
         borderRadius: 2,
-        backgroundColor: '#64748B',
+        backgroundColor: theme.colors.textMuted,
         marginHorizontal: 8,
     },
     reviewCount: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 14,
         textDecorationLine: 'underline',
     },
     topperCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         padding: 16,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
         marginBottom: 25,
     },
     topperImage: {
@@ -680,64 +685,63 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     topperName: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 16,
         marginRight: 8,
     },
     badge: {
-        backgroundColor: '#3B82F6',
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 4,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
     },
     badgeText: {
-        color: 'white',
-        fontSize: 10,
+        color: theme.colors.textInverse,
+        fontSize: 11,
         fontWeight: 'bold',
     },
     topperBio: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 12,
         marginTop: 2,
     },
     viewProfileText: {
-        color: '#3B82F6',
+        color: theme.colors.primary,
         fontSize: 14,
     },
     statsRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: 30,
+        gap: 10,
     },
     statBox: {
         flex: 1,
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         borderRadius: 16,
         padding: 15,
         alignItems: 'center',
-        marginHorizontal: 4,
         justifyContent: 'center',
         height: 100,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     statValue: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 16,
         marginTop: 8,
         marginBottom: 4,
     },
     statLabel: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 12,
     },
     sectionTitle: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 18,
         marginBottom: 12,
     },
     descriptionText: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 14,
         lineHeight: 24,
         marginBottom: 30,
@@ -748,35 +752,35 @@ const styles = StyleSheet.create({
     tocItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         padding: 15,
         borderRadius: 12,
         marginBottom: 10,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     chapterNumberBox: {
         width: 28,
         height: 28,
         borderRadius: 8,
-        backgroundColor: '#334155',
+        backgroundColor: theme.colors.surface,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
     },
     chapterNumber: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 12,
         fontWeight: 'bold',
     },
     chapterTitle: {
         flex: 1,
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 14,
         fontWeight: '500',
     },
     chapterPage: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         fontSize: 12,
     },
     showAllChapters: {
@@ -786,7 +790,7 @@ const styles = StyleSheet.create({
         marginTop: 5,
     },
     showAllText: {
-        color: '#3B82F6',
+        color: theme.colors.primary,
         fontSize: 14,
         fontWeight: '600',
         marginRight: 4,
@@ -798,16 +802,16 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
     seeAllText: {
-        color: '#3B82F6',
+        color: theme.colors.primary,
         fontSize: 14,
     },
     reviewCard: {
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         borderRadius: 16,
         padding: 16,
         marginBottom: 10,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     reviewHeader: {
         flexDirection: 'row',
@@ -818,23 +822,23 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: '#8B5CF6', // Purple avatar
+        backgroundColor: theme.colors.secondary,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
     },
     avatarText: {
-        color: 'white',
+        color: theme.colors.textInverse,
         fontWeight: 'bold',
         fontSize: 16,
     },
     reviewerName: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 14,
         marginBottom: 2,
     },
     reviewDate: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         fontSize: 12,
     },
     ratingRow: {
@@ -842,7 +846,7 @@ const styles = StyleSheet.create({
         gap: 2,
     },
     reviewComment: {
-        color: '#CBD5E1',
+        color: theme.colors.textSubtle,
         fontSize: 14,
         lineHeight: 22,
         marginBottom: 12,
@@ -853,12 +857,12 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     verifiedText: {
-        color: '#10B981',
+        color: theme.colors.success,
         fontSize: 12,
         fontWeight: '500',
     },
     noReviewsText: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
     },
     bottomBar: {
         position: 'absolute',
@@ -866,9 +870,9 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 10,
-        backgroundColor: Theme.colors.background, // Dark background
+        backgroundColor: theme.colors.card,
         borderTopWidth: 1,
-        borderTopColor: Theme.colors.border,
+        borderTopColor: theme.colors.border,
         paddingHorizontal: 20,
         paddingVertical: 15,
         flexDirection: 'row',
@@ -876,7 +880,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         shadowColor: "#000",
         shadowOffset: { width: 0, height: -10 },
-        shadowOpacity: 0.5,
+        shadowOpacity: 0.1,
         shadowRadius: 20,
         elevation: 10,
     },
@@ -887,18 +891,17 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     finalPrice: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 24,
     },
     discountText: {
-        color: '#10B981',
+        color: theme.colors.success,
         fontSize: 14,
         fontWeight: 'bold',
     },
     strikePrice: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         fontSize: 14,
-        textDecorationLine: 'line-through',
     },
     unlockBtn: {
         borderRadius: 12,
@@ -913,7 +916,7 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     downloadBtnLarge: {
-        backgroundColor: '#3B82F6',
+        backgroundColor: theme.colors.primary,
         borderRadius: 12,
         paddingVertical: 14,
         paddingHorizontal: 20,
@@ -924,28 +927,27 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     downloadBtnText: {
-        color: 'white',
+        color: theme.colors.textInverse,
         fontSize: 14,
     },
     unlockText: {
-        color: 'white',
+        color: theme.colors.textInverse,
         fontSize: 16,
     },
-    // Modal Styles
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.8)',
+        backgroundColor: theme.colors.overlay,
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         padding: 24,
     },
     modalTitle: {
         fontSize: 20,
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 20,
         textAlign: 'center',
     },
@@ -956,10 +958,10 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     commentInput: {
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
         borderRadius: 12,
         padding: 15,
-        color: 'white',
+        color: theme.colors.text,
         minHeight: 100,
         textAlignVertical: 'top',
         marginBottom: 20,

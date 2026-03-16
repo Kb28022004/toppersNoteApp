@@ -10,12 +10,14 @@ import {
 import { useGetChatsQuery } from "../../features/api/chatApi";
 import SearchBar from "../../components/SearchBar";
 import AppText from "../../components/AppText";
-import { Theme } from "../../theme/Theme";
-import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import ScreenLoader from "../../components/ScreenLoader";
+import useTheme from "../../hooks/useTheme";
+import { useMemo } from "react";
+import { Ionicons } from "@expo/vector-icons";
 
 const ChatList = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [search, setSearch] = useState("");
   const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -136,13 +138,13 @@ const ChatList = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           style={styles.backBtn}
         >
-          <Ionicons name="chevron-back" size={24} color="white" />
+          <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
         <AppText style={styles.headerTitle} weight="bold">
           Messages
         </AppText>
         <TouchableOpacity style={styles.headerActionBtn}>
-          <Ionicons name="create-outline" size={24} color="white" />
+          <Ionicons name="create-outline" size={24} color={theme.colors.text} />
         </TouchableOpacity>
       </View>
 
@@ -163,14 +165,14 @@ const ChatList = ({ navigation }) => {
           contentContainerStyle={styles.listContainer}
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
-          ListFooterComponent={isFetching && chats.length > 0 ? <ActivityIndicator style={{ margin: 20 }} color={Theme.colors.primary} /> : null}
+          ListFooterComponent={isFetching && chats.length > 0 ? <ActivityIndicator style={{ margin: 20 }} color={theme.colors.primary} /> : null}
           onRefresh={refetch}
           refreshing={isFetching && !lastUpdatedAt}
         />
       ) : (
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconCircle}>
-            <Ionicons name="chatbubbles-outline" size={48} color="#64748B" />
+            <Ionicons name="chatbubbles-outline" size={48} color={theme.colors.textMuted} />
           </View>
           <AppText style={styles.emptyText} weight="bold">No messages matching "{search}"</AppText>
           <AppText style={styles.emptySubText}>Try a different name or start a new chat.</AppText>
@@ -180,10 +182,10 @@ const ChatList = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Theme.colors.background,
+    backgroundColor: theme.colors.background,
   },
   header: {
     flexDirection: "row",
@@ -192,9 +194,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
-    backgroundColor: Theme.colors.card,
+    backgroundColor: theme.colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.05)",
+    borderBottomColor: theme.colors.border + '40',
   },
   backBtn: {
     width: 40,
@@ -202,11 +204,13 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border + '40',
   },
   headerTitle: {
     fontSize: 20,
-    color: "white",
+    color: theme.colors.text,
   },
   headerActionBtn: {
     width: 40,
@@ -225,12 +229,12 @@ const styles = StyleSheet.create({
   chatCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Theme.colors.card,
+    backgroundColor: theme.colors.card,
     padding: 16,
     borderRadius: 20,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.05)",
+    borderColor: theme.colors.border + '20',
   },
   avatarWrapper: {
     position: "relative",
@@ -240,9 +244,9 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 27,
     marginRight: 15,
-    backgroundColor: "#334155",
+    backgroundColor: theme.colors.border + '40',
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderColor: theme.colors.border + '20',
   },
   chatInfo: {
     flex: 1,
@@ -255,12 +259,12 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 16,
-    color: "white",
+    color: theme.colors.text,
     flex: 1,
   },
   time: {
     fontSize: 12,
-    color: "#64748B",
+    color: theme.colors.textMuted,
   },
   messageRow: {
     flexDirection: "row",
@@ -269,12 +273,12 @@ const styles = StyleSheet.create({
   },
   lastMessage: {
     fontSize: 14,
-    color: "#94A3B8",
+    color: theme.colors.textMuted,
     flex: 1,
     paddingRight: 10,
   },
   unreadBadge: {
-    backgroundColor: "#3B82F6",
+    backgroundColor: theme.colors.primary,
     minWidth: 20,
     height: 20,
     borderRadius: 10,
@@ -297,19 +301,21 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: "rgba(255,255,255,0.03)",
+    backgroundColor: theme.colors.card,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: theme.colors.border + '20',
   },
   emptyText: {
-    color: "white",
+    color: theme.colors.text,
     fontSize: 18,
     textAlign: "center",
     marginBottom: 8,
   },
   emptySubText: {
-    color: "#64748B",
+    color: theme.colors.textMuted,
     fontSize: 14,
     textAlign: "center",
   },

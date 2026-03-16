@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
     View,
     FlatList,
@@ -9,7 +9,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import AppText from '../AppText';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 import { NoteStripSkeleton } from '../skeletons/HomeSkeletons';
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -22,6 +22,8 @@ const getStatus = (s) => STATUS_CONFIG[s] ?? STATUS_CONFIG.UNDER_REVIEW;
 
 // ─── Individual card ──────────────────────────────────────────────────────────
 const NoteCard = React.memo(({ item }) => {
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const navigation = useNavigation();
     const s = getStatus(item.status);
     // Sales endpoint returns 'totalSales'; My Notes endpoint returns 'salesCount'
@@ -78,17 +80,6 @@ const NoteCard = React.memo(({ item }) => {
 });
 
 // ─── Main component ───────────────────────────────────────────────────────────
-/**
- * NoteStrip — horizontal scrolling strip of note cards.
- *
- * Props:
- *  title        {string}   Section heading
- *  notes        {array}    Array of note objects
- *  isLoading    {bool}     Show activity indicator
- *  onSeeAll     {func}     Called when "See all" tapped
- *  emptyMessage {string}   Text shown when notes is empty
- *  accentColor  {string}   Optional colour for "See all" text (default #00B1FC)
- */
 const NoteStrip = ({
     title,
     notes = [],
@@ -96,47 +87,51 @@ const NoteStrip = ({
     onSeeAll,
     emptyMessage = 'Nothing here yet.',
     accentColor = '#00B1FC',
-}) => (
-    <View style={styles.wrapper}>
-        {/* Section header */}
-        <View style={styles.header}>
-            <AppText style={styles.sectionTitle} weight="bold">{title}</AppText>
-            {onSeeAll && (
-                <TouchableOpacity onPress={onSeeAll}>
-                    <AppText style={[styles.seeAll, { color: accentColor }]}>See all</AppText>
-                </TouchableOpacity>
+}) => {
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
+    return (
+        <View style={styles.wrapper}>
+            {/* Section header */}
+            <View style={styles.header}>
+                <AppText style={styles.sectionTitle} weight="bold">{title}</AppText>
+                {onSeeAll && (
+                    <TouchableOpacity onPress={onSeeAll}>
+                        <AppText style={[styles.seeAll, { color: accentColor }]}>See all</AppText>
+                    </TouchableOpacity>
+                )}
+            </View>
+
+            {isLoading ? (
+                <View style={{ flexDirection: 'row', paddingHorizontal: 20, gap: 12 }}>
+                    {[...Array(4)].map((_, i) => (
+                        <NoteStripSkeleton key={i} />
+                    ))}
+                </View>
+            ) : notes.length === 0 ? (
+                <View style={styles.emptyBox}>
+                    <Ionicons name="document-text-outline" size={28} color={theme.colors.textSubtle} />
+                    <AppText style={styles.emptyText}>{emptyMessage}</AppText>
+                </View>
+            ) : (
+                <FlatList
+                    data={notes}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    keyExtractor={(item) => (item._id || item.noteId)?.toString()}
+                    renderItem={({ item }) => <NoteCard item={item} />}
+                    contentContainerStyle={styles.listContent}
+                />
             )}
         </View>
+    );
+};
 
-        {isLoading ? (
-            <View style={{ flexDirection: 'row', paddingHorizontal: 20, gap: 12 }}>
-                {[...Array(4)].map((_, i) => (
-                    <NoteStripSkeleton key={i} />
-                ))}
-            </View>
-        ) : notes.length === 0 ? (
-            <View style={styles.emptyBox}>
-                <Ionicons name="document-text-outline" size={28} color="#334155" />
-                <AppText style={styles.emptyText}>{emptyMessage}</AppText>
-            </View>
-        ) : (
-            <FlatList
-                data={notes}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                keyExtractor={(item) => (item._id || item.noteId)?.toString()}
-                renderItem={({ item }) => <NoteCard item={item} />}
-                contentContainerStyle={styles.listContent}
-            />
-        )}
-    </View>
-);
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const CARD_WIDTH = 160;
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     wrapper: {
         marginBottom: 28,
         height: 220,
@@ -150,7 +145,7 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 17,
-        color: 'white',
+        color: theme.colors.text,
     },
     seeAll: {
         fontSize: 13,
@@ -166,17 +161,17 @@ const styles = StyleSheet.create({
     // Empty state
     emptyBox: {
         marginHorizontal: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+        backgroundColor: theme.colors.card,
         borderRadius: 16,
         paddingVertical: 32,
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
         gap: 12,
     },
     emptyText: {
-        color: '#64748B',
+        color: theme.colors.textSubtle,
         fontSize: 14,
         textAlign: 'center',
         paddingHorizontal: 16,
@@ -185,11 +180,11 @@ const styles = StyleSheet.create({
     // Card
     card: {
         width: CARD_WIDTH,
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         borderRadius: 16,
         padding: 14,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
         justifyContent: 'space-between',
     },
     cardTop: {
@@ -216,13 +211,13 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     title: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 13,
         lineHeight: 18,
         marginBottom: 4,
     },
     sub: {
-        color: '#64748B',
+        color: theme.colors.textSubtle,
         fontSize: 11,
         marginBottom: 12,
     },
@@ -241,7 +236,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     sales: {
-        color: '#64748B',
+        color: theme.colors.textSubtle,
         fontSize: 11,
     },
     // Sold pill

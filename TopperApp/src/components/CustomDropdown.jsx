@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView, Modal, TouchableWithoutFeedback } from 'react-native';
 import AppText from './AppText';
 import { Ionicons } from "@expo/vector-icons";
-import { Theme } from '../theme/Theme';
+import useTheme from '../hooks/useTheme';
 
 const CustomDropdown = ({ label, options, selectedValue, onSelect, placeholder = "Select", error }) => {
     const [isVisible, setIsVisible] = useState(false);
-
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     const handleSelect = (item) => {
         onSelect(item);
@@ -24,7 +25,7 @@ const CustomDropdown = ({ label, options, selectedValue, onSelect, placeholder =
                 <AppText style={[styles.selectedText, !selectedValue && styles.placeholderText]}>
                     {options.find(opt => (opt.value || opt) === selectedValue)?.label || (typeof selectedValue === 'object' ? selectedValue.label : selectedValue) || placeholder}
                 </AppText>
-                <Ionicons name="chevron-down" size={20} color="#ccc" />
+                <Ionicons name="chevron-down" size={20} color={theme.colors.textMuted} />
             </TouchableOpacity>
 
             <Modal
@@ -62,7 +63,7 @@ const CustomDropdown = ({ label, options, selectedValue, onSelect, placeholder =
                                                 {optionLabel}
                                             </AppText>
                                             {isSelected && (
-                                                <Ionicons name="checkmark" size={20} color="#4377d8ff" />
+                                                <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
                                             )}
                                         </TouchableOpacity>
                                     );
@@ -76,33 +77,33 @@ const CustomDropdown = ({ label, options, selectedValue, onSelect, placeholder =
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         marginBottom: 0,
     },
     label: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 10,
     },
     dropdownButton: {
-        backgroundColor: Theme.colors.inputBackground,
+        backgroundColor: theme.colors.inputBackground || theme.colors.surface,
         borderRadius: 12,
         paddingVertical: 15,
         paddingHorizontal: 15,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
     },
     selectedText: {
-        color: Theme.colors.text,
+        color: theme.colors.text,
         fontSize: 15,
     },
     placeholderText: {
-        color: Theme.colors.textSubtle,
+        color: theme.colors.textMuted,
     },
     modalOverlay: {
         flex: 1,
@@ -111,7 +112,7 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     modalContent: {
-        backgroundColor: '#1a202c',
+        backgroundColor: theme.colors.card,
         borderRadius: 16,
         padding: 20,
         maxHeight: '70%',
@@ -127,7 +128,7 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 15,
         textAlign: 'center',
     },
@@ -140,25 +141,25 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 15,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+        borderBottomColor: theme.colors.border,
     },
     selectedOptionItem: {
-        backgroundColor: 'rgba(67, 119, 216, 0.1)', // Light blue tint
+        backgroundColor: theme.colors.primary + '1A', // 10% alpha
         borderRadius: 8,
         paddingHorizontal: 10,
         borderBottomWidth: 0,
     },
     optionText: {
         fontSize: 16,
-        color: '#a0aec0',
+        color: theme.colors.textMuted,
     },
     selectedOptionText: {
-        color: '#4377d8ff',
+        color: theme.colors.primary,
         fontWeight: 'bold',
     },
     buttonError: {
-        borderColor: '#EF4444',
-        backgroundColor: 'rgba(239, 68, 68, 0.05)',
+        borderColor: theme.colors.danger,
+        backgroundColor: theme.colors.danger + '0D', // 5% alpha
     },
 });
 

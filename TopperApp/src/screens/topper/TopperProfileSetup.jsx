@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
+
 import { View, StyleSheet, TouchableOpacity, TextInput, Image, Platform } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import * as ImagePicker from 'expo-image-picker';
@@ -18,7 +19,7 @@ import { useAlert } from '../../context/AlertContext';
 import useInitialLoad from '../../hooks/useInitialLoad';
 
 // Constants
-const CLASSES = ['9', '10', '11', '12'];
+const CLASSES = ['10', '12'];
 const BOARDS = ['CBSE', 'ICSE', 'STATE'];
 const STREAMS = ['SCIENCE', 'COMMERCE', 'ARTS'];
 
@@ -426,8 +427,9 @@ const TopperProfileSetup = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-    mainContainer: { flex: 1, backgroundColor: Theme.colors.background },
-    container: { flex: 1, paddingHorizontal: Theme.layout.screenPadding, paddingTop: 60, backgroundColor: 'transparent' },
+    mainContainer: { flex: 1, backgroundColor: '#0F172A' },
+    container: { flex: 1, paddingHorizontal: 20, paddingTop: 60, backgroundColor: 'transparent' },
+
     subTitleHeader: { color: '#a0aec0', fontSize: 14, marginTop: -10, marginBottom: 20, textAlign: 'center' },
     scrollContent: { paddingBottom: 40 },
     profileSection: { alignItems: 'center', marginVertical: 20 },
@@ -447,7 +449,8 @@ const styles = StyleSheet.create({
     subjectsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, padding: 4 },
     errorGroupBorder: { borderRadius: 12, borderWidth: 1.5, borderColor: '#EF4444', padding: 8 },
     errorText: { fontSize: 12, color: '#EF4444', marginTop: 5 },
-    subjectChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: Theme.colors.inputBackground, paddingVertical: 10, paddingHorizontal: 15, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)', gap: 8 },
+    subjectChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E293B', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)', gap: 8 },
+
     subjectChipSelected: { backgroundColor: '#4377d8ff', borderColor: '#4377d8ff' },
     subjectText: { color: '#a0aec0', fontSize: 14 },
     subjectTextSelected: { color: 'white', fontWeight: '600' },
@@ -455,7 +458,8 @@ const styles = StyleSheet.create({
     chip: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2d3748', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, borderWidth: 1, borderColor: '#4a5568', gap: 8 },
     chipText: { color: '#90cdf4', fontSize: 14, fontWeight: '600' },
     addInputContainer: { flexDirection: 'row', gap: 10, borderRadius: 12, borderWidth: 1, borderColor: 'transparent' },
-    addInput: { flex: 1, backgroundColor: Theme.colors.inputBackground, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 15, color: 'white', fontSize: 14, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' },
+    addInput: { flex: 1, backgroundColor: '#1E293B', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 15, color: 'white', fontSize: 14, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' },
+
     addButton: { backgroundColor: '#2d3748', width: 50, justifyContent: 'center', alignItems: 'center', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' },
     saveButton: { marginTop: 10, marginBottom: 30, backgroundColor: '#4299e1' },
 });

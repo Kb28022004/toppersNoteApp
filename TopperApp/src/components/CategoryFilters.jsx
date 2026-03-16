@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import AppText from './AppText';
+import useTheme from '../hooks/useTheme';
 
 const CategoryFilters = ({
     categories = [],
@@ -8,6 +9,9 @@ const CategoryFilters = ({
     onSelectCategory,
     style
 }) => {
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
     return (
         <View style={[styles.container, style]}>
             <FlatList
@@ -37,28 +41,27 @@ const CategoryFilters = ({
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         marginBottom: 20,
     },
     listContent: {
-
         gap: 10,
     },
     chip: {
         paddingHorizontal: 20,
         paddingVertical: 8,
         borderRadius: 20,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     activeChip: {
-        backgroundColor: '#00B1FC',
-        borderColor: '#00B1FC',
+        backgroundColor: theme.colors.primary,
+        borderColor: theme.colors.primary,
     },
     text: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 14,
         fontWeight: '500',
     },

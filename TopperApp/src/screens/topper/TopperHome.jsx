@@ -23,7 +23,7 @@ import { useGetNotificationsQuery } from '../../features/api/notificationApi';
 import { useGetChatsQuery } from '../../features/api/chatApi';
 import { useAlert } from '../../context/AlertContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 import { getTodayDate, getGreeting } from '../../helpers/dateHelpers';
 import { getTopPerformingSubject } from '../../helpers/salesHelpers';
 import HomeHeader from '../../components/HomeHeader';
@@ -32,6 +32,8 @@ import { StatCardSkeleton } from '../../components/skeletons/HomeSkeletons';
 const { width } = Dimensions.get('window');
 
 const TopperHome = ({ navigation }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { showAlert } = useAlert();
     const { data: profile, isLoading: isLoadingProfile, refetch: refetchProfile } = useGetProfileQuery();
     const { data: notesData, isLoading, isFetching: notesFetching, refetch: refetchNotes } = useGetMyNotesQuery({ sortBy: 'newest', page: 1, limit: 4 });
@@ -105,9 +107,8 @@ const TopperHome = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
-            {/* Custom Header */}
             <HomeHeader
                 userProfile={profile?.data}
                 userType="topper"
@@ -128,14 +129,14 @@ const TopperHome = ({ navigation }) => {
                         onRefresh={onRefresh}
                         tintColor="#00B1FC"
                         colors={["#00B1FC"]}
-                        backgroundColor={Theme.colors.background}
+                        backgroundColor={theme.colors.background}
                     />
                 }
             >
                 {/* Search / Announcement Banner */}
                 <TouchableOpacity style={styles.bannerContainer} activeOpacity={0.9}>
                     <LinearGradient
-                        colors={[Theme.colors.card, Theme.colors.surface]}
+                        colors={[theme.colors.card, theme.colors.surface]}
                         style={styles.banner}
                     >
                         <View style={styles.bannerContent}>
@@ -152,10 +153,6 @@ const TopperHome = ({ navigation }) => {
                 {/* Stats Section */}
                 <View style={styles.sectionHeader}>
                     <AppText style={styles.sectionTitle} weight="bold">Account Overview</AppText>
-                    {/* <View style={styles.liveIndicator}>
-                        <View style={styles.liveDot} />
-                        <AppText style={styles.liveText}>LIVE</AppText>
-                    </View> */}
                 </View>
 
                 <View style={styles.statsGrid}>
@@ -203,7 +200,7 @@ const TopperHome = ({ navigation }) => {
                         style={styles.actionGradient}
                     >
                         <View>
-                            <AppText style={styles.actionTitle} weight="bold">Upload New Content</AppText>
+                            <AppText style={[styles.actionTitle, { color: 'white' }]} weight="bold">Upload New Content</AppText>
                             <AppText style={styles.actionSubtitle}>Start earning by sharing your expertise</AppText>
                         </View>
                         <View style={styles.addIconCircle}>
@@ -230,7 +227,7 @@ const TopperHome = ({ navigation }) => {
                     emptyMessage="No sales recorded yet."
                 />
 
-                {/* Weekly Goal (Placeholder for gamification) */}
+                {/* Weekly Goal */}
                 <View style={styles.goalCard}>
                     <View style={styles.goalHeader}>
                         <AppText style={styles.goalTitle} weight="bold">Weekly Sales Goal</AppText>
@@ -247,10 +244,10 @@ const TopperHome = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     scrollContent: {
         paddingBottom: 40,
@@ -265,7 +262,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     bannerContent: {
         flex: 1,
@@ -285,12 +282,12 @@ const styles = StyleSheet.create({
     },
     bannerTitle: {
         fontSize: 18,
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 4,
     },
     bannerDesc: {
         fontSize: 12,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         lineHeight: 18,
     },
     bannerIcon: {
@@ -301,46 +298,26 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
         marginBottom: 15,
     },
     sectionTitle: {
         fontSize: 18,
-        color: 'white',
-    },
-    liveIndicator: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#10B98115',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 20,
-    },
-    liveDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: '#10B981',
-        marginRight: 6,
-    },
-    liveText: {
-        fontSize: 10,
-        color: '#10B981',
-        fontWeight: 'bold',
+        color: theme.colors.text,
     },
     statsGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
         justifyContent: 'space-between',
     },
     performanceCard: {
         marginHorizontal: 20,
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         padding: 16,
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
         marginBottom: 20,
     },
     row: {
@@ -357,11 +334,11 @@ const styles = StyleSheet.create({
     },
     perfTitle: {
         fontSize: 15,
-        color: 'white',
+        color: theme.colors.text,
     },
     perfDesc: {
         fontSize: 12,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         marginTop: 2,
     },
     actionCard: {
@@ -378,7 +355,6 @@ const styles = StyleSheet.create({
     },
     actionTitle: {
         fontSize: 18,
-        color: 'white',
     },
     actionSubtitle: {
         fontSize: 13,
@@ -395,11 +371,11 @@ const styles = StyleSheet.create({
     },
     goalCard: {
         marginHorizontal: 20,
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         padding: 20,
         borderRadius: 24,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
         marginTop: 10,
     },
     goalHeader: {
@@ -410,7 +386,7 @@ const styles = StyleSheet.create({
     },
     goalTitle: {
         fontSize: 15,
-        color: 'white',
+        color: theme.colors.text,
     },
     goalPercent: {
         fontSize: 15,
@@ -419,7 +395,7 @@ const styles = StyleSheet.create({
     },
     progressBarBg: {
         height: 8,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
         borderRadius: 4,
         overflow: 'hidden',
         marginBottom: 12,
@@ -431,7 +407,7 @@ const styles = StyleSheet.create({
     },
     goalDesc: {
         fontSize: 12,
-        color: '#64748B',
+        color: theme.colors.textSubtle,
         lineHeight: 18,
     }
 });

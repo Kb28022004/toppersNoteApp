@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     View,
     StyleSheet,
@@ -21,12 +21,14 @@ import BottomSheet from '../../components/BottomSheet';
 import { useGetNoteDetailsQuery, useGetNoteBuyersQuery } from '../../features/api/noteApi';
 import { useAlert } from '../../context/AlertContext';
 import useRefresh from '../../hooks/useRefresh';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 import { NoteDetailsSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const { width } = Dimensions.get('window');
 
 const TopperNoteDetails = ({ route, navigation }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { noteId } = route.params;
     const { data: note, isLoading, isError, refetch: refetchNote } = useGetNoteDetailsQuery(noteId);
     const { data: buyers, isLoading: isBuyersLoading, refetch: refetchBuyers } = useGetNoteBuyersQuery(noteId);
@@ -36,6 +38,20 @@ const TopperNoteDetails = ({ route, navigation }) => {
     });
     const { showAlert } = useAlert();
     const [optionsModalVisible, setOptionsModalVisible] = useState(false);
+
+    if (isLoading || isBuyersLoading) return (
+        <View style={styles.container}>
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
+                    <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
+                </TouchableOpacity>
+                <AppText style={styles.headerTitle} weight="bold">Note Insights</AppText>
+                <View style={{ width: 40 }} />
+            </View>
+            <NoteDetailsSkeleton />
+        </View>
+    );
 
     if (isError || !note) return (
         <View style={styles.center}>
@@ -92,6 +108,7 @@ const TopperNoteDetails = ({ route, navigation }) => {
     })();
 
     const currentStatus = STATUS_MAP;
+    const statsRowBg = isDarkMode ? theme.colors.card : theme.colors.surface;
 
     const handleShare = async () => {
         setOptionsModalVisible(false);
@@ -133,25 +150,25 @@ const TopperNoteDetails = ({ route, navigation }) => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
-                    <Ionicons name="chevron-back" size={24} color="white" />
+                    <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
                 </TouchableOpacity>
                 <AppText style={styles.headerTitle} weight="bold">Note Insights</AppText>
                 <TouchableOpacity onPress={() => setOptionsModalVisible(true)} style={styles.iconBtn}>
-                    <Ionicons name="ellipsis-vertical" size={20} color="white" />
+                    <Ionicons name="ellipsis-vertical" size={20} color={theme.colors.text} />
                 </TouchableOpacity>
             </View>
 
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} backgroundColor="transparent" />}
             >
-                {isLoading || isBuyersLoading ? (
+                {false ? (
                     <NoteDetailsSkeleton />
                 ) : (
                     <>
@@ -426,20 +443,20 @@ const TopperNoteDetails = ({ route, navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     center: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     retryBtn: {
         marginTop: 20,
-        backgroundColor: '#3B82F6',
+        backgroundColor: theme.colors.primary,
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderRadius: 8,
@@ -451,11 +468,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 50,
         paddingBottom: 15,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
         zIndex: 10,
     },
     headerTitle: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 18,
     },
     iconBtn: {
@@ -486,27 +503,27 @@ const styles = StyleSheet.create({
         marginTop: 12,
         paddingTop: 12,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.1)',
+        borderTopColor: theme.colors.border + '40',
     },
     remarkTitle: {
-        color: '#EF4444',
+        color: theme.colors.danger,
         fontSize: 12,
         marginBottom: 4,
     },
     remarkText: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 13,
         lineHeight: 18,
     },
     statsCard: {
         flexDirection: 'row',
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         marginHorizontal: 20,
         marginBottom: 25,
         borderRadius: 20,
         paddingVertical: 20,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     statItem: {
         flex: 1,
@@ -514,17 +531,17 @@ const styles = StyleSheet.create({
     },
     statVal: {
         fontSize: 18,
-        color: 'white',
+        color: theme.colors.text,
     },
     statLab: {
         fontSize: 12,
-        color: '#64748B',
+        color: theme.colors.textMuted,
         marginTop: 2,
     },
     statDivider: {
         width: 1,
         height: '60%',
-        backgroundColor: '#334155',
+        backgroundColor: theme.colors.border,
         alignSelf: 'center',
     },
     ratingRowSmall: {
@@ -538,7 +555,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         overflow: 'hidden',
         position: 'relative',
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         marginBottom: 25,
     },
     previewImage: {
@@ -551,12 +568,12 @@ const styles = StyleSheet.create({
         right: 20,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(15, 23, 42, 0.8)',
+        backgroundColor: theme.colors.overlay,
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderColor: theme.colors.borderLight,
     },
     previewBtnText: {
         color: 'white',
@@ -568,12 +585,12 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 22,
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 6,
     },
     noteSub: {
         fontSize: 14,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         marginBottom: 20,
     },
     metaGrid: {
@@ -585,32 +602,36 @@ const styles = StyleSheet.create({
     metaItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 12,
         gap: 8,
+        borderWidth: 1,
+        borderColor: theme.colors.border + '40',
     },
     metaText: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 14,
     },
     sectionTitle: {
         fontSize: 18,
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 12,
     },
     descriptionText: {
         fontSize: 14,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         lineHeight: 22,
         marginBottom: 30,
     },
     tocList: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 16,
         padding: 16,
         marginBottom: 30,
+        borderWidth: 1,
+        borderColor: theme.colors.border + '40',
     },
     tocItem: {
         flexDirection: 'row',
@@ -621,22 +642,24 @@ const styles = StyleSheet.create({
         width: 6,
         height: 6,
         borderRadius: 3,
-        backgroundColor: '#3B82F6',
+        backgroundColor: theme.colors.primary,
         marginRight: 12,
     },
     chapterTitle: {
         flex: 1,
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 14,
     },
     chapterPage: {
-        color: '#64748B',
+        color: theme.colors.textSubtle,
         fontSize: 12,
     },
     reviewCard: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 16,
         padding: 16,
+        borderWidth: 1,
+        borderColor: theme.colors.border + '40',
     },
     reviewHeader: {
         flexDirection: 'row',
@@ -657,11 +680,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     reviewerName: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 14,
     },
     reviewDate: {
-        color: '#64748B',
+        color: theme.colors.textSubtle,
         fontSize: 11,
     },
     ratingRow: {
@@ -669,19 +692,21 @@ const styles = StyleSheet.create({
         gap: 2,
     },
     reviewComment: {
-        color: '#CBD5E1',
+        color: theme.colors.textMuted,
         fontSize: 13,
         lineHeight: 20,
     },
     emptyReviewBox: {
         alignItems: 'center',
         paddingVertical: 30,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 16,
         gap: 8,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
     },
     noReviewsText: {
-        color: '#475569',
+        color: theme.colors.textSubtle,
         fontSize: 13,
     },
     rowBetween: {
@@ -691,10 +716,10 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
     badgeTextCount: {
-        color: '#3B82F6',
+        color: theme.colors.primary,
         fontSize: 13,
         fontWeight: 'bold',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        backgroundColor: theme.colors.primary + '15',
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 10,
@@ -705,35 +730,35 @@ const styles = StyleSheet.create({
     buyerCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         padding: 12,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     buyerAvatar: {
         width: 44,
         height: 44,
         borderRadius: 22,
         marginRight: 12,
-        backgroundColor: '#334155',
+        backgroundColor: theme.colors.border,
     },
     buyerName: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 14,
         marginBottom: 2,
     },
     buyerMeta: {
-        color: '#64748B',
+        color: theme.colors.textSubtle,
         fontSize: 11,
     },
     purchasedDate: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 11,
         marginBottom: 2,
     },
     purchasedTime: {
-        color: '#10B981',
+        color: theme.colors.success,
         fontSize: 10,
         fontWeight: 'bold',
     },
@@ -742,18 +767,20 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
     },
     seeMoreText: {
-        color: '#3B82F6',
+        color: theme.colors.primary,
         fontSize: 13,
         fontWeight: '600',
     },
     emptySmallBox: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 16,
         padding: 20,
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: theme.colors.border,
     },
     noDataText: {
-        color: '#475569',
+        color: theme.colors.textSubtle,
         fontSize: 13,
     },
     modalHeader: {
@@ -764,14 +791,14 @@ const styles = StyleSheet.create({
     },
     modalTitle: {
         fontSize: 18,
-        color: 'white',
+        color: theme.colors.text,
     },
     optionBtn: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: 15,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+        borderBottomColor: theme.colors.border + '40',
     },
     deleteOptionBtn: {
         borderBottomWidth: 0,
@@ -781,14 +808,16 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: theme.colors.card,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 15,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
     },
     optionText: {
         fontSize: 16,
-        color: 'white',
+        color: theme.colors.text,
     },
 });
 

@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import {
   TouchableOpacity,
   StyleSheet,
@@ -7,7 +7,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AppText from "./AppText";
-import { Theme } from "../theme/Theme";
+import useTheme from "../hooks/useTheme";
 
 const ReusableButton = ({
   title,
@@ -18,6 +18,9 @@ const ReusableButton = ({
   loading,
   loadingText,
 }) => {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   return (
     <TouchableOpacity
       style={[
@@ -50,12 +53,10 @@ const ReusableButton = ({
   );
 };
 
-export default memo(ReusableButton);
-
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
   button: {
     width: "100%",
-    backgroundColor: Theme.colors.primary,
+    backgroundColor: theme.colors.primary,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -72,3 +73,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
 });
+
+export default memo(ReusableButton);

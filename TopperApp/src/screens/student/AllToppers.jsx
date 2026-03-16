@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
     View,
     StyleSheet,
@@ -8,6 +8,7 @@ import {
     StatusBar,
     ActivityIndicator,
     Dimensions,
+    RefreshControl,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { useGetAllToppersQuery } from '../../features/api/topperApi';
@@ -19,13 +20,15 @@ import useDebounceSearch from '../../hooks/useDebounceSearch';
 import NoDataFound from '../../components/NoDataFound';
 import TopperFilterModal from '../../components/TopperFilterModal';
 import PageHeader from '../../components/PageHeader';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 
 import { TopperListSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const { width } = Dimensions.get('window');
 
 const AllToppers = ({ navigation }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { searchQuery, localSearch, setLocalSearch } = useDebounceSearch();
     const [page, setPage] = useState(1);
     const [sortBy, setSortBy] = useState('newest');
@@ -89,7 +92,7 @@ const AllToppers = ({ navigation }) => {
                 <View style={styles.headerInfo}>
                     <View style={styles.nameRow}>
                         <AppText style={styles.name} weight="bold">{item.name}</AppText>
-                        <MaterialCommunityIcons name="check-decagram" size={16} color="#00B1FC" />
+                        <MaterialCommunityIcons name="check-decagram" size={16} color={theme.colors.primary} />
                     </View>
                     <AppText style={styles.expertise} numberOfLines={1}>Class {item.expertiseClass} • {item.stream || item.board || 'Topper'}</AppText>
                 </View>
@@ -99,24 +102,24 @@ const AllToppers = ({ navigation }) => {
 
             <View style={styles.statsRow}>
                 <View style={styles.stat}>
-                    <Ionicons name="star" size={14} color="#FFD700" />
+                    <Ionicons name="star" size={14} color={theme.colors.warning} />
                     <AppText style={styles.statValue} weight="bold">{item.stats?.avgRating || '0.0'}</AppText>
                 </View>
                 <View style={styles.divider} />
                 <View style={styles.stat}>
-                    <Ionicons name="documents-outline" size={14} color="#3B82F6" />
+                    <Ionicons name="documents-outline" size={14} color={theme.colors.primary} />
                     <AppText style={styles.statValue} weight="bold">{item.stats?.totalNotes || 0} Notes</AppText>
                 </View>
                 <View style={styles.divider} />
                 <View style={styles.stat}>
-                    <Ionicons name="people-outline" size={14} color="#10B981" />
+                    <Ionicons name="people-outline" size={14} color={theme.colors.success} />
                     <AppText style={styles.statValue} weight="bold">{item.stats?.totalSold || 0} Sold</AppText>
                 </View>
             </View>
 
             <View style={styles.footer}>
                 <AppText style={styles.viewProfile}>View Profile</AppText>
-                <Feather name="arrow-right" size={14} color="#3B82F6" />
+                <Feather name="arrow-right" size={14} color={theme.colors.primary} />
             </View>
         </TouchableOpacity>
     );
@@ -125,7 +128,7 @@ const AllToppers = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
             <PageHeader
                 title="Verified Toppers"
@@ -148,8 +151,9 @@ const AllToppers = ({ navigation }) => {
                 renderItem={renderTopperItem}
                 keyExtractor={(item) => item.userId}
                 contentContainerStyle={styles.listContent}
-                refreshing={refreshing}
-                onRefresh={onRefresh}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} backgroundColor="transparent" />
+                }
                 onEndReached={loadMore}
                 onEndReachedThreshold={0.5}
                 showsVerticalScrollIndicator={false}
@@ -171,7 +175,7 @@ const AllToppers = ({ navigation }) => {
                         </View>
                     ) : isFetching ? (
                         <View style={{ paddingVertical: 40 }}>
-                            <ActivityIndicator size="large" color="#3B82F6" />
+                            <ActivityIndicator size="large" color={theme.colors.primary} />
                         </View>
                     ) : null
                 }
@@ -191,27 +195,27 @@ const AllToppers = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     searchSection: {
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
         marginBottom: 10,
     },
     listContent: {
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
         paddingTop: 10,
         paddingBottom: 40,
     },
     topperCard: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 20,
         padding: 16,
         marginBottom: 15,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     cardHeader: {
         flexDirection: 'row',
@@ -224,7 +228,7 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         marginRight: 12,
         borderWidth: 2,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     headerInfo: {
         flex: 1,
@@ -236,23 +240,23 @@ const styles = StyleSheet.create({
     },
     name: {
         fontSize: 16,
-        color: 'white',
+        color: theme.colors.text,
     },
     expertise: {
         fontSize: 12,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         marginTop: 2,
     },
     bio: {
         fontSize: 13,
-        color: '#CBD5E1',
+        color: theme.colors.text,
         lineHeight: 18,
         marginBottom: 15,
     },
     statsRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
         paddingVertical: 10,
         paddingHorizontal: 12,
         borderRadius: 12,
@@ -267,12 +271,12 @@ const styles = StyleSheet.create({
     },
     statValue: {
         fontSize: 12,
-        color: 'white',
+        color: theme.colors.text,
     },
     divider: {
         width: 1,
         height: 15,
-        backgroundColor: '#334155',
+        backgroundColor: theme.colors.border,
     },
     footer: {
         flexDirection: 'row',
@@ -282,7 +286,7 @@ const styles = StyleSheet.create({
     },
     viewProfile: {
         fontSize: 12,
-        color: '#3B82F6',
+        color: theme.colors.primary,
         fontWeight: 'bold',
     },
 });

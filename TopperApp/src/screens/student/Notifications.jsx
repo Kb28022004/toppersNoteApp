@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import PageHeader from '../../components/PageHeader';
-import { Theme } from '../../theme/Theme';
+import AppText from '../../components/AppText';
 import { useGetNotificationsQuery, useMarkAsReadMutation, useDeleteNotificationMutation } from '../../features/api/notificationApi';
 import { NotificationSkeleton } from '../../components/skeletons/HomeSkeletons';
 
+import useTheme from '../../hooks/useTheme';
+import { useMemo } from 'react';
+
 export default function Notifications({ navigation }) {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const [page, setPage] = useState(1);
     const { data: notificationsData, isLoading, isFetching, refetch } = useGetNotificationsQuery({ page, limit: 15 });
     const [markAsRead] = useMarkAsReadMutation();
@@ -35,12 +40,12 @@ export default function Notifications({ navigation }) {
 
     const renderIcon = (type) => {
         switch (type) {
-            case 'NEW_SALE': return <Ionicons name="cash" size={24} color="#10B981" />;
-            case 'NOTE_APPROVED': return <Ionicons name="checkmark-circle" size={24} color="#10B981" />;
-            case 'NOTE_REJECTED': return <Ionicons name="close-circle" size={24} color="#EF4444" />;
-            case 'NEW_FOLLOWER': return <Ionicons name="person-add" size={24} color="#3B82F6" />;
-            case 'PURCHASE_SUCCESS': return <Ionicons name="bag-check" size={24} color="#00B1FC" />;
-            default: return <Ionicons name="notifications" size={24} color="#E2E8F0" />;
+            case 'NEW_SALE': return <Ionicons name="cash" size={24} color={theme.colors.success} />;
+            case 'NOTE_APPROVED': return <Ionicons name="checkmark-circle" size={24} color={theme.colors.success} />;
+            case 'NOTE_REJECTED': return <Ionicons name="close-circle" size={24} color={theme.colors.danger} />;
+            case 'NEW_FOLLOWER': return <Ionicons name="person-add" size={24} color={theme.colors.primary} />;
+            case 'PURCHASE_SUCCESS': return <Ionicons name="bag-check" size={24} color={theme.colors.primary} />;
+            default: return <Ionicons name="notifications" size={24} color={theme.colors.textMuted} />;
         }
     };
 
@@ -84,16 +89,16 @@ export default function Notifications({ navigation }) {
                 {renderIcon(item.type)}
             </View>
             <View style={styles.content}>
-                <Text style={styles.title}>{item.title}</Text>
-                <Text style={styles.body}>{item.body}</Text>
-                <Text style={styles.time}>{new Date(item.createdAt).toLocaleString()}</Text>
+                <AppText style={styles.title} weight="bold">{item.title}</AppText>
+                <AppText style={styles.body}>{item.body}</AppText>
+                <AppText style={styles.time} weight="medium">{new Date(item.createdAt).toLocaleString()}</AppText>
             </View>
             <TouchableOpacity
                 style={styles.deleteButton}
                 onPress={() => handleDelete(item._id)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-                <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                <Ionicons name="trash-outline" size={20} color={theme.colors.danger} />
             </TouchableOpacity>
         </TouchableOpacity>
     );
@@ -113,7 +118,7 @@ export default function Notifications({ navigation }) {
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.5}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00B1FC" />
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />
                 }
                 ListEmptyComponent={() => {
                     if (isLoading && page === 1) {
@@ -128,69 +133,68 @@ export default function Notifications({ navigation }) {
                     }
                     return (
                         <View style={styles.emptyContainer}>
-                            <Ionicons name="notifications-off-outline" size={60} color="#64748B" />
-                            <Text style={styles.emptyText}>You're all caught up!</Text>
+                            <Ionicons name="notifications-off-outline" size={60} color={theme.colors.textSubtle} />
+                            <AppText style={styles.emptyText} weight="medium">You're all caught up!</AppText>
                         </View>
                     );
                 }}
                 ListFooterComponent={() => (
-                    (isFetching && page > 1) ? <ActivityIndicator style={{ padding: 20 }} color="#00B1FC" /> : null
+                    (isFetching && page > 1) ? <ActivityIndicator style={{ padding: 20 }} color={theme.colors.primary} /> : null
                 )}
             />
         </View>
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
-        paddingVertical: Theme.layout.screenPadding,
+        backgroundColor: theme.colors.background,
+        paddingBottom: theme.layout.screenPadding,
     },
     centered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     notificationCard: {
         flexDirection: 'row',
         padding: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#1E293B',
-        backgroundColor: Theme.colors.background,
+        borderBottomColor: theme.colors.border + '40',
+        backgroundColor: theme.colors.background,
     },
     unread: {
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.card + '50',
     },
     iconContainer: {
         width: 45,
         height: 45,
         borderRadius: 22.5,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 15
+        marginRight: 15,
+        borderWidth: 1,
+        borderColor: theme.colors.border + '40',
     },
     content: {
         flex: 1
     },
     title: {
-        color: '#E2E8F0',
+        color: theme.colors.text,
         fontSize: 16,
-        fontFamily: 'Inter-SemiBold',
         marginBottom: 4
     },
     body: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 14,
-        fontFamily: 'Inter-Regular',
         lineHeight: 20
     },
     time: {
-        color: '#64748B',
+        color: theme.colors.textSubtle,
         fontSize: 12,
-        fontFamily: 'Inter-Medium',
         marginTop: 6
     },
     deleteButton: {
@@ -204,9 +208,8 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     emptyText: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         marginTop: 15,
         fontSize: 16,
-        fontFamily: 'Inter-Medium'
     }
 });

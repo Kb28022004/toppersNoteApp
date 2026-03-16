@@ -18,11 +18,13 @@ import Loader from '../../components/Loader';
 import useRefresh from '../../hooks/useRefresh';
 import useDebounceSearch from '../../hooks/useDebounceSearch';
 import PageHeader from '../../components/PageHeader';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TransactionSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const TransactionHistory = ({ navigation }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const [page, setPage] = useState(1);
     const [statusFilter, setStatusFilter] = useState(''); // '', 'SUCCESS', 'PENDING', 'FAILED'
     const { searchQuery, localSearch, setLocalSearch } = useDebounceSearch('', 500);
@@ -106,11 +108,11 @@ const TransactionHistory = ({ navigation }) => {
             activeOpacity={0.7}
         >
             <View style={styles.cardHeader}>
-                <View style={[styles.iconContainer, { backgroundColor: item.status === 'SUCCESS' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' }]}>
+                <View style={[styles.iconContainer, { backgroundColor: item.status === 'SUCCESS' ? theme.colors.success + '15' : theme.colors.danger + '15' }]}>
                     <MaterialCommunityIcons
                         name={item.status === 'SUCCESS' ? 'file-document-check-outline' : 'file-document-remove-outline'}
                         size={24}
-                        color={item.status === 'SUCCESS' ? '#10B981' : '#EF4444'}
+                        color={item.status === 'SUCCESS' ? theme.colors.success : theme.colors.danger}
                     />
                 </View>
                 <View style={styles.transactionInfo}>
@@ -123,19 +125,19 @@ const TransactionHistory = ({ navigation }) => {
             </View>
 
             <View style={styles.cardFooter}>
-                <View style={[styles.statusBadge, { backgroundColor: item.status === 'SUCCESS' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' }]}>
-                    <View style={[styles.statusDot, { backgroundColor: item.status === 'SUCCESS' ? '#10B981' : '#EF4444' }]} />
-                    <AppText style={[styles.statusText, { color: item.status === 'SUCCESS' ? '#10B981' : '#EF4444' }]}>
+                <View style={[styles.statusBadge, { backgroundColor: item.status === 'SUCCESS' ? theme.colors.success + '15' : theme.colors.danger + '15' }]}>
+                    <View style={[styles.statusDot, { backgroundColor: item.status === 'SUCCESS' ? theme.colors.success : theme.colors.danger }]} />
+                    <AppText style={[styles.statusText, { color: item.status === 'SUCCESS' ? theme.colors.success : theme.colors.danger }]}>
                         {item.status}
                     </AppText>
                 </View>
                 <View style={styles.actionButtons}>
                     <TouchableOpacity style={styles.actionBtn}>
-                        <MaterialCommunityIcons name="receipt" size={14} color="#3B82F6" />
+                        <MaterialCommunityIcons name="receipt" size={14} color={theme.colors.primary} />
                         <AppText style={styles.actionText}>Receipt</AppText>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.actionBtn}>
-                        <MaterialCommunityIcons name="download" size={14} color="#3B82F6" />
+                        <MaterialCommunityIcons name="download" size={14} color={theme.colors.primary} />
                         <AppText style={styles.actionText}>Invoice</AppText>
                     </TouchableOpacity>
                 </View>
@@ -147,14 +149,14 @@ const TransactionHistory = ({ navigation }) => {
         <View style={styles.headerComponent}>
             <View style={styles.statsContainer}>
                 <LinearGradient
-                    colors={[Theme.colors.surface, Theme.colors.background]}
+                    colors={isDarkMode ? [theme.colors.card, theme.colors.background] : [theme.colors.surface, theme.colors.background]}
                     style={styles.statsCard}
                 >
                     <AppText style={styles.statsLabel}>Total Spent in {history?.currentMonthName || 'this month'}</AppText>
                     <View style={styles.amountRow}>
                         <AppText style={styles.totalAmount} weight="bold">₹{history?.totalSpentThisMonth || 0}</AppText>
                         <View style={styles.trendBadge}>
-                            <Ionicons name="trending-up" size={12} color="#10B981" />
+                            <Ionicons name="trending-up" size={12} color={theme.colors.success} />
                             <AppText style={styles.trendText}>12%</AppText>
                         </View>
                     </View>
@@ -174,7 +176,7 @@ const TransactionHistory = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
             <PageHeader
                 title="Transaction History"
@@ -219,11 +221,11 @@ const TransactionHistory = ({ navigation }) => {
                                 onEndReachedThreshold={0.5}
                                 ListHeaderComponent={statusFilter === tab.value ? HeaderComponent : null}
                                 refreshControl={
-                                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00B1FC" />
+                                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />
                                 }
                                 ListFooterComponent={() => (
                                     isFetching && page > 1 && statusFilter === tab.value ? (
-                                        <ActivityIndicator size="small" color="#00B1FC" style={{ marginVertical: 20 }} />
+                                        <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginVertical: 20 }} />
                                     ) : <View style={{ height: 100 }} />
                                 )}
                                 ListEmptyComponent={() => (
@@ -235,7 +237,7 @@ const TransactionHistory = ({ navigation }) => {
                                         </View>
                                     ) : statusFilter === tab.value ? (
                                         <View style={styles.emptyState}>
-                                            <MaterialCommunityIcons name="history" size={64} color="#334155" />
+                                            <MaterialCommunityIcons name="history" size={64} color={theme.colors.border} />
                                             <AppText style={styles.emptyText}>No transactions found</AppText>
                                         </View>
                                     ) : null
@@ -250,10 +252,10 @@ const TransactionHistory = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     headerComponent: {
         marginBottom: 10,
@@ -270,20 +272,20 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 20,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     activeTab: {
-        backgroundColor: 'rgba(0, 177, 252, 0.15)',
-        borderColor: '#00B1FC',
+        backgroundColor: theme.colors.primary + '20',
+        borderColor: theme.colors.primary,
     },
     tabText: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         fontSize: 13,
     },
     activeTabText: {
-        color: '#00B1FC',
+        color: theme.colors.primary,
     },
     listContent: {
         paddingHorizontal: 20,
@@ -297,10 +299,10 @@ const styles = StyleSheet.create({
         padding: 24,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     statsLabel: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 14,
         marginBottom: 8,
     },
@@ -311,36 +313,36 @@ const styles = StyleSheet.create({
     },
     totalAmount: {
         fontSize: 32,
-        color: 'white',
+        color: theme.colors.text,
     },
     trendBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        backgroundColor: theme.colors.success + '15',
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 12,
         gap: 4,
     },
     trendText: {
-        color: '#10B981',
+        color: theme.colors.success,
         fontSize: 12,
         fontWeight: 'bold',
     },
     sectionTitle: {
-        color: '#64748B',
+        color: theme.colors.textSubtle,
         fontSize: 12,
         letterSpacing: 1.2,
         marginTop: 15,
         marginBottom: 15,
     },
     transactionCard: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 16,
         padding: 16,
         marginBottom: 15,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     cardHeader: {
         flexDirection: 'row',
@@ -359,16 +361,16 @@ const styles = StyleSheet.create({
         marginLeft: 15,
     },
     noteTitle: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 15,
         marginBottom: 4,
     },
     transactionDate: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         fontSize: 12,
     },
     amount: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 16,
     },
     cardFooter: {
@@ -377,7 +379,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingTop: 12,
         borderTopWidth: 1,
-        borderTopColor: '#334155',
+        borderTopColor: theme.colors.border + '40',
     },
     statusBadge: {
         flexDirection: 'row',
@@ -407,7 +409,7 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     actionText: {
-        color: '#3B82F6',
+        color: theme.colors.primary,
         fontSize: 11,
         fontWeight: '600',
     },
@@ -417,7 +419,7 @@ const styles = StyleSheet.create({
         marginTop: 60,
     },
     emptyText: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         marginTop: 15,
         fontSize: 16,
     }

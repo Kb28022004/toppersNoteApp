@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
+
 import { View, StyleSheet, TextInput, TouchableOpacity, Image, Alert, Platform } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import * as DocumentPicker from 'expo-document-picker';
@@ -26,7 +27,9 @@ const SUBJECTS_MAP = {
 };
 
 const TopperVerification = ({ navigation }) => {
+    const { theme } = useTheme();
     const { showAlert } = useAlert();
+
     const [marksheet, setMarksheet] = useState(null);
     const [yearOfPassing, setYearOfPassing] = useState('');
     const [isLoading, setIsLoading] = useState(true);
@@ -240,7 +243,8 @@ const TopperVerification = ({ navigation }) => {
                     // }
                     />
 
-                    <View style={{ paddingHorizontal: Theme.layout.screenPadding }}>
+                    <View style={{ paddingHorizontal: theme.layout.screenPadding }}>
+
                         <AppText style={styles.headerTitle}>Verify Academic Details</AppText>
                         <AppText style={styles.headerSubtitle}>Please upload proof of your academic achievements.</AppText>
 
@@ -442,8 +446,9 @@ const TopperVerification = ({ navigation }) => {
 const styles = StyleSheet.create({
     mainContainer: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: '#0F172A',
     },
+
     container: {
         flex: 1,
         backgroundColor: 'transparent'
@@ -480,8 +485,9 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingBottom: 40,
         paddingTop: 10,
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: 20,
     },
+
     sectionLabel: {
         fontSize: 14,
         fontWeight: 'bold',

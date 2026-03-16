@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
     View,
     StyleSheet,
@@ -23,11 +23,13 @@ import { useUploadNoteMutation } from '../../features/api/noteApi';
 import { useGetProfileQuery } from '../../features/api/topperApi';
 import useApiFeedback from '../../hooks/useApiFeedback';
 import { useAlert } from '../../context/AlertContext';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 import useInitialLoad from '../../hooks/useInitialLoad';
 
 const UploadNotes = ({ navigation }) => {
     const { showAlert } = useAlert();
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const [currentStep, setCurrentStep] = useState(1);
     const [file, setFile] = useState(null);
     const isLoading = useInitialLoad(1000);
@@ -443,14 +445,13 @@ const UploadNotes = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
-
+        backgroundColor: theme.colors.background,
     },
     helpBtn: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 14,
     },
     stepperWrapper: {
@@ -464,21 +465,21 @@ const styles = StyleSheet.create({
     },
     stepCount: {
         fontSize: 12,
-        color: '#00B1FC',
+        color: theme.colors.primary,
     },
     stepModule: {
         fontSize: 12,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
     },
     progressContainer: {
         height: 6,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 3,
         overflow: 'hidden',
     },
     progressBar: {
         height: '100%',
-        backgroundColor: '#00B1FC',
+        backgroundColor: theme.colors.primary,
     },
     scrollContent: {
         flexGrow: 1,
@@ -490,20 +491,20 @@ const styles = StyleSheet.create({
     },
     stepTitle: {
         fontSize: 24,
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 8,
     },
     stepSubtitle: {
         fontSize: 14,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         marginBottom: 30,
     },
     uploadBox: {
         height: 250,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 24,
         borderWidth: 2,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
         borderStyle: 'dashed',
         justifyContent: 'center',
         alignItems: 'center',
@@ -519,12 +520,12 @@ const styles = StyleSheet.create({
     },
     uploadText: {
         fontSize: 18,
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 8,
     },
     uploadSubtext: {
         fontSize: 12,
-        color: '#64748B',
+        color: theme.colors.textMuted,
     },
     sectionHeader: {
         flexDirection: 'row',
@@ -534,7 +535,7 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 16,
-        color: 'white',
+        color: theme.colors.text,
         fontWeight: 'bold',
     },
     editBtn: {
@@ -544,16 +545,16 @@ const styles = StyleSheet.create({
     fileCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         padding: 15,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     fileIconBox: {
         width: 45,
         height: 55,
-        backgroundColor: '#2D3748',
+        backgroundColor: theme.colors.surface,
         borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
@@ -563,12 +564,12 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     fileName: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 14,
         marginBottom: 4,
     },
     fileSize: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 12,
     },
     rowBetween: {
@@ -582,33 +583,32 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 14,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         marginBottom: 10,
     },
     formGroup: {
         marginBottom: 20,
     },
     input: {
-        backgroundColor: Theme.colors.inputBackground,
+        backgroundColor: theme.colors.inputBackground || theme.colors.surface,
         borderRadius: 12,
         paddingVertical: 15,
         paddingHorizontal: 15,
-        color: Theme.colors.text,
+        color: theme.colors.text,
         fontSize: 15,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     readOnlyInput: {
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        backgroundColor: theme.colors.surface,
         borderRadius: 12,
         paddingVertical: 15,
         paddingHorizontal: 15,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
-
+        borderColor: theme.colors.border,
     },
     readOnlyText: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 15,
     },
     textArea: {
@@ -616,8 +616,8 @@ const styles = StyleSheet.create({
         paddingTop: 15,
     },
     inputError: {
-        borderColor: Theme.colors.error,
-        backgroundColor: 'rgba(239, 68, 68, 0.05)',
+        borderColor: theme.colors.danger,
+        backgroundColor: theme.colors.danger + '08',
     },
     rowBetweenNoMargin: {
         flexDirection: 'row',
@@ -646,55 +646,55 @@ const styles = StyleSheet.create({
         padding: 5,
     },
     summaryCard: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         padding: 20,
         borderRadius: 20,
         marginBottom: 30,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     fileNameSmall: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 14,
         flex: 1,
     },
     summaryDetails: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 13,
         marginTop: 4,
     },
     sectionTitleLarge: {
         fontSize: 28,
-        color: 'white',
+        color: theme.colors.text,
         fontWeight: 'bold',
         marginBottom: 10,
     },
     priceDescription: {
         fontSize: 14,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         lineHeight: 22,
         marginBottom: 30,
     },
     priceInputWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 16,
         paddingHorizontal: 20,
         height: 80,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
         marginBottom: 40,
     },
     currency: {
         fontSize: 32,
-        color: 'white',
+        color: theme.colors.text,
         marginRight: 10,
     },
     priceInput: {
         flex: 1,
         fontSize: 32,
-        color: '#00B1FC',
+        color: theme.colors.primary,
         fontWeight: 'bold',
     },
     footer: {
@@ -704,22 +704,22 @@ const styles = StyleSheet.create({
     backBtn: {
         flex: 1,
         height: 60,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     backText: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: 'bold',
     },
     submitBtn: {
         flex: 2,
         height: 60,
-        backgroundColor: '#00B1FC',
+        backgroundColor: theme.colors.primary,
         borderRadius: 16,
         flexDirection: 'row',
         justifyContent: 'center',

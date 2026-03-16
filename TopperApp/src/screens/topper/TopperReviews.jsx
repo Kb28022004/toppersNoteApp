@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
     View,
     StyleSheet,
@@ -9,7 +9,6 @@ import {
     StatusBar,
     ActivityIndicator,
     TextInput,
-    Dimensions
 } from 'react-native';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import PageHeader from '../../components/PageHeader';
@@ -18,13 +17,13 @@ import NoDataFound from '../../components/NoDataFound';
 import { useGetTopperReviewsQuery } from '../../features/api/noteApi';
 import useRefresh from '../../hooks/useRefresh';
 import useDebounceSearch from '../../hooks/useDebounceSearch';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 import { ReviewSkeleton } from '../../components/skeletons/HomeSkeletons';
-
-const { width } = Dimensions.get('window');
 
 const TopperReviews = ({ route, navigation }) => {
     const { topperId } = route.params;
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { searchQuery, localSearch, setLocalSearch } = useDebounceSearch('', 500);
     const [page, setPage] = useState(1);
     const [sortBy, setSortBy] = useState('newest');
@@ -34,7 +33,6 @@ const TopperReviews = ({ route, navigation }) => {
         data: response,
         isLoading,
         isFetching,
-        isError,
         refetch
     } = useGetTopperReviewsQuery({
         topperId,
@@ -55,7 +53,6 @@ const TopperReviews = ({ route, navigation }) => {
         }
     };
 
-    // Reset page when filters change
     useEffect(() => {
         setPage(1);
     }, [searchQuery, sortBy, ratingFilter]);
@@ -73,15 +70,15 @@ const TopperReviews = ({ route, navigation }) => {
                         <AppText style={styles.timeAgo}>{item.daysAgo}</AppText>
                         {item.verifiedPurchase && (
                             <View style={styles.verifiedBadge}>
-                                <Ionicons name="checkmark-seal" size={12} color="#10B981" />
+                                <Ionicons name="checkmark-seal" size={12} color={theme.colors.success} />
                                 <AppText style={styles.verifiedText}>Bought this note</AppText>
                             </View>
                         )}
                     </View>
                 </View>
-                <View style={[styles.ratingTag, { backgroundColor: item.rating >= 4 ? '#10B98115' : '#F59E0B15' }]}>
-                    <Ionicons name="star" size={12} color={item.rating >= 4 ? '#10B981' : '#F59E0B'} />
-                    <AppText style={[styles.ratingVal, { color: item.rating >= 4 ? '#10B981' : '#F59E0B' }]} weight="bold">{item.rating}</AppText>
+                <View style={[styles.ratingTag, { backgroundColor: item.rating >= 4 ? theme.colors.success + '18' : '#F59E0B18' }]}>
+                    <Ionicons name="star" size={12} color={item.rating >= 4 ? theme.colors.success : '#F59E0B'} />
+                    <AppText style={[styles.ratingVal, { color: item.rating >= 4 ? theme.colors.success : '#F59E0B' }]} weight="bold">{item.rating}</AppText>
                 </View>
             </View>
 
@@ -89,9 +86,9 @@ const TopperReviews = ({ route, navigation }) => {
 
             {item.noteInfo && (
                 <View style={styles.noteRefBox}>
-                    <Feather name="book-open" size={12} color="#94A3B8" />
+                    <Feather name="book-open" size={12} color={theme.colors.textSubtle} />
                     <AppText style={styles.noteRefText} numberOfLines={1}>
-                        Reviewed on: <AppText weight="bold" style={{ color: '#00B1FC' }}>{item.noteInfo.subject}</AppText> - {item.noteInfo.chapter}
+                        Reviewed on: <AppText weight="bold" style={{ color: theme.colors.primary }}>{item.noteInfo.subject}</AppText> - {item.noteInfo.chapter}
                     </AppText>
                 </View>
             )}
@@ -111,34 +108,29 @@ const TopperReviews = ({ route, navigation }) => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
             <PageHeader
                 title="All Reviews"
                 subtitle={`${response?.total || 0} Feedbacks Received`}
                 onBackPress={() => navigation.goBack()}
-                rightComponent={
-                    <TouchableOpacity style={styles.infoIcon}>
-                        <Feather name="help-circle" size={20} color="#64748B" />
-                    </TouchableOpacity>
-                }
             />
 
             <View style={styles.header}>
                 {/* Search Bar */}
                 <View style={styles.searchContainer}>
                     <View style={styles.searchBox}>
-                        <Feather name="search" size={18} color="#94A3B8" />
+                        <Feather name="search" size={18} color={theme.colors.textMuted} />
                         <TextInput
                             style={styles.searchInput}
                             placeholder="Search in comments..."
-                            placeholderTextColor="#64748B"
+                            placeholderTextColor={theme.colors.textSubtle}
                             value={localSearch}
                             onChangeText={setLocalSearch}
                         />
                         {localSearch.length > 0 && (
                             <TouchableOpacity onPress={() => setLocalSearch('')}>
-                                <Ionicons name="close-circle" size={18} color="#94A3B8" />
+                                <Ionicons name="close-circle" size={18} color={theme.colors.textMuted} />
                             </TouchableOpacity>
                         )}
                     </View>
@@ -175,7 +167,7 @@ const TopperReviews = ({ route, navigation }) => {
                         style={styles.sortToggle}
                         onPress={() => setSortBy(sortBy === 'newest' ? 'rating_high' : sortBy === 'rating_high' ? 'rating_low' : 'newest')}
                     >
-                        <MaterialCommunityIcons name="sort-variant" size={16} color="#00B1FC" />
+                        <MaterialCommunityIcons name="sort-variant" size={16} color={theme.colors.primary} />
                         <AppText style={styles.sortVal} weight="bold">
                             {sortBy === 'newest' ? 'Newest First' : sortBy === 'rating_high' ? 'Highest Rating' : 'Lowest Rating'}
                         </AppText>
@@ -183,7 +175,6 @@ const TopperReviews = ({ route, navigation }) => {
                 </View>
             </View>
 
-            {/* Reviews List */}
             <FlatList
                 data={(isLoading || (isFetching && page === 1)) ? [] : (response?.reviews || [])}
                 keyExtractor={(item) => item.id || item._id}
@@ -192,11 +183,11 @@ const TopperReviews = ({ route, navigation }) => {
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.5}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00B1FC" />
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />
                 }
                 ListFooterComponent={
                     isFetching ? (
-                        <ActivityIndicator size="small" color="#00B1FC" style={{ marginVertical: 20 }} />
+                        <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginVertical: 20 }} />
                     ) : (response?.reviews?.length > 0 && page >= response?.totalPages) ? (
                         <AppText style={styles.endText}>You've reached the end of your reviews.</AppText>
                     ) : null
@@ -220,19 +211,16 @@ const TopperReviews = ({ route, navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     header: {
-        backgroundColor: '#1E293B40',
+        backgroundColor: theme.colors.card + '60',
         paddingBottom: 15,
         borderBottomWidth: 1,
-        borderBottomColor: '#33415550',
-    },
-    infoIcon: {
-        padding: 5,
+        borderBottomColor: theme.colors.border,
     },
     searchContainer: {
         paddingHorizontal: 20,
@@ -241,16 +229,16 @@ const styles = StyleSheet.create({
     searchBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         borderRadius: 16,
         paddingHorizontal: 15,
         height: 50,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     searchInput: {
         flex: 1,
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 14,
         marginLeft: 10,
     },
@@ -266,20 +254,20 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 12,
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     activeChip: {
-        backgroundColor: '#00B1FC20',
-        borderColor: '#00B1FC',
+        backgroundColor: theme.colors.primary + '20',
+        borderColor: theme.colors.primary,
     },
     chipText: {
         fontSize: 13,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
     },
     activeChipText: {
-        color: '#00B1FC',
+        color: theme.colors.primary,
     },
     sortRow: {
         flexDirection: 'row',
@@ -290,32 +278,32 @@ const styles = StyleSheet.create({
     },
     sortLabel: {
         fontSize: 12,
-        color: '#64748B',
+        color: theme.colors.textSubtle,
     },
     sortToggle: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 5,
-        backgroundColor: '#00B1FC10',
+        backgroundColor: theme.colors.primary + '12',
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderRadius: 8,
     },
     sortVal: {
         fontSize: 12,
-        color: '#00B1FC',
+        color: theme.colors.primary,
     },
     listContent: {
         padding: 20,
         paddingBottom: 40,
     },
     reviewCard: {
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         borderRadius: 24,
         padding: 18,
         marginBottom: 16,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     reviewHeader: {
         flexDirection: 'row',
@@ -326,7 +314,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#334155',
+        backgroundColor: theme.colors.surface,
     },
     headerInfo: {
         flex: 1,
@@ -334,7 +322,7 @@ const styles = StyleSheet.create({
     },
     studentName: {
         fontSize: 16,
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 2,
     },
     metaRow: {
@@ -344,7 +332,7 @@ const styles = StyleSheet.create({
     },
     timeAgo: {
         fontSize: 12,
-        color: '#64748B',
+        color: theme.colors.textMuted,
     },
     verifiedBadge: {
         flexDirection: 'row',
@@ -353,7 +341,7 @@ const styles = StyleSheet.create({
     },
     verifiedText: {
         fontSize: 10,
-        color: '#10B981',
+        color: theme.colors.success,
         fontWeight: 'bold',
     },
     ratingTag: {
@@ -369,7 +357,7 @@ const styles = StyleSheet.create({
     },
     commentText: {
         fontSize: 14,
-        color: '#CBD5E1',
+        color: theme.colors.textMuted,
         lineHeight: 22,
         marginBottom: 15,
     },
@@ -377,27 +365,23 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        backgroundColor: '#0F172A40',
+        backgroundColor: theme.colors.surface,
         padding: 10,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#33415540',
+        borderColor: theme.colors.border,
     },
     noteRefText: {
         fontSize: 11,
-        color: '#94A3B8',
+        color: theme.colors.textSubtle,
         flex: 1,
-    },
-    loaderBox: {
-        marginTop: 60,
-        alignItems: 'center',
     },
     endText: {
         textAlign: 'center',
-        color: '#475569',
+        color: theme.colors.textSubtle,
         fontSize: 12,
         marginTop: 10,
-    }
+    },
 });
 
 export default TopperReviews;

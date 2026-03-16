@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
     View,
     StyleSheet,
@@ -27,7 +27,7 @@ import NoDataFound from '../../components/NoDataFound';
 import SortModal from '../../components/SortModal';
 import ScreenLoader from '../../components/ScreenLoader';
 import PageHeader from '../../components/PageHeader';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 import { capitalize } from '../../helpers/capitalize';
 
 import { StoreNoteSkeleton, TopperSkeleton } from '../../components/skeletons/HomeSkeletons';
@@ -35,6 +35,8 @@ import { StoreNoteSkeleton, TopperSkeleton } from '../../components/skeletons/Ho
 const { width } = Dimensions.get('window');
 
 const Store = ({ navigation, route }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const initialParams = route.params || {};
     const { searchQuery, localSearch, setLocalSearch } = useDebounceSearch(initialParams.search || '');
     const [activeCategory, setActiveCategory] = useState(initialParams.category || 'All');
@@ -46,7 +48,7 @@ const Store = ({ navigation, route }) => {
     const [isSortModalVisible, setIsSortModalVisible] = useState(false);
 
     // Sync with navigation params when they change
-    React.useEffect(() => {
+    useEffect(() => {
         if (route.params) {
             const { search, category, subject, sortBy: pSortBy, timeRange: pTimeRange, topperId } = route.params;
             if (search !== undefined) setLocalSearch(search);
@@ -58,7 +60,7 @@ const Store = ({ navigation, route }) => {
         }
     }, [route.params]);
 
-    React.useEffect(() => {
+    useEffect(() => {
         setPage(1);
     }, [activeCategory, searchQuery, selectedTopper, sortBy, timeRange, selectedSubject]);
 
@@ -125,7 +127,7 @@ const Store = ({ navigation, route }) => {
                     />
                     {isSelected && (
                         <View style={styles.checkBadge}>
-                            <Ionicons name="checkmark-circle" size={16} color="#00B1FC" />
+                            <Ionicons name="checkmark-circle" size={16} color={theme.colors.primary} />
                         </View>
                     )}
                 </View>
@@ -144,7 +146,7 @@ const Store = ({ navigation, route }) => {
                 onBackPress={() => navigation.goBack()}
                 rightComponent={
                     <TouchableOpacity style={styles.cartIconBtn}>
-                        <Feather name="shopping-bag" size={18} color="white" />
+                        <Feather name="shopping-bag" size={18} color={theme.colors.text} />
                     </TouchableOpacity>
                 }
             />
@@ -201,7 +203,7 @@ const Store = ({ navigation, route }) => {
                 <AppText style={styles.totalCount}>{notesResponse?.pagination?.totalNotes || 0} items</AppText>
             </View>
         </View>
-    ), [localSearch, activeCategory, selectedTopper, toppers, isLoadingToppers, isFetchingToppers, sortBy, timeRange, categories, notesResponse]);
+    ), [localSearch, activeCategory, selectedTopper, toppers, isLoadingToppers, isFetchingToppers, sortBy, timeRange, categories, notesResponse, theme, styles]);
 
     const renderItem = useCallback(({ item }) => (
         <NoteCard
@@ -214,7 +216,7 @@ const Store = ({ navigation, route }) => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
             <FlatList
                 ListHeaderComponent={HeaderComponent}
@@ -225,7 +227,7 @@ const Store = ({ navigation, route }) => {
                 columnWrapperStyle={styles.gridRow}
                 contentContainerStyle={styles.scrollList}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00B1FC" />
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} backgroundColor="transparent" />
                 }
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.5}
@@ -241,7 +243,7 @@ const Store = ({ navigation, route }) => {
                             ))}
                         </View>
                     ) : (isFetching && page > 1) ? (
-                        <ActivityIndicator size="large" color="#00B1FC" style={{ marginVertical: 40 }} />
+                        <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginVertical: 40 }} />
                     ) : (notesResponse?.notes?.length === 0) ? (
                         <NoDataFound
                             message="We couldn't find any notes matching your search."
@@ -266,27 +268,27 @@ const Store = ({ navigation, route }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     cartIconBtn: {
         width: 38,
         height: 38,
         borderRadius: 12,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     searchBox: {
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
         marginBottom: 20,
     },
     categoryFilters: {
-        paddingLeft: Theme.layout.screenPadding,
+        paddingLeft: theme.layout.screenPadding,
         marginBottom: 25,
     },
     topperFilterSection: {
@@ -296,21 +298,21 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
         marginBottom: 15,
     },
     sectionTitle: {
         fontSize: 12,
-        color: '#475569',
+        color: theme.colors.textMuted,
         letterSpacing: 1.5,
     },
     clearText: {
         fontSize: 12,
-        color: '#00B1FC',
+        color: theme.colors.primary,
         fontWeight: 'bold',
     },
     toppersFlatList: {
-        paddingLeft: Theme.layout.screenPadding,
+        paddingLeft: theme.layout.screenPadding,
         paddingRight: 10,
     },
     topperItem: {
@@ -323,13 +325,13 @@ const styles = StyleSheet.create({
         height: 54,
         borderRadius: 27,
         borderWidth: 2,
-        borderColor: '#1E293B',
+        borderColor: theme.colors.border,
         padding: 2,
         marginBottom: 8,
         position: 'relative',
     },
     selectedAvatarContainer: {
-        borderColor: '#00B1FC',
+        borderColor: theme.colors.primary,
     },
     avatar: {
         width: '100%',
@@ -340,41 +342,41 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: -2,
         right: -2,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
         borderRadius: 10,
     },
     topperNameText: {
         fontSize: 11,
-        color: '#64748B',
+        color: theme.colors.textMuted,
     },
     selectedTopperNameText: {
-        color: 'white',
+        color: theme.colors.text,
         fontWeight: 'bold',
     },
     resultsHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
         marginBottom: 20,
     },
     resultsTitle: {
         fontSize: 18,
-        color: 'white',
+        color: theme.colors.text,
     },
     totalCount: {
         fontSize: 12,
-        color: '#64748B',
+        color: theme.colors.textMuted,
     },
     gridRow: {
         justifyContent: 'space-between',
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
     },
     skeletonGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
     },
     scrollList: {
         paddingBottom: 40,

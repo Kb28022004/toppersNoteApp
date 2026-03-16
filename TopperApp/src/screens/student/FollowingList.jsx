@@ -19,12 +19,15 @@ import SearchBar from '../../components/SearchBar';
 import CategoryFilters from '../../components/CategoryFilters';
 import PageHeader from '../../components/PageHeader';
 import NoDataFound from '../../components/NoDataFound';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
+import { useMemo } from 'react';
 import { FollowingSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const { width } = Dimensions.get('window');
 
 const FollowingList = ({ navigation }) => {
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { searchQuery, localSearch, setLocalSearch } = useDebounceSearch();
     const [activeFilter, setActiveFilter] = useState('All');
 
@@ -71,7 +74,7 @@ const FollowingList = ({ navigation }) => {
                     <AppText style={styles.topperExpertise}>{item.expertise}</AppText>
                 </View>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#4B5563" />
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSubtle} />
         </TouchableOpacity>
     );
 
@@ -104,9 +107,9 @@ const FollowingList = ({ navigation }) => {
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={onRefresh}
-                        tintColor="#00B1FC"
-                        colors={["#00B1FC"]}
-                        backgroundColor={Theme.colors.background}
+                        tintColor={theme.colors.primary}
+                        colors={[theme.colors.primary]}
+                        backgroundColor="transparent"
                     />
                 }
                 ListEmptyComponent={
@@ -127,7 +130,7 @@ const FollowingList = ({ navigation }) => {
                 }
                 ListFooterComponent={
                     isFetching && followedToppers?.length > 0 ? (
-                        <ActivityIndicator size="small" color="#00B1FC" style={{ marginVertical: 20 }} />
+                        <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginVertical: 20 }} />
                     ) : null
                 }
             />
@@ -135,13 +138,13 @@ const FollowingList = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     searchContainer: {
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
         marginTop: 10,
     },
     filterWrapper: {
@@ -153,7 +156,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     listContent: {
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
         paddingBottom: 30,
         marginTop: 10,
     },
@@ -161,12 +164,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         padding: 15,
         borderRadius: 20,
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     topperLeft: {
         flexDirection: 'row',
@@ -182,7 +185,7 @@ const styles = StyleSheet.create({
         height: 55,
         borderRadius: 27.5,
         borderWidth: 2,
-        borderColor: '#3B82F6',
+        borderColor: theme.colors.primary,
     },
     statusDot: {
         position: 'absolute',
@@ -191,21 +194,21 @@ const styles = StyleSheet.create({
         width: 12,
         height: 12,
         borderRadius: 6,
-        backgroundColor: '#10B981',
+        backgroundColor: theme.colors.success,
         borderWidth: 2,
-        borderColor: '#1E293B',
+        borderColor: theme.colors.card,
     },
     topperInfo: {
         flex: 1,
     },
     topperName: {
         fontSize: 16,
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 4,
     },
     topperExpertise: {
         fontSize: 12,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
     },
 });
 

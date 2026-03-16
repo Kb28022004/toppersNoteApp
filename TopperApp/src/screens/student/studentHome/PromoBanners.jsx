@@ -1,12 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AppText from '../../../components/AppText';
+import useTheme from '../../../hooks/useTheme';
 
 const { width } = Dimensions.get('window');
 
 const PromoBanners = ({ navigation }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const scrollRef = useRef(null);
     const [currentSlide, setCurrentSlide] = useState(0);
     const promoCount = 3;
@@ -66,7 +69,7 @@ const PromoBanners = ({ navigation }) => {
                         style={styles.promoGradient}
                     >
                         <View style={styles.promoTextGroup}>
-                            <View style={[styles.promoBadge, { backgroundColor: '#FBBF24' }]}>
+                            <View style={[styles.promoBadge, { backgroundColor: theme.colors.warning }]}>
                                 <AppText style={[styles.promoBadgeText, { color: '#000' }]} weight="bold">VERIFIED</AppText>
                             </View>
                             <AppText style={styles.promoTitle} weight="bold">AIR 1 Hand-written{'\n'}Solved Notes</AppText>
@@ -84,8 +87,8 @@ const PromoBanners = ({ navigation }) => {
                         style={styles.promoGradient}
                     >
                         <View style={styles.promoTextGroup}>
-                            <View style={[styles.promoBadge, { backgroundColor: '#fff' }]}>
-                                <AppText style={[styles.promoBadgeText, { color: '#10B981' }]} weight="bold">FREEBIE</AppText>
+                            <View style={[styles.promoBadge, { backgroundColor: theme.colors.surface }]}>
+                                <AppText style={[styles.promoBadgeText, { color: theme.colors.success }]} weight="bold">FREEBIE</AppText>
                             </View>
                             <AppText style={styles.promoTitle} weight="bold">Free Sample{'\n'}Cheat Sheets</AppText>
                             <AppText style={styles.promoSubtitle}>Quick revision formulas for all</AppText>
@@ -104,7 +107,7 @@ const PromoBanners = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     promoContainer: {
         marginBottom: 35,
     },
@@ -133,17 +136,17 @@ const styles = StyleSheet.create({
     },
     promoBadgeText: {
         fontSize: 10,
-        color: 'white',
+        color: theme.colors.textInverse,
     },
     promoTitle: {
         fontSize: 24,
-        color: 'white',
+        color: theme.colors.textInverse,
         lineHeight: 32,
         marginBottom: 8,
     },
     promoSubtitle: {
         fontSize: 13,
-        color: 'rgba(255,255,255,0.8)',
+        color: theme.colors.textInverse + 'cc',
     },
     promoIcon: {
         marginLeft: 10,
@@ -158,11 +161,11 @@ const styles = StyleSheet.create({
         width: 6,
         height: 6,
         borderRadius: 3,
-        backgroundColor: '#334155',
+        backgroundColor: theme.colors.border,
     },
     activeDot: {
         width: 20,
-        backgroundColor: '#00B1FC',
+        backgroundColor: theme.colors.primary,
     },
 });
 

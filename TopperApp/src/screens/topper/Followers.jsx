@@ -18,11 +18,13 @@ import SortModal from '../../components/SortModal';
 import PageHeader from '../../components/PageHeader';
 import { useGetTopperFollowersQuery } from '../../features/api/topperApi';
 import useDebounceSearch from '../../hooks/useDebounceSearch';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 import { FollowerSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const Followers = ({ route, navigation }) => {
     const { userId, name } = route.params;
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { searchQuery, localSearch, setLocalSearch } = useDebounceSearch();
 
     // States
@@ -104,7 +106,7 @@ const Followers = ({ route, navigation }) => {
                     </AppText>
                 )}
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#64748B" />
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.textMuted} />
         </TouchableOpacity>
     );
 
@@ -112,8 +114,8 @@ const Followers = ({ route, navigation }) => {
     const isInitialLoading = isFetching && page === 1;
 
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" />
+        <SafeAreaView style={styles.container} edges={['bottom']}>
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
             {/* Header */}
             <PageHeader
@@ -145,14 +147,14 @@ const Followers = ({ route, navigation }) => {
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={onRefresh}
-                        tintColor="#00B1FC"
-                        colors={["#00B1FC"]}
-                        backgroundColor={Theme.colors.background}
+                        tintColor={theme.colors.primary}
+                        colors={[theme.colors.primary]}
+                        backgroundColor="transparent"
                     />
                 }
                 ListFooterComponent={
                     isFetching && page > 1 ? (
-                        <ActivityIndicator size="small" color="#00B1FC" style={styles.footerLoader} />
+                        <ActivityIndicator size="small" color={theme.colors.primary} style={styles.footerLoader} />
                     ) : null
                 }
                 ListEmptyComponent={
@@ -172,23 +174,20 @@ const Followers = ({ route, navigation }) => {
                 }
             />
 
-
             <SortModal
                 visible={isSortVisible}
                 onClose={() => setIsSortVisible(false)}
                 selectedSort={sortBy}
                 onSelectSort={setSortBy}
-            // We'll reuse sort modal for sorting. If we need class filtering we can add it here or use another modal.
-            // Assuming SortModal has generic sorting options.
             />
         </SafeAreaView>
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     searchSection: {
         paddingHorizontal: 20,
@@ -201,12 +200,12 @@ const styles = StyleSheet.create({
     followerCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         padding: 14,
         borderRadius: 20,
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     avatar: {
         width: 52,
@@ -214,34 +213,27 @@ const styles = StyleSheet.create({
         borderRadius: 26,
         marginRight: 14,
         borderWidth: 2,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     info: {
         flex: 1,
     },
     name: {
         fontSize: 15,
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 2,
     },
     meta: {
         fontSize: 12,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         marginBottom: 4,
     },
     joinedDate: {
         fontSize: 10,
-        color: '#64748B',
+        color: theme.colors.textSubtle,
     },
     footerLoader: {
         marginVertical: 20,
-    },
-    overlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(15, 23, 42, 0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 10,
     },
 });
 

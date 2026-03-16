@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppText from './AppText';
-import { Theme } from '../theme/Theme';
+import useTheme from '../hooks/useTheme';
 
 const PageHeader = ({
     title,
@@ -16,6 +16,8 @@ const PageHeader = ({
     style
 }) => {
     const insets = useSafeAreaInsets();
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Use custom padding if provided, otherwise use safe area top + small constant
     const finalPaddingTop = customPaddingTop !== undefined
@@ -32,7 +34,7 @@ const PageHeader = ({
             <View style={styles.leftContainer}>
                 {onBackPress ? (
                     <TouchableOpacity style={styles.backBtn} onPress={onBackPress}>
-                        <Ionicons name={iconName} size={22} color="white" />
+                        <Ionicons name={iconName} size={22} color={theme.colors.text} />
                     </TouchableOpacity>
                 ) : null}
             </View>
@@ -55,13 +57,13 @@ const PageHeader = ({
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 20,
         paddingBottom: 15,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     leftContainer: {
         width: 40,
@@ -71,11 +73,11 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 12,
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     titleContainer: {
         flex: 1,
@@ -84,11 +86,11 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         fontSize: 20,
-        color: 'white',
+        color: theme.colors.text,
     },
     headerSub: {
         fontSize: 12,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         marginTop: 2,
     },
     rightContainer: {

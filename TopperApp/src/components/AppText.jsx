@@ -1,5 +1,6 @@
 import React, { memo } from "react";
 import { Text } from "react-native";
+import useTheme from "../hooks/useTheme";
 
 function AppText({
   children,
@@ -7,12 +8,13 @@ function AppText({
   weight = "regular",
   ...props
 }) {
+  const { theme } = useTheme();
   const fontWeight = weight === "bold" ? "bold" : weight === "semibold" ? "600" : "400";
 
   return (
     <Text
       {...props}
-      style={[{ fontWeight, color: "white" }, style]}
+      style={[{ fontWeight, color: theme.colors.text }, style]}
     >
       {children}
     </Text>

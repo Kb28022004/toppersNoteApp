@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
     View,
     StyleSheet,
@@ -7,10 +7,8 @@ import {
     ScrollView,
     RefreshControl,
     StatusBar,
-    Switch,
 } from 'react-native';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import AppText from '../../components/AppText';
 import { useGetProfileQuery, useUpdateProfilePictureMutation } from '../../features/api/topperApi';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,14 +16,15 @@ import { useAlert } from '../../context/AlertContext';
 import * as ImagePicker from 'expo-image-picker';
 import Loader from '../../components/Loader';
 import ProfilePictureViewer from '../../components/ProfilePictureViewer';
-import { Theme } from '../../theme/Theme'
+import useTheme from '../../hooks/useTheme';
 
 const TopperProfile = ({ navigation }) => {
     const { showAlert } = useAlert();
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { data: profile, refetch: refetchProfile } = useGetProfileQuery();
     const [updateProfilePicture, { isLoading: isUpdating }] = useUpdateProfilePictureMutation();
     const [refreshing, setRefreshing] = React.useState(false);
-    const [isOnline, setIsOnline] = React.useState(true);
     const [isImageViewerVisible, setIsImageViewerVisible] = React.useState(false);
 
     const onRefresh = React.useCallback(async () => {
@@ -115,27 +114,20 @@ const TopperProfile = ({ navigation }) => {
                 { icon: 'gift-outline', label: 'Refer & Earn', color: '#F59E0B', onPress: () => navigation.navigate('ReferAndEarn') },
             ]
         },
-        // {
-        //     title: 'Preferences',
-        //     items: [
-        //         { icon: 'notifications-outline', label: 'Push Notifications', color: '#64748B', onPress: null, type: 'toggle' },
-        //         { icon: 'globe-outline', label: 'Language Settings', color: '#64748B', onPress: null },
-        //     ]
-        // }
     ];
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
             {/* Header Area */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <Ionicons name="chevron-back" size={24} color="white" />
+                    <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
                 </TouchableOpacity>
                 <AppText style={styles.headerTitle} weight="bold">Settings</AppText>
                 <TouchableOpacity onPress={handleLogout} style={styles.logoutIcon}>
-                    <Feather name="log-out" size={20} color="#EF4444" />
+                    <Feather name="log-out" size={20} color={theme.colors.danger} />
                 </TouchableOpacity>
             </View>
 
@@ -146,8 +138,8 @@ const TopperProfile = ({ navigation }) => {
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={onRefresh}
-                        tintColor="#00B1FC"
-                        backgroundColor={Theme.colors.background}
+                        tintColor={theme.colors.primary}
+                        backgroundColor="transparent"
                     />
                 }
             >
@@ -167,8 +159,8 @@ const TopperProfile = ({ navigation }) => {
 
                     <View style={styles.infoArea}>
                         <View style={styles.nameRow}>
-                            <AppText style={styles.userName} weight="bold">{userData?.fullName || 'Topper Name'}</AppText>
-                            {userData?.verified && <MaterialCommunityIcons name="check-decagram" size={20} color="#00B1FC" style={{ marginLeft: 6 }} />}
+                            <AppText style={styles.userName} weight="bold">{userData?.firstName || 'Topper Name'}</AppText>
+                            {userData?.verified && <MaterialCommunityIcons name="check-decagram" size={20} color={theme.colors.primary} style={{ marginLeft: 6 }} />}
                         </View>
                         <AppText style={styles.userRole}>Class {userData?.expertiseClass} {userData?.stream} Topper</AppText>
 
@@ -176,7 +168,7 @@ const TopperProfile = ({ navigation }) => {
                             style={styles.previewBtn}
                             onPress={() => navigation.navigate('PublicTopperProfile', { topperId: userData?.userId, isPreview: true })}
                         >
-                            <Feather name="eye" size={14} color="#00B1FC" />
+                            <Feather name="eye" size={14} color={theme.colors.primary} />
                             <AppText style={styles.previewText} weight="bold">View My Profile</AppText>
                         </TouchableOpacity>
                     </View>
@@ -203,20 +195,6 @@ const TopperProfile = ({ navigation }) => {
                     </View>
                 </View>
 
-                {/* Profile Visibility Toggle */}
-                {/* <View style={styles.visibilityCard}>
-                    <View style={styles.visibilityText}>
-                        <AppText style={styles.visTitle} weight="bold">Profile Visibility</AppText>
-                        <AppText style={styles.visSub}>Allow students to find your notes</AppText>
-                    </View>
-                    <Switch
-                        value={isOnline}
-                        onValueChange={setIsOnline}
-                        trackColor={{ false: '#334155', true: '#00B1FC' }}
-                        thumbColor="white"
-                    />
-                </View> */}
-
                 {/* Settings Menu Sections */}
                 {menuSections.map((section, sIndex) => (
                     <View key={sIndex} style={styles.menuSection}>
@@ -233,11 +211,7 @@ const TopperProfile = ({ navigation }) => {
                                         <Ionicons name={item.icon} size={20} color={item.color} />
                                     </View>
                                     <AppText style={styles.menuLabel}>{item.label}</AppText>
-                                    {item.type === 'toggle' ? (
-                                        <Switch value={true} size="small" trackColor={{ false: '#334155', true: '#00B1FC' }} />
-                                    ) : (
-                                        <Feather name="chevron-right" size={18} color="#475569" />
-                                    )}
+                                    <Feather name="chevron-right" size={18} color={theme.colors.textSubtle} />
                                 </TouchableOpacity>
                             ))}
                         </View>
@@ -265,10 +239,10 @@ const TopperProfile = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     header: {
         flexDirection: 'row',
@@ -282,19 +256,21 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: theme.colors.border,
     },
     headerTitle: {
         fontSize: 18,
-        color: 'white',
+        color: theme.colors.text,
     },
     logoutIcon: {
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: '#EF444415',
+        backgroundColor: theme.colors.danger + '15',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -307,7 +283,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 10,
         marginBottom: 30,
-
     },
     avatarContainer: {
         position: 'relative',
@@ -317,20 +292,20 @@ const styles = StyleSheet.create({
         height: 80,
         borderRadius: 40,
         borderWidth: 3,
-        borderColor: Theme.colors.card,
+        borderColor: theme.colors.border,
     },
     cameraBtn: {
         position: 'absolute',
         bottom: 0,
         right: 0,
-        backgroundColor: '#00B1FC',
+        backgroundColor: theme.colors.primary,
         width: 28,
         height: 28,
         borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: Theme.colors.background,
+        borderColor: theme.colors.background,
     },
     infoArea: {
         marginLeft: 20,
@@ -343,37 +318,37 @@ const styles = StyleSheet.create({
     },
     userName: {
         fontSize: 20,
-        color: 'white',
+        color: theme.colors.text,
     },
     userRole: {
         fontSize: 13,
-        color: Theme.colors.textSubtle,
+        color: theme.colors.textMuted,
         marginBottom: 10,
     },
     previewBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#00B1FC10',
+        backgroundColor: theme.colors.primary + '10',
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 20,
         alignSelf: 'flex-start',
         borderWidth: 1,
-        borderColor: '#00B1FC30',
+        borderColor: theme.colors.primary + '30',
         gap: 6,
     },
     previewText: {
         fontSize: 11,
-        color: '#00B1FC',
+        color: theme.colors.primary,
     },
     statsBanner: {
         flexDirection: 'row',
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         marginHorizontal: 20,
         borderRadius: 24,
         paddingVertical: 18,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
         marginBottom: 25,
     },
     bannerStat: {
@@ -382,60 +357,36 @@ const styles = StyleSheet.create({
     },
     statVal: {
         fontSize: 18,
-        color: 'white',
+        color: theme.colors.text,
     },
     statLab: {
         fontSize: 11,
-        color: Theme.colors.textSubtle,
+        color: theme.colors.textMuted,
         marginTop: 2,
     },
     bannerDivider: {
         width: 1,
         height: '60%',
-        backgroundColor: Theme.colors.border,
+        backgroundColor: theme.colors.border,
         alignSelf: 'center',
-    },
-    visibilityCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: `${Theme.colors.card}60`,
-        marginHorizontal: 20,
-        padding: 16,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: Theme.colors.border,
-        marginBottom: 30,
-        justifyContent: 'space-between',
-    },
-    visibilityText: {
-        flex: 1,
-    },
-    visTitle: {
-        fontSize: 15,
-        color: 'white',
-    },
-    visSub: {
-        fontSize: 12,
-        color: Theme.colors.textSubtle,
-        marginTop: 2,
     },
     menuSection: {
         marginBottom: 30,
     },
     sectionLabel: {
         fontSize: 12,
-        color: '#475569',
+        color: theme.colors.textSubtle,
         textTransform: 'uppercase',
         letterSpacing: 1.5,
         marginLeft: 24,
         marginBottom: 12,
     },
     menuGroup: {
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         marginHorizontal: 20,
         borderRadius: 24,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
         overflow: 'hidden',
     },
     menuItem: {
@@ -443,7 +394,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 16,
         borderBottomWidth: 1,
-        borderBottomColor: Theme.colors.border,
+        borderBottomColor: theme.colors.border,
     },
     menuIconBox: {
         width: 38,
@@ -456,21 +407,21 @@ const styles = StyleSheet.create({
     menuLabel: {
         flex: 1,
         fontSize: 15,
-        color: 'white',
+        color: theme.colors.text,
     },
     logoutBtn: {
         marginHorizontal: 20,
         paddingVertical: 18,
         borderRadius: 20,
-        backgroundColor: '#EF444410',
+        backgroundColor: theme.colors.danger + '10',
         borderWidth: 1,
-        borderColor: '#EF444430',
+        borderColor: theme.colors.danger + '30',
         alignItems: 'center',
         marginTop: 10,
         marginBottom: 30,
     },
     logoutText: {
-        color: '#EF4444',
+        color: theme.colors.danger,
         fontSize: 15,
     },
     footer: {
@@ -479,11 +430,11 @@ const styles = StyleSheet.create({
     },
     version: {
         fontSize: 11,
-        color: '#475569',
+        color: theme.colors.textSubtle,
     },
     supportLink: {
         fontSize: 11,
-        color: '#00B1FC',
+        color: theme.colors.primary,
         marginTop: 8,
         fontWeight: 'bold',
     }

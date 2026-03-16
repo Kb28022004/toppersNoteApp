@@ -1,13 +1,17 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AppText from '../../../components/AppText';
+import useTheme from '../../../hooks/useTheme';
 
 const ProTipCard = () => {
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
     return (
         <View style={styles.proTipCard}>
             <View style={styles.tipIconBox}>
-                <Ionicons name="bulb" size={24} color="#FBBF24" />
+                <Ionicons name="bulb" size={24} color={theme.colors.warning} />
             </View>
             <View style={{ flex: 1, marginLeft: 15 }}>
                 <AppText style={styles.tipTitle} weight="bold">Pro Tip for Exams</AppText>
@@ -17,34 +21,34 @@ const ProTipCard = () => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     proTipCard: {
         marginHorizontal: 20,
         marginTop: 20,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 24,
         padding: 20,
         flexDirection: 'row',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#FBBF2430',
+        borderColor: theme.colors.warning + '30',
     },
     tipIconBox: {
         width: 50,
         height: 50,
         borderRadius: 25,
-        backgroundColor: '#FBBF2415',
+        backgroundColor: theme.colors.warning + '15',
         justifyContent: 'center',
         alignItems: 'center',
     },
     tipTitle: {
         fontSize: 16,
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 4,
     },
     tipDesc: {
         fontSize: 12,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         lineHeight: 18,
     },
 });

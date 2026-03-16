@@ -10,13 +10,16 @@ import {
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import AppText from '../../components/AppText';
 import PageHeader from '../../components/PageHeader';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
+import { useMemo } from 'react';
 import { useAlert } from '../../context/AlertContext';
 import { useDeleteAccountMutation } from '../../features/api/studentApi';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Loader from '../../components/Loader';
 
 const AccountSettings = ({ navigation }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { showAlert } = useAlert();
     const [deleteAccount, { isLoading: isDeleting }] = useDeleteAccountMutation();
 
@@ -44,7 +47,7 @@ const AccountSettings = ({ navigation }) => {
         );
     };
 
-    const settingSections = [
+    const settingSections = useMemo(() => [
         {
             title: "PROFILE SETTINGS",
             items: [
@@ -53,15 +56,8 @@ const AccountSettings = ({ navigation }) => {
                     title: "Academic Profile",
                     subtitle: "Update Class, Board & Stream",
                     icon: "school-outline",
-                    color: "#3B82F6",
+                    color: theme.colors.primary,
                     onPress: () => navigation.navigate('EditAcademicProfile')
-                },
-                {
-                    id: 'notifications',
-                    title: "Notifications",
-                    subtitle: "Preferences for alerts & news",
-                    icon: "notifications-outline",
-                    color: "#10B981"
                 },
             ]
         },
@@ -73,22 +69,22 @@ const AccountSettings = ({ navigation }) => {
                     title: "Help & Support",
                     subtitle: "Contact us for any issues",
                     icon: "help-circle-outline",
-                    color: "#F59E0B"
+                    color: theme.colors.warning
                 },
                 {
                     id: 'privacy',
                     title: "Privacy Policy",
                     subtitle: "How we handle your data",
                     icon: "shield-checkmark-outline",
-                    color: "#6366F1"
+                    color: theme.colors.primary
                 },
             ]
         }
-    ];
+    ], [theme]);
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
             <Loader visible={isDeleting} />
 
             <PageHeader
@@ -117,7 +113,7 @@ const AccountSettings = ({ navigation }) => {
                                             <AppText style={styles.itemSubtitle}>{item.subtitle}</AppText>
                                         </View>
                                     </View>
-                                    <Ionicons name="chevron-forward" size={20} color="#4B5563" />
+                                    <Ionicons name="chevron-forward" size={20} color={theme.colors.textSubtle} />
                                 </TouchableOpacity>
                             ))}
                         </View>
@@ -130,7 +126,7 @@ const AccountSettings = ({ navigation }) => {
                     <TouchableOpacity style={styles.deleteCard} onPress={handleDeleteAccount}>
                         <View style={styles.itemLeft}>
                             <View style={styles.deleteIconContainer}>
-                                <Feather name="trash-2" size={20} color="#EF4444" />
+                                <Feather name="trash-2" size={20} color={theme.colors.danger} />
                             </View>
                             <View>
                                 <AppText style={styles.deleteTitle} weight="bold">Delete Account</AppText>
@@ -151,11 +147,10 @@ const AccountSettings = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
-
+        backgroundColor: theme.colors.background,
     },
     scrollContent: {
         padding: 20,
@@ -164,18 +159,18 @@ const styles = StyleSheet.create({
         marginBottom: 30,
     },
     sectionTitle: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         fontSize: 11,
         letterSpacing: 1.5,
         marginBottom: 12,
         marginLeft: 4,
     },
     card: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 20,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     item: {
         flexDirection: 'row',
@@ -183,7 +178,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         padding: 16,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.05)',
+        borderBottomColor: theme.colors.border + '40',
     },
     itemLeft: {
         flexDirection: 'row',
@@ -198,35 +193,35 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     itemTitle: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 16,
     },
     itemSubtitle: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         fontSize: 12,
         marginTop: 2,
     },
     deleteCard: {
-        backgroundColor: 'rgba(239, 68, 68, 0.05)',
+        backgroundColor: theme.colors.danger + '10',
         borderRadius: 20,
         padding: 16,
         borderWidth: 1,
-        borderColor: 'rgba(239, 68, 68, 0.2)',
+        borderColor: theme.colors.danger + '30',
     },
     deleteIconContainer: {
         width: 44,
         height: 44,
         borderRadius: 12,
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        backgroundColor: theme.colors.danger + '15',
         justifyContent: 'center',
         alignItems: 'center',
     },
     deleteTitle: {
-        color: '#EF4444',
+        color: theme.colors.danger,
         fontSize: 16,
     },
     deleteSubtitle: {
-        color: 'rgba(239, 68, 68, 0.6)',
+        color: theme.colors.danger + '99',
         fontSize: 12,
         marginTop: 2,
     },
@@ -235,7 +230,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     versionText: {
-        color: '#4B5563',
+        color: theme.colors.textSubtle,
         fontSize: 12,
     }
 });

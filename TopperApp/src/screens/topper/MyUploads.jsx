@@ -19,8 +19,9 @@ import SortModal from '../../components/SortModal';
 import PageHeader from '../../components/PageHeader';
 import useDebounceSearch from '../../hooks/useDebounceSearch';
 import { useGetMyNotesQuery } from '../../features/api/noteApi';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 import { UploadNoteSkeleton } from '../../components/skeletons/HomeSkeletons';
+
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STATUS_CATEGORIES = ['All', 'Approved', 'Pending', 'Rejected'];
@@ -43,26 +44,27 @@ const getStatus = (s) => STATUS_CONFIG[s?.toUpperCase()] ?? STATUS_CONFIG.UNDER_
 // ─── Note card ────────────────────────────────────────────────────────────────
 const NoteCard = React.memo(({ item }) => {
     const navigation = useNavigation();
+    const { theme } = useTheme();
     const s = getStatus(item.status);
     return (
         <TouchableOpacity
-            style={styles.card}
+            style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
             activeOpacity={0.7}
             onPress={() => navigation.navigate('TopperNoteDetails', { noteId: item._id })}
         >
             <View style={styles.iconBox}>
-                <Ionicons name="document-text-outline" size={22} color="#00B1FC" />
+                <Ionicons name="document-text-outline" size={22} color={theme.colors.primary} />
             </View>
             <View style={styles.cardBody}>
-                <AppText style={styles.cardTitle} numberOfLines={1} weight="bold">
+                <AppText style={[styles.cardTitle, { color: theme.colors.text }]} numberOfLines={1} weight="bold">
                     {item.chapterName || item.subject}
                 </AppText>
-                <AppText style={styles.cardSub} numberOfLines={1}>
+                <AppText style={[styles.cardSub, { color: theme.colors.textMuted }]} numberOfLines={1}>
                     {item.subject} • Class {item.class} • {item.board}
                 </AppText>
                 <View style={styles.cardFooter}>
-                    <AppText style={styles.price}>₹{item.price}</AppText>
-                    <AppText style={styles.sales}>{item.salesCount || 0} Sales</AppText>
+                    <AppText style={[styles.price, { color: theme.colors.primary }]}>₹{item.price}</AppText>
+                    <AppText style={[styles.sales, { color: theme.colors.textMuted }]}>{item.salesCount || 0} Sales</AppText>
                 </View>
             </View>
             <View style={[styles.badge, { backgroundColor: s.bg }]}>
@@ -72,8 +74,11 @@ const NoteCard = React.memo(({ item }) => {
     );
 });
 
+
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 const MyUploads = ({ navigation }) => {
+    const { theme, isDarkMode } = useTheme();
+
     const { searchQuery, localSearch, setLocalSearch } = useDebounceSearch();
     const [activeCategory, setActiveCategory] = useState('All');
     const [sortBy, setSortBy] = useState('newest');
@@ -119,8 +124,9 @@ const MyUploads = ({ navigation }) => {
     const isFiltering = isFetching && page === 1;
 
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" />
+        <SafeAreaView style={[styles.container, { gap: 10, backgroundColor: theme.colors.background }]} edges={['bottom']}>
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+
 
             {/* ── Header ── */}
             <PageHeader
@@ -161,11 +167,12 @@ const MyUploads = ({ navigation }) => {
                         <RefreshControl
                             refreshing={refreshing}
                             onRefresh={onRefresh}
-                            tintColor="#00B1FC"
-                            colors={['#00B1FC']}
-                            backgroundColor={Theme.colors.background}
+                            tintColor={theme.colors.primary}
+                            colors={[theme.colors.primary]}
+                            backgroundColor="transparent"
                         />
                     }
+
                     onEndReached={handleLoadMore}
                     onEndReachedThreshold={0.5}
                     ListEmptyComponent={
@@ -211,57 +218,37 @@ const MyUploads = ({ navigation }) => {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-    container: { flex: 1, gap: 10, backgroundColor: Theme.colors.background },
+    container: { flex: 1 },
 
     searchBar: { paddingHorizontal: 20, marginTop: 14, marginBottom: 4 },
     filters: { paddingHorizontal: 20 },
 
     listContent: { paddingHorizontal: 20, paddingBottom: 40 },
     listEmpty: { flex: 1 },
-    listWrapper: { flex: 1, position: 'relative' },
+    listWrapper: { flex: 1 },
     footerLoader: { paddingVertical: 20 },
 
-    // Overlay loader (search / filter transition)
-    overlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(15, 23, 42, 0.65)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 10,
-        borderRadius: 12,
-    },
-    overlayInner: {
-        alignItems: 'center',
-        gap: 12,
-    },
-    overlayText: {
-        color: '#94A3B8',
-        fontSize: 13,
-    },
-
-    // Card
+    // Card (background/border set inline via theme)
     card: {
-        backgroundColor: '#1E293B',
         borderRadius: 16,
         padding: 14,
         marginBottom: 12,
         flexDirection: 'row',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#334155',
     },
     iconBox: {
         width: 44, height: 44, borderRadius: 12,
-        backgroundColor: '#00B1FC12',
+        backgroundColor: 'rgba(0, 177, 252, 0.07)',
         justifyContent: 'center', alignItems: 'center',
         marginRight: 12,
     },
     cardBody: { flex: 1 },
-    cardTitle: { color: 'white', fontSize: 14, marginBottom: 3 },
-    cardSub: { color: '#94A3B8', fontSize: 12, marginBottom: 8 },
+    cardTitle: { fontSize: 14, marginBottom: 3 },
+    cardSub: { fontSize: 12, marginBottom: 8 },
     cardFooter: { flexDirection: 'row', justifyContent: 'space-between' },
-    price: { color: '#00B1FC', fontSize: 13, fontWeight: 'bold' },
-    sales: { color: '#64748B', fontSize: 12 },
+    price: { fontSize: 13, fontWeight: 'bold' },
+    sales: { fontSize: 12 },
 
     badge: {
         paddingHorizontal: 8, paddingVertical: 4,
@@ -272,3 +259,4 @@ const styles = StyleSheet.create({
 });
 
 export default MyUploads;
+

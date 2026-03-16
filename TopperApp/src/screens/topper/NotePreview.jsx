@@ -21,14 +21,15 @@ import { useCreateOrderMutation, useVerifyPaymentMutation } from '../../features
 import Loader from '../../components/Loader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { downloadNote, isNoteDownloaded, getDownloadedNotes } from '../../helpers/downloadService';
-import { Theme } from '../../theme/Theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAlert } from '../../context/AlertContext';
 import PaymentConfirmationModal from '../../components/PaymentConfirmationModal';
+import useTheme from '../../hooks/useTheme';
 
 const { width, height } = Dimensions.get('window');
 
 const NotePreview = ({ route, navigation }) => {
+    const { theme, isDarkMode } = useTheme();
     const { showAlert } = useAlert();
     const { noteId } = route.params;
     const { data: note, isLoading, refetch } = useGetNoteDetailsQuery(noteId);
@@ -171,14 +172,14 @@ const NotePreview = ({ route, navigation }) => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" />
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
             {/* Header */}
             {!isFullScreen && (
-                <View style={styles.header}>
+                <View style={[styles.header, { backgroundColor: theme.colors.background }]}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                        <Ionicons name="chevron-back" size={24} color="white" />
+                        <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                     <View style={styles.headerInfo}>
                         <AppText style={styles.noteTitle} weight="bold" numberOfLines={1}>
@@ -189,14 +190,14 @@ const NotePreview = ({ route, navigation }) => {
                             <AppText style={styles.topperName} weight="bold">{displayNote?.topper?.name || displayNote?.topperName}</AppText>
                         </View>
                     </View>
-                    <View style={styles.pageIndicatorBox}>
+                    <View style={[styles.pageIndicatorBox, { backgroundColor: theme.colors.card }]}>
                         <AppText style={styles.pageCountText}>{currentPageIndex + 1} / {previewImages.length}</AppText>
                     </View>
                 </View>
             )}
 
             {/* Note Content */}
-            <View style={[styles.contentContainer, isFullScreen && styles.fullScreenContent]}>
+            <View style={[styles.contentContainer, isFullScreen && styles.fullScreenContent, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
                 <View style={[styles.imageWrapper, { width: '100%', height: '100%' }]}>
                     {previewImages.length > 0 ? (
                         <FlatList
@@ -234,13 +235,13 @@ const NotePreview = ({ route, navigation }) => {
                         />
                     ) : (
                         <View style={styles.emptyState}>
-                            <AppText style={{ color: '#64748B' }}>No preview pages available</AppText>
+                            <AppText style={{ color: theme.colors.textMuted }}>No preview pages available</AppText>
                         </View>
                     )}
 
                     {isFullScreen && (
                         <TouchableOpacity style={styles.exitFullScreenBtn} onPress={() => setIsFullScreen(false)}>
-                            <Ionicons name="close" size={24} color="white" />
+                            <Ionicons name="close" size={24} color={theme.colors.white} />
                         </TouchableOpacity>
                     )}
 
@@ -249,7 +250,7 @@ const NotePreview = ({ route, navigation }) => {
                         <View style={styles.watermarkLayer} pointerEvents="none">
                             {[1, 2, 3, 4, 5, 6].map((i) => (
                                 <View key={i} style={[styles.watermarkRow, { marginTop: i * 80 }]}>
-                                    <AppText style={styles.watermarkText}>
+                                    <AppText style={[styles.watermarkText, { color: theme.colors.white }]}>
                                         UID: {userData?.id?.slice(-6) || 'STUDENT'} • UNAUTHORIZED SHARING PROHIBITED • PROPERTY OF TOPPERSNOTE
                                     </AppText>
                                 </View>
@@ -259,7 +260,7 @@ const NotePreview = ({ route, navigation }) => {
 
                     {/* Protected Content Badge */}
                     <View style={styles.protectedBadge}>
-                        <Ionicons name="lock-closed" size={14} color="white" style={{ marginRight: 6 }} />
+                        <Ionicons name="lock-closed" size={14} color={theme.colors.white} style={{ marginRight: 6 }} />
                         <AppText style={styles.protectedText}>Protected Content</AppText>
                     </View>
                 </View>
@@ -270,12 +271,12 @@ const NotePreview = ({ route, navigation }) => {
                 <View style={styles.footer}>
                     {!isPurchased && hasMorePages && (
                         <TouchableOpacity
-                            style={styles.buyBtn}
+                            style={[styles.buyBtn, { shadowColor: theme.colors.primary }]}
                             onPress={handleBuyNow}
                             disabled={isCreatingOrder || isVerifyingPayment}
                         >
                             <LinearGradient
-                                colors={['#00B1FC', '#007FFF']}
+                                colors={[theme.colors.primary, theme.colors.primary + 'CC']}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
                                 style={styles.buyGradient}
@@ -305,31 +306,31 @@ const NotePreview = ({ route, navigation }) => {
                             step={1}
                             value={currentPageIndex}
                             onSlidingComplete={handleSliderChange}
-                            minimumTrackTintColor="#00B1FC"
-                            maximumTrackTintColor="#1E293B"
-                            thumbTintColor="#00B1FC"
+                            minimumTrackTintColor={theme.colors.primary}
+                            maximumTrackTintColor={theme.colors.border}
+                            thumbTintColor={theme.colors.primary}
                         />
                     )}
 
                     <View style={styles.controlsRow}>
-                        <TouchableOpacity style={styles.controlBtn} onPress={() => setIsFullScreen(true)}>
-                            <MaterialCommunityIcons name="fullscreen" size={24} color="#00B1FC" />
+                        <TouchableOpacity style={[styles.controlBtn, { backgroundColor: theme.colors.card }]} onPress={() => setIsFullScreen(true)}>
+                            <MaterialCommunityIcons name="fullscreen" size={24} color={theme.colors.primary} />
                         </TouchableOpacity>
 
-                        <View style={styles.screenshotBlocked}>
-                            <MaterialCommunityIcons name="eye-off-outline" size={16} color="#EF4444" style={{ marginRight: 8 }} />
-                            <AppText style={styles.blockedText}>SCREEN RECORDING BLOCKED</AppText>
+                        <View style={[styles.screenshotBlocked, { backgroundColor: isDarkMode ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)', borderColor: isDarkMode ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)' }]}>
+                            <MaterialCommunityIcons name="eye-off-outline" size={16} color={theme.colors.danger} style={{ marginRight: 8 }} />
+                            <AppText style={[styles.blockedText, { color: theme.colors.danger }]}>SCREEN RECORDING BLOCKED</AppText>
                         </View>
 
                         <TouchableOpacity
-                            style={[styles.controlBtn, isDownloaded && { backgroundColor: '#059669' }]}
+                            style={[styles.controlBtn, { backgroundColor: theme.colors.card }, isDownloaded && { backgroundColor: theme.colors.success }]}
                             disabled={!isPurchased || isDownloading}
                             onPress={handleDownload}
                         >
                             {isDownloading ? (
                                 <ActivityIndicator size="small" color="white" />
                             ) : (
-                                <Feather name={isDownloaded ? "check" : "download"} size={22} color={isPurchased ? "white" : "#334155"} />
+                                <Feather name={isDownloaded ? "check" : "download"} size={22} color={isPurchased ? "white" : theme.colors.textMuted} />
                             )}
                         </TouchableOpacity>
                     </View>
@@ -351,14 +352,12 @@ const NotePreview = ({ route, navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
         paddingVertical: 12,
-        backgroundColor: Theme.colors.background,
     },
     backBtn: {
         marginRight: 12,
@@ -367,7 +366,6 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     noteTitle: {
-        color: 'white',
         fontSize: 14,
     },
     topperRow: {
@@ -375,31 +373,25 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     topperText: {
-        color: '#64748B',
         fontSize: 11,
     },
     topperName: {
-        color: '#94A3B8',
         fontSize: 11,
     },
     pageIndicatorBox: {
-        backgroundColor: '#1E293B',
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 8,
     },
     pageCountText: {
-        color: '#94A3B8',
         fontSize: 12,
     },
     contentContainer: {
         flex: 1,
-        backgroundColor: '#1E293B',
         marginHorizontal: 16,
         borderRadius: 16,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: '#334155',
     },
     imageWrapper: {
         flex: 1,
@@ -423,7 +415,6 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     watermarkText: {
-        color: '#FFFFFF',
         fontSize: 16,
         fontWeight: 'bold',
         textAlign: 'center',
@@ -451,7 +442,6 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         overflow: 'hidden',
         elevation: 5,
-        shadowColor: '#00B1FC',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -483,7 +473,6 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     pageLabel: {
-        color: '#64748B',
         fontSize: 12,
     },
     slider: {
@@ -501,22 +490,18 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 12,
-        backgroundColor: '#1E293B',
         justifyContent: 'center',
         alignItems: 'center',
     },
     screenshotBlocked: {
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 10,
         flexDirection: 'row',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: 'rgba(239, 68, 68, 0.2)',
     },
     blockedText: {
-        color: '#EF4444',
         fontSize: 10,
         fontWeight: 'bold',
     },

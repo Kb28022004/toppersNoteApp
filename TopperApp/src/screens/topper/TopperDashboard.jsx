@@ -16,12 +16,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AppText from '../../components/AppText';
 import { useGetProfileQuery } from '../../features/api/topperApi';
 import { useGetMyNotesQuery } from '../../features/api/noteApi';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 import { RevenueCardSkeleton, ActionGridSkeleton, DashboardNoteSkeleton, HeaderSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const { width } = Dimensions.get('window');
 
 const TopperDashboard = ({ navigation }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { data: profile, isLoading: profileLoading, refetch: refetchProfile } = useGetProfileQuery();
     const { data: notes, isLoading, isFetching, refetch: refetchNotes } = useGetMyNotesQuery();
     const [filter, setFilter] = useState('All');
@@ -70,7 +72,7 @@ const TopperDashboard = ({ navigation }) => {
                         {item.subject} • {item.chapterName}
                     </AppText>
                     <View style={styles.noteBadges}>
-                        <View style={[styles.miniBadge, { backgroundColor: '#1E293B' }]}>
+                        <View style={styles.miniBadge}>
                             <AppText style={styles.miniBadgeText}>Class {item.class}</AppText>
                         </View>
                         <View style={[styles.statusTag, { backgroundColor: isPublished ? '#10B98120' : '#F59E0B20' }]}>
@@ -85,7 +87,7 @@ const TopperDashboard = ({ navigation }) => {
                 <View style={styles.noteStatsSection}>
                     <AppText style={styles.notePrice} weight="bold">₹{item.price}</AppText>
                     <View style={styles.miniSales}>
-                        <Feather name="trending-up" size={10} color="#94A3B8" />
+                        <Feather name="trending-up" size={10} color={theme.colors.textMuted} />
                         <AppText style={styles.miniSalesText}>{item.salesCount || 0} sold</AppText>
                     </View>
                 </View>
@@ -104,7 +106,7 @@ const TopperDashboard = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
             <ScrollView
                 showsVerticalScrollIndicator={false}
@@ -115,7 +117,7 @@ const TopperDashboard = ({ navigation }) => {
                         onRefresh={onRefresh}
                         tintColor="#00B1FC"
                         colors={["#00B1FC"]}
-                        backgroundColor={Theme.colors.background}
+                        backgroundColor={theme.colors.background}
                     />
                 }
             >
@@ -145,7 +147,7 @@ const TopperDashboard = ({ navigation }) => {
                     <RevenueCardSkeleton />
                 ) : (
                     <LinearGradient
-                        colors={[Theme.colors.surface, Theme.colors.background]}
+                        colors={[theme.colors.card, theme.colors.background]}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.earningsCard}
@@ -234,29 +236,25 @@ const TopperDashboard = ({ navigation }) => {
                         ))}
                     </View>
                 ) : (
-                    <FlatList
-                        data={filteredNotes.slice(0, 5)}
-                        renderItem={renderNoteItem}
-                        keyExtractor={item => item._id}
-                        scrollEnabled={false}
-                        contentContainerStyle={styles.notesList}
-                        ListEmptyComponent={
+                    <View style={styles.notesList}>
+                        {filteredNotes.slice(0, 5).map((item) => renderNoteItem({ item }))}
+                        {filteredNotes.length === 0 && (
                             <View style={styles.emptyState}>
-                                <Ionicons name="document-text-outline" size={48} color="#1E293B" />
+                                <Ionicons name="document-text-outline" size={48} color={theme.colors.border} />
                                 <AppText style={styles.emptyText}>No notes found</AppText>
                             </View>
-                        }
-                    />
+                        )}
+                    </View>
                 )}
             </ScrollView>
         </View>
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     scrollContent: {
         paddingBottom: 100,
@@ -266,21 +264,21 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
         marginBottom: 25,
     },
     greeting: {
         fontSize: 14,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         marginBottom: 2,
     },
     userName: {
         fontSize: 24,
-        color: 'white',
+        color: theme.colors.text,
     },
     profileBtn: {
         borderWidth: 2,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
         borderRadius: 25,
         padding: 2,
     },
@@ -294,7 +292,7 @@ const styles = StyleSheet.create({
         borderRadius: 28,
         padding: 24,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
         marginBottom: 30,
         overflow: 'hidden',
     },
@@ -306,13 +304,13 @@ const styles = StyleSheet.create({
     },
     cardLabel: {
         fontSize: 10,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         letterSpacing: 1.5,
         marginBottom: 8,
     },
     cardMainValue: {
         fontSize: 36,
-        color: 'white',
+        color: theme.colors.text,
     },
     growthBadge: {
         flexDirection: 'row',
@@ -330,7 +328,7 @@ const styles = StyleSheet.create({
     },
     cardDivider: {
         height: 1,
-        backgroundColor: Theme.colors.border,
+        backgroundColor: theme.colors.border,
         marginBottom: 20,
     },
     cardStatsRow: {
@@ -343,17 +341,17 @@ const styles = StyleSheet.create({
     },
     cardStatLabel: {
         fontSize: 12,
-        color: '#64748B',
+        color: theme.colors.textMuted,
         marginBottom: 4,
     },
     cardStatValue: {
         fontSize: 18,
-        color: 'white',
+        color: theme.colors.text,
     },
     cardStatDivider: {
         width: 1,
         height: 24,
-        backgroundColor: Theme.colors.border,
+        backgroundColor: theme.colors.border,
         marginHorizontal: 15,
     },
     withdrawBtn: {
@@ -375,12 +373,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
         marginBottom: 16,
     },
     sectionTitle: {
         fontSize: 18,
-        color: 'white',
+        color: theme.colors.text,
         marginHorizontal: 20,
         marginBottom: 16,
     },
@@ -391,7 +389,7 @@ const styles = StyleSheet.create({
     },
     actionsGrid: {
         flexDirection: 'row',
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
         justifyContent: 'space-between',
         marginBottom: 35,
     },
@@ -409,12 +407,12 @@ const styles = StyleSheet.create({
     },
     actionLabel: {
         fontSize: 11,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         textAlign: 'center',
     },
     filterBar: {
         flexDirection: 'row',
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
         marginBottom: 20,
         gap: 12,
     },
@@ -422,9 +420,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 20,
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     filterChipActive: {
         backgroundColor: '#00B1FC15',
@@ -432,24 +430,25 @@ const styles = StyleSheet.create({
     },
     filterChipText: {
         fontSize: 13,
-        color: '#64748B',
+        color: theme.colors.textMuted,
     },
     filterChipTextActive: {
         color: '#00B1FC',
         fontWeight: 'bold',
     },
     notesList: {
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
         gap: 12,
     },
     noteCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         padding: 12,
         borderRadius: 24,
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
+        marginBottom: 12,
     },
     noteIconSection: {
         marginRight: 15,
@@ -466,7 +465,7 @@ const styles = StyleSheet.create({
     },
     noteTitle: {
         fontSize: 15,
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 6,
     },
     noteBadges: {
@@ -478,11 +477,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingVertical: 2,
         borderRadius: 6,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     miniBadgeText: {
         fontSize: 10,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontWeight: 'bold',
     },
     statusTag: {
@@ -508,7 +507,7 @@ const styles = StyleSheet.create({
     },
     notePrice: {
         fontSize: 16,
-        color: 'white',
+        color: theme.colors.text,
         marginBottom: 2,
     },
     miniSales: {
@@ -518,19 +517,19 @@ const styles = StyleSheet.create({
     },
     miniSalesText: {
         fontSize: 10,
-        color: '#64748B',
+        color: theme.colors.textMuted,
     },
     emptyState: {
         alignItems: 'center',
         paddingVertical: 40,
-        backgroundColor: Theme.colors.card,
+        backgroundColor: theme.colors.card,
         borderRadius: 24,
         borderStyle: 'dashed',
         borderWidth: 1,
-        borderColor: Theme.colors.border,
+        borderColor: theme.colors.border,
     },
     emptyText: {
-        color: '#475569',
+        color: theme.colors.textMuted,
         marginTop: 10,
     }
 });

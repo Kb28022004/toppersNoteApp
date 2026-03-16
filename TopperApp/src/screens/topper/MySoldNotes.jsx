@@ -18,55 +18,72 @@ import SortModal from '../../components/SortModal';
 import PageHeader from '../../components/PageHeader';
 import useDebounceSearch from '../../hooks/useDebounceSearch';
 import { useGetMySalesDetailsQuery } from '../../features/api/noteApi';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 import { SoldNoteSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 // ─── Note card ────────────────────────────────────────────────────────────────
 const SoldNoteCard = React.memo(({ item }) => {
     const navigation = useNavigation();
+    const { theme } = useTheme();
+    const cardStyles = useMemo(() => ({
+        card: {
+            backgroundColor: theme.colors.card,
+            borderRadius: 16,
+            padding: 16,
+            marginBottom: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+        },
+        cardTitle: { color: theme.colors.text, fontSize: 15, marginBottom: 4 },
+        cardSub: { color: theme.colors.textMuted, fontSize: 12, marginBottom: 10 },
+        statText: { color: theme.colors.textSubtle, fontSize: 12 },
+    }), [theme]);
+
     return (
         <TouchableOpacity
-            style={styles.card}
+            style={cardStyles.card}
             activeOpacity={0.7}
             onPress={() => navigation.navigate('TopperNoteDetails', { noteId: item.noteId })}
         >
             <View style={styles.iconBox}>
-                <Ionicons name="cart-outline" size={22} color="#10B981" />
+                <Ionicons name="cart-outline" size={22} color={theme.colors.success} />
             </View>
             <View style={styles.cardBody}>
-                <AppText style={styles.cardTitle} numberOfLines={1} weight="bold">
+                <AppText style={cardStyles.cardTitle} numberOfLines={1} weight="bold">
                     {item.chapterName || item.subject}
                 </AppText>
-                <AppText style={styles.cardSub} numberOfLines={1}>
+                <AppText style={cardStyles.cardSub} numberOfLines={1}>
                     {item.subject} • Class {item.class}
                 </AppText>
                 <View style={styles.cardFooter}>
                     <View style={styles.footerStat}>
-                        <Ionicons name="people-outline" size={14} color="#64748B" />
-                        <AppText style={styles.statText}>{item.totalSales || 0} Buyers</AppText>
+                        <Ionicons name="people-outline" size={14} color={theme.colors.textMuted} />
+                        <AppText style={cardStyles.statText}>{item.totalSales || 0} Buyers</AppText>
                     </View>
                     <View style={styles.footerStat}>
-                        <Ionicons name="wallet-outline" size={14} color="#10B981" />
-                        <AppText style={[styles.statText, { color: '#10B981', fontWeight: 'bold' }]}>
+                        <Ionicons name="wallet-outline" size={14} color={theme.colors.success} />
+                        <AppText style={[cardStyles.statText, { color: theme.colors.success, fontWeight: 'bold' }]}>
                             ₹{item.revenue || 0}
                         </AppText>
                     </View>
                 </View>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#334155" />
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.textSubtle} />
         </TouchableOpacity>
     );
 });
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 const MySoldNotes = ({ navigation }) => {
+    const { theme, isDarkMode } = useTheme();
     const { searchQuery, localSearch, setLocalSearch } = useDebounceSearch();
     const [sortBy, setSortBy] = useState('newest');
     const [timeRange, setTimeRange] = useState('all');
     const [page, setPage] = useState(1);
     const [isSortVisible, setIsSortVisible] = useState(false);
 
-    // Reset page on any filter change
     useEffect(() => { setPage(1); }, [searchQuery, sortBy, timeRange]);
 
     const queryArgs = useMemo(() => ({
@@ -83,7 +100,6 @@ const MySoldNotes = ({ navigation }) => {
     const pagination = data?.pagination ?? {};
     const summary = data?.summary ?? {};
 
-    // Pull-to-refresh
     const [refreshing, setRefreshing] = useState(false);
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -92,7 +108,6 @@ const MySoldNotes = ({ navigation }) => {
         finally { setRefreshing(false); }
     }, [refetch]);
 
-    // Infinite scroll
     const handleLoadMore = () => {
         if (page < (pagination.totalPages || 1) && !isFetching) {
             setPage(p => p + 1);
@@ -103,17 +118,15 @@ const MySoldNotes = ({ navigation }) => {
     const isFiltering = isFetching && page === 1;
 
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" />
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom']}>
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
-            {/* ── Header ── */}
             <PageHeader
                 title="My Sold Notes"
                 subtitle={`₹${summary.totalRevenue || 0} Total Revenue • ${summary.totalSales || 0} Sales`}
                 onBackPress={() => navigation.goBack()}
             />
 
-            {/* ── Search + Sort ── */}
             <SearchBar
                 value={localSearch}
                 onChangeText={setLocalSearch}
@@ -123,7 +136,6 @@ const MySoldNotes = ({ navigation }) => {
                 style={styles.searchBar}
             />
 
-            {/* ── Notes list ── */}
             <View style={styles.listWrapper}>
                 <FlatList
                     data={isFiltering ? [] : notes}
@@ -137,9 +149,9 @@ const MySoldNotes = ({ navigation }) => {
                         <RefreshControl
                             refreshing={refreshing}
                             onRefresh={onRefresh}
-                            tintColor="#10B981"
-                            colors={['#10B981']}
-                            backgroundColor={Theme.colors.background}
+                            tintColor={theme.colors.success}
+                            colors={[theme.colors.success]}
+                            backgroundColor="transparent"
                         />
                     }
                     onEndReached={handleLoadMore}
@@ -165,11 +177,10 @@ const MySoldNotes = ({ navigation }) => {
                     }
                     ListFooterComponent={
                         isFetching && page > 1
-                            ? <ActivityIndicator color="#10B981" style={styles.footerLoader} />
+                            ? <ActivityIndicator color={theme.colors.primary} style={styles.footerLoader} />
                             : null
                     }
                 />
-
             </View>
 
             <SortModal
@@ -185,34 +196,12 @@ const MySoldNotes = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Theme.colors.background },
+    container: { flex: 1 },
     searchBar: { paddingHorizontal: 20, marginTop: 16, marginBottom: 8 },
-
     listContent: { paddingHorizontal: 20, paddingBottom: 40 },
     listEmpty: { flex: 1 },
-    listWrapper: { flex: 1, position: 'relative' },
+    listWrapper: { flex: 1 },
     footerLoader: { paddingVertical: 20 },
-
-    overlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(15, 23, 42, 0.65)',
-        justifyContent: 'center', alignItems: 'center',
-        zIndex: 10,
-    },
-    overlayInner: { alignItems: 'center', gap: 12 },
-    overlayText: { color: '#94A3B8', fontSize: 13 },
-
-    // Card
-    card: {
-        backgroundColor: '#1E293B',
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#334155',
-    },
     iconBox: {
         width: 46, height: 46, borderRadius: 12,
         backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -220,11 +209,8 @@ const styles = StyleSheet.create({
         marginRight: 14,
     },
     cardBody: { flex: 1 },
-    cardTitle: { color: 'white', fontSize: 15, marginBottom: 4 },
-    cardSub: { color: '#64748B', fontSize: 12, marginBottom: 10 },
     cardFooter: { flexDirection: 'row', gap: 16 },
     footerStat: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    statText: { color: '#94A3B8', fontSize: 12 },
 });
 
 export default MySoldNotes;

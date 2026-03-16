@@ -10,13 +10,16 @@ import {
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AppText from '../../components/AppText';
 import PageHeader from '../../components/PageHeader';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
+import { useMemo } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const TransactionDetails = ({ route, navigation }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { transaction } = route.params;
 
-    const DetailRow = ({ label, value, icon, color = "#94A3B8" }) => (
+    const DetailRow = ({ label, value, icon, color = theme.colors.textSubtle }) => (
         <View style={styles.detailRow}>
             <View style={styles.detailLabelRow}>
                 <MaterialCommunityIcons name={icon} size={18} color={color} />
@@ -28,7 +31,7 @@ const TransactionDetails = ({ route, navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
             <PageHeader
                 title="Transaction Details"
@@ -39,14 +42,14 @@ const TransactionDetails = ({ route, navigation }) => {
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 {/* Status Card */}
                 <LinearGradient
-                    colors={transaction.status === 'SUCCESS' ? ['#065F46', '#064E3B'] : ['#991B1B', '#7F1D1D']}
+                    colors={transaction.status === 'SUCCESS' ? [theme.colors.success, theme.colors.success + 'ee'] : [theme.colors.danger, theme.colors.danger + 'ee']}
                     style={styles.statusCard}
                 >
                     <View style={styles.statusIconContainer}>
                         <MaterialCommunityIcons
                             name={transaction.status === 'SUCCESS' ? 'check-circle' : 'close-circle'}
                             size={48}
-                            color="white"
+                            color={theme.colors.textInverse}
                         />
                     </View>
                     <AppText style={styles.statusTitle} weight="bold">
@@ -73,7 +76,7 @@ const TransactionDetails = ({ route, navigation }) => {
                             label="Note Title"
                             value={transaction.noteTitle}
                             icon="book-open-page-variant"
-                            color="#3B82F6"
+                            color={theme.colors.primary}
                         />
                         <DetailRow
                             label="Subject"
@@ -112,7 +115,7 @@ const TransactionDetails = ({ route, navigation }) => {
 
                 {/* Help Section */}
                 <TouchableOpacity style={styles.helpBtn}>
-                    <MaterialCommunityIcons name="help-circle-outline" size={20} color="#94A3B8" />
+                    <MaterialCommunityIcons name="help-circle-outline" size={20} color={theme.colors.textSubtle} />
                     <AppText style={styles.helpText}>Need help with this transaction?</AppText>
                 </TouchableOpacity>
 
@@ -122,10 +125,10 @@ const TransactionDetails = ({ route, navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     scrollContent: {
         padding: 20,
@@ -140,35 +143,35 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
     statusTitle: {
-        color: 'white',
+        color: theme.colors.textInverse,
         fontSize: 20,
         marginBottom: 10,
     },
     statusAmount: {
-        color: 'white',
+        color: theme.colors.textInverse,
         fontSize: 36,
         marginBottom: 10,
     },
     statusDate: {
-        color: 'rgba(255,255,255,0.7)',
+        color: theme.colors.textInverse + 'b3',
         fontSize: 13,
     },
     section: {
         marginBottom: 25,
     },
     sectionTitle: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         fontSize: 12,
         letterSpacing: 1.2,
         marginBottom: 12,
         marginLeft: 5,
     },
     card: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 16,
         padding: 20,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     detailRow: {
         marginBottom: 18,
@@ -180,17 +183,17 @@ const styles = StyleSheet.create({
         marginBottom: 6,
     },
     detailLabel: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 13,
     },
     detailValue: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 15,
         marginLeft: 26,
     },
     divider: {
         height: 1,
-        backgroundColor: '#334155',
+        backgroundColor: theme.colors.border + '40',
         marginVertical: 15,
     },
     totalRow: {
@@ -199,11 +202,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     totalLabel: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 16,
     },
     totalValue: {
-        color: '#00B1FC',
+        color: theme.colors.primary,
         fontSize: 20,
     },
     helpBtn: {
@@ -214,7 +217,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     helpText: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 14,
     },
 });

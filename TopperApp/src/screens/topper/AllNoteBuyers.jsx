@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
     View,
     StyleSheet,
@@ -7,7 +7,6 @@ import {
     Image,
     RefreshControl,
     StatusBar,
-    ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,13 +16,15 @@ import NoDataFound from '../../components/NoDataFound';
 import { useGetNoteBuyersQuery } from '../../features/api/noteApi';
 import useRefresh from '../../hooks/useRefresh';
 import PageHeader from '../../components/PageHeader';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 import { BuyerSkeleton } from '../../components/skeletons/HomeSkeletons';
 
 const AllNoteBuyers = ({ route, navigation }) => {
     const { noteId } = route.params;
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const [search, setSearch] = useState('');
-    const { data: buyers, isLoading, isError, refetch } = useGetNoteBuyersQuery(noteId);
+    const { data: buyers, isLoading, refetch } = useGetNoteBuyersQuery(noteId);
     const { refreshing, onRefresh } = useRefresh(refetch);
 
     const filteredBuyers = buyers ? buyers.filter(b =>
@@ -32,19 +33,16 @@ const AllNoteBuyers = ({ route, navigation }) => {
         b.board?.toLowerCase().includes(search.toLowerCase())
     ) : [];
 
-
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" />
+        <SafeAreaView style={styles.container} edges={['bottom']}>
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
-            {/* Header */}
             <PageHeader
                 title="Purchased Students"
                 subtitle={`${buyers?.length || 0} Total Learners`}
                 onBackPress={() => navigation.goBack()}
             />
 
-            {/* Search */}
             <View style={styles.searchWrapper}>
                 <SearchBar
                     value={search}
@@ -54,7 +52,6 @@ const AllNoteBuyers = ({ route, navigation }) => {
                 />
             </View>
 
-            {/* List */}
             <FlatList
                 data={isLoading ? [] : filteredBuyers}
                 keyExtractor={(item, index) => index.toString()}
@@ -63,7 +60,9 @@ const AllNoteBuyers = ({ route, navigation }) => {
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={onRefresh}
-                        tintColor="#10B981"
+                        tintColor={theme.colors.success}
+                        colors={[theme.colors.success]}
+                        backgroundColor="transparent"
                     />
                 }
                 ListEmptyComponent={
@@ -88,8 +87,8 @@ const AllNoteBuyers = ({ route, navigation }) => {
                         {item.profilePhoto ? (
                             <Image source={{ uri: item.profilePhoto }} style={styles.buyerAvatar} />
                         ) : (
-                            <View style={[styles.buyerAvatar, { justifyContent: 'center', alignItems: 'center' }]}>
-                                <AppText style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>
+                            <View style={[styles.buyerAvatar, styles.buyerAvatarFallback]}>
+                                <AppText style={styles.buyerAvatarText}>
                                     {item.studentName?.charAt(0) || 'S'}
                                 </AppText>
                             </View>
@@ -107,7 +106,7 @@ const AllNoteBuyers = ({ route, navigation }) => {
                                 })}
                             </AppText>
                             <View style={styles.statusBadge}>
-                                <Ionicons name="checkmark-circle" size={10} color="#10B981" />
+                                <Ionicons name="checkmark-circle" size={10} color={theme.colors.success} />
                                 <AppText style={styles.statusText}>Purchased</AppText>
                             </View>
                         </View>
@@ -118,16 +117,10 @@ const AllNoteBuyers = ({ route, navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
-    },
-    center: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     searchWrapper: {
         paddingHorizontal: 20,
@@ -141,48 +134,57 @@ const styles = StyleSheet.create({
     buyerCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         padding: 15,
         borderRadius: 16,
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     buyerAvatar: {
         width: 48,
         height: 48,
         borderRadius: 24,
         marginRight: 12,
-        backgroundColor: '#334155',
+    },
+    buyerAvatarFallback: {
+        backgroundColor: theme.colors.surface,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    buyerAvatarText: {
+        color: theme.colors.text,
+        fontSize: 18,
+        fontWeight: 'bold',
     },
     buyerName: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 15,
         marginBottom: 2,
     },
     buyerMeta: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         fontSize: 12,
     },
     purchasedDate: {
-        color: '#94A3B8',
+        color: theme.colors.textSubtle,
         fontSize: 11,
         marginBottom: 4,
     },
     statusBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        backgroundColor: theme.colors.success + '18',
         paddingHorizontal: 8,
         paddingVertical: 2,
         borderRadius: 8,
         gap: 4,
     },
     statusText: {
-        color: '#10B981',
+        color: theme.colors.success,
         fontSize: 10,
         fontWeight: 'bold',
-    }
+    },
 });
 
 export default AllNoteBuyers;

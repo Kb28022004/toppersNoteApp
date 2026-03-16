@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
     View,
     StyleSheet,
@@ -6,27 +6,30 @@ import {
     ScrollView,
     TouchableOpacity,
     StatusBar,
-    ActivityIndicator
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AppText from '../../components/AppText';
 import { useGetPublicProfileQuery } from '../../features/api/studentApi';
-import Loader from '../../components/Loader';
 import ScreenLoader from '../../components/ScreenLoader';
-import { Theme } from '../../theme/Theme';
+import NoDataFound from '../../components/NoDataFound';
+import useTheme from '../../hooks/useTheme';
 
 const StudentProfileDetail = ({ route, navigation }) => {
     const { studentId } = route.params;
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { data: profile, isLoading, isError, refetch } = useGetPublicProfileQuery(studentId);
 
     if (isLoading) return <ScreenLoader />;
 
     if (isError || !profile) return (
         <View style={styles.center}>
-            <AppText style={{ color: '#EF4444' }}>Failed to load student profile</AppText>
+            <NoDataFound
+                message="Failed to load student profile."
+                icon="person-outline"
+            />
             <TouchableOpacity onPress={refetch} style={styles.retryBtn}>
-                <AppText style={{ color: 'white' }}>Retry</AppText>
+                <AppText style={styles.retryText}>Retry</AppText>
             </TouchableOpacity>
         </View>
     );
@@ -45,7 +48,7 @@ const StudentProfileDetail = ({ route, navigation }) => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 {/* Header / Banner Area */}
@@ -69,8 +72,8 @@ const StudentProfileDetail = ({ route, navigation }) => {
                         <View style={styles.classBadge}>
                             <AppText style={styles.badgeText}>Class {profile.class}</AppText>
                         </View>
-                        <View style={[styles.classBadge, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
-                            <AppText style={[styles.badgeText, { color: '#3B82F6' }]}>{profile.board}</AppText>
+                        <View style={[styles.classBadge, { backgroundColor: theme.colors.primary + '18' }]}>
+                            <AppText style={[styles.badgeText, { color: theme.colors.primary }]}>{profile.board}</AppText>
                         </View>
                     </View>
                 </View>
@@ -79,8 +82,8 @@ const StudentProfileDetail = ({ route, navigation }) => {
                 <View style={styles.section}>
                     <AppText style={styles.sectionTitle} weight="bold">Learning Activity</AppText>
                     <View style={styles.statsGrid}>
-                        {renderStat('notebook-check-outline', 'Notes Bought', profile.stats?.notesPurchased || 0, '#10B981')}
-                        {renderStat('clock-outline', 'Last Active', profile.stats?.lastActive ? new Date(profile.stats.lastActive).toLocaleDateString() : 'Active Now', '#3B82F6')}
+                        {renderStat('notebook-check-outline', 'Notes Bought', profile.stats?.notesPurchased || 0, theme.colors.success)}
+                        {renderStat('clock-outline', 'Last Active', profile.stats?.lastActive ? new Date(profile.stats.lastActive).toLocaleDateString() : 'Active Now', theme.colors.primary)}
                     </View>
                 </View>
 
@@ -101,46 +104,51 @@ const StudentProfileDetail = ({ route, navigation }) => {
                 </View>
 
                 {/* Subjects */}
-                <View style={styles.section}>
-                    <AppText style={styles.sectionTitle} weight="bold">Subjects Studying</AppText>
-                    <View style={styles.subjectsContainer}>
-                        {profile.subjects?.map((subject, index) => (
-                            <View key={index} style={styles.subjectChip}>
-                                <AppText style={styles.subjectText}>{subject}</AppText>
-                            </View>
-                        ))}
+                {profile.subjects?.length > 0 && (
+                    <View style={styles.section}>
+                        <AppText style={styles.sectionTitle} weight="bold">Subjects Studying</AppText>
+                        <View style={styles.subjectsContainer}>
+                            {profile.subjects.map((subject, index) => (
+                                <View key={index} style={styles.subjectChip}>
+                                    <AppText style={styles.subjectText}>{subject}</AppText>
+                                </View>
+                            ))}
+                        </View>
                     </View>
-                </View>
-
+                )}
             </ScrollView>
         </View>
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     center: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     retryBtn: {
-        marginTop: 20,
-        backgroundColor: '#3B82F6',
-        paddingHorizontal: 20,
+        marginTop: 16,
+        backgroundColor: theme.colors.primary,
+        paddingHorizontal: 24,
         paddingVertical: 10,
-        borderRadius: 8,
+        borderRadius: 10,
+    },
+    retryText: {
+        color: 'white',
+        fontWeight: 'bold',
     },
     scrollContent: {
         paddingBottom: 40,
     },
     headerBanner: {
         height: 120,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.surface,
         paddingHorizontal: 20,
         paddingTop: 50,
     },
@@ -162,9 +170,9 @@ const styles = StyleSheet.create({
         height: 100,
         borderRadius: 50,
         borderWidth: 4,
-        borderColor: Theme.colors.background,
+        borderColor: theme.colors.background,
         overflow: 'hidden',
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
     },
     avatar: {
         width: '100%',
@@ -172,7 +180,7 @@ const styles = StyleSheet.create({
     },
     studentName: {
         fontSize: 22,
-        color: 'white',
+        color: theme.colors.text,
         marginTop: 15,
     },
     badgeRow: {
@@ -181,13 +189,13 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     classBadge: {
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        backgroundColor: theme.colors.success + '18',
         paddingHorizontal: 12,
         paddingVertical: 4,
         borderRadius: 10,
     },
     badgeText: {
-        color: '#10B981',
+        color: theme.colors.success,
         fontSize: 12,
         fontWeight: 'bold',
     },
@@ -197,7 +205,7 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 16,
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         marginBottom: 15,
         textTransform: 'uppercase',
         letterSpacing: 1,
@@ -208,14 +216,14 @@ const styles = StyleSheet.create({
     },
     statCard: {
         flex: 1,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         padding: 15,
         borderRadius: 20,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     statIconBox: {
         width: 44,
@@ -226,19 +234,19 @@ const styles = StyleSheet.create({
     },
     statVal: {
         fontSize: 14,
-        color: 'white',
+        color: theme.colors.text,
     },
     statLab: {
         fontSize: 10,
-        color: '#64748B',
+        color: theme.colors.textMuted,
         marginTop: 2,
     },
     detailCard: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 20,
         padding: 20,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     detailItem: {
         flexDirection: 'row',
@@ -247,17 +255,17 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
     },
     detailLabel: {
-        color: '#64748B',
+        color: theme.colors.textMuted,
         fontSize: 14,
     },
     detailVal: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 14,
         fontWeight: 'bold',
     },
     divider: {
         height: 1,
-        backgroundColor: '#334155',
+        backgroundColor: theme.colors.border,
         marginVertical: 5,
     },
     subjectsContainer: {
@@ -266,17 +274,17 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     subjectChip: {
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     subjectText: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 13,
-    }
+    },
 });
 
 export default StudentProfileDetail;

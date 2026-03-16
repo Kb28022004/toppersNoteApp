@@ -1,9 +1,10 @@
-import React, { memo, useState, useEffect, useCallback } from 'react';
+import React, { memo, useState, useEffect, useCallback, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AppText from './AppText';
+import useTheme from '../hooks/useTheme';
 
 import { useToggleFavoriteNoteMutation } from '../features/api/noteApi';
 import { useAlert } from '../context/AlertContext';
@@ -11,8 +12,11 @@ import { useAlert } from '../context/AlertContext';
 const { width } = Dimensions.get('window');
 
 const NoteCard = memo(({ note, onPress }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const [toggleFavorite] = useToggleFavoriteNoteMutation();
     const { showAlert } = useAlert();
+
     const handleToggleFavorite = useCallback(async () => {
         try {
             await toggleFavorite(note?._id || note?.id).unwrap();
@@ -33,7 +37,7 @@ const NoteCard = memo(({ note, onPress }) => {
                     cachePolicy="memory-disk"
                 />
                 <LinearGradient
-                    colors={['transparent', 'rgba(15, 23, 42, 0.7)']}
+                    colors={['transparent', isDarkMode ? 'rgba(15, 23, 42, 0.7)' : 'rgba(255, 255, 255, 0.7)']}
                     style={styles.gradient}
                 />
 
@@ -45,7 +49,7 @@ const NoteCard = memo(({ note, onPress }) => {
                     <Ionicons
                         name={note?.isFavorite ? "heart" : "heart-outline"}
                         size={18}
-                        color={note?.isFavorite ? "#F43F5E" : "white"}
+                        color={note?.isFavorite ? "#F43F5E" : (isDarkMode ? "white" : theme.colors.text)}
                     />
                 </TouchableOpacity>
 
@@ -67,11 +71,11 @@ const NoteCard = memo(({ note, onPress }) => {
 
                 <View style={styles.footerRow}>
                     <AppText style={styles.priceText} weight="bold">₹{typeof note?.price === 'object' ? note.price.current : (note?.price || '0')}</AppText>
-                    <View style={[styles.statusIndicator, { backgroundColor: note?.isPurchased ? '#10B98120' : '#00B1FC20' }]}>
+                    <View style={[styles.statusIndicator, { backgroundColor: note?.isPurchased ? '#10B98120' : theme.colors.primary + '20' }]}>
                         <Ionicons
                             name={note?.isPurchased ? "checkmark-circle" : "chevron-forward"}
                             size={14}
-                            color={note?.isPurchased ? '#10B981' : '#00B1FC'}
+                            color={note?.isPurchased ? '#10B981' : theme.colors.primary}
                         />
                     </View>
                 </View>
@@ -80,20 +84,20 @@ const NoteCard = memo(({ note, onPress }) => {
     );
 });
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     card: {
         width: (width - 40) / 2 - 10,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 20,
         overflow: 'hidden',
         marginBottom: 20,
         borderWidth: 1,
-        borderColor: '#33415550',
+        borderColor: theme.colors.border,
     },
     imageWrapper: {
         height: 130,
         position: 'relative',
-        backgroundColor: '#334155',
+        backgroundColor: theme.colors.surface,
     },
     image: {
         width: '100%',
@@ -134,7 +138,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 8,
         left: 8,
-        backgroundColor: '#00B1FC',
+        backgroundColor: theme.colors.primary,
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 6,
@@ -149,12 +153,12 @@ const styles = StyleSheet.create({
     },
     subjectText: {
         fontSize: 9,
-        color: '#00B1FC',
+        color: theme.colors.primary,
         letterSpacing: 1,
         marginBottom: 4,
     },
     titleText: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 13,
         height: 36,
         lineHeight: 18,
@@ -166,7 +170,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     priceText: {
-        color: 'white',
+        color: theme.colors.text,
         fontSize: 15,
     },
     statusIndicator: {

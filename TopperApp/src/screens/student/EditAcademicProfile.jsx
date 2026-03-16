@@ -10,13 +10,16 @@ import CustomDropdown from '../../components/CustomDropdown';
 import { useGetProfileQuery, useUpdateProfileMutation } from '../../features/api/studentApi';
 import Loader from '../../components/Loader';
 import { useAlert } from '../../context/AlertContext';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
+import { useMemo } from 'react';
 
 const CLASSES = ['6', '7', '8', '9', '10', '11', '12'];
 const BOARDS = ['CBSE', 'ICSE', 'State Board'];
 const STREAMS = ['Science (PCM)', 'Science (PCB)', 'Science (PCMB)', 'Commerce', 'Arts'];
 
 const EditAcademicProfile = ({ navigation }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { showAlert } = useAlert();
     const { data: profile, isLoading: isFetchingProfile } = useGetProfileQuery();
     const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
@@ -61,7 +64,7 @@ const EditAcademicProfile = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
             <View style={{ flex: 1 }}>
 
                 <PageHeader
@@ -151,16 +154,16 @@ const EditAcademicProfile = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
+        backgroundColor: theme.colors.background,
     },
     scrollContent: {
         padding: 24,
     },
     infoText: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 14,
         lineHeight: 20,
         marginBottom: 30,
@@ -171,7 +174,7 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 14,
-        color: '#64748B',
+        color: theme.colors.textSubtle,
         marginBottom: 12,
         fontWeight: 'bold',
         letterSpacing: 1,
@@ -184,18 +187,18 @@ const styles = StyleSheet.create({
     },
     required: {
         fontSize: 15,
-        color: '#EF4444',
+        color: theme.colors.danger,
         fontWeight: '700',
     },
     errorText: {
         fontSize: 12,
-        color: '#EF4444',
+        color: theme.colors.danger,
         marginTop: 5,
     },
     errorGroupBorder: {
         borderRadius: 12,
         borderWidth: 1.5,
-        borderColor: '#EF4444',
+        borderColor: theme.colors.danger,
         padding: 8,
     },
     chipRow: {
@@ -207,23 +210,23 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 12,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     chipSelected: {
-        backgroundColor: '#3B82F6',
-        borderColor: '#3B82F6',
+        backgroundColor: theme.colors.primary,
+        borderColor: theme.colors.primary,
     },
     chipText: {
-        color: '#94A3B8',
+        color: theme.colors.textMuted,
         fontSize: 15,
         fontWeight: 'bold',
     },
     chipTextSelected: {
-        color: 'white',
+        color: theme.colors.textInverse,
     },
 });
 

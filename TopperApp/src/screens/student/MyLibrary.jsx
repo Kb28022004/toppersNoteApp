@@ -22,7 +22,7 @@ import SearchBar from '../../components/SearchBar';
 import NoDataFound from '../../components/NoDataFound';
 import Loader from '../../components/Loader';
 import PageHeader from '../../components/PageHeader';
-import { Theme } from '../../theme/Theme';
+import useTheme from '../../hooks/useTheme';
 import { useAlert } from '../../context/AlertContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import SortModal from '../../components/SortModal';
@@ -31,6 +31,8 @@ import { LibraryNoteSkeleton } from '../../components/skeletons/HomeSkeletons';
 const { width } = Dimensions.get('window');
 
 const MyLibrary = ({ navigation, route }) => {
+    const { theme, isDarkMode } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { showAlert } = useAlert();
     const { searchQuery, localSearch, setLocalSearch } = useDebounceSearch('', 500);
     const [activeTab, setActiveTab] = useState(route.params?.initialTab || 'Purchases'); // 'Purchases', 'Favorites', or 'Downloaded'
@@ -117,8 +119,6 @@ const MyLibrary = ({ navigation, route }) => {
 
     const [downloadedNotes, setDownloadedNotes] = useState([]);
 
-    console.log("downloadNotes", downloadedNotes)
-
     const fetchDownloads = useCallback(async () => {
         const downloads = await getDownloadedNotes();
         setDownloadedNotes(downloads);
@@ -174,59 +174,9 @@ const MyLibrary = ({ navigation, route }) => {
         );
     };
 
-    const renderNoteCard = ({ item }) => {
-        const isOffline = activeTab === 'Downloaded' || downloadedNotes.some(d => d.id === item._id || d.id === item.id);
-
-        return (
-            <TouchableOpacity
-                style={styles.card}
-                activeOpacity={0.9}
-                onPress={() => navigation.navigate(activeTab === 'Purchases' ? 'NotePreview' : 'StudentNoteDetails', { noteId: item._id || item.id, isLocal: activeTab === 'Downloaded' })}
-            >
-                <View style={styles.cardCover}>
-                    <Image
-                        source={item.localThumbnail ? { uri: item.localThumbnail } : item.thumbnail ? { uri: item.thumbnail } : require('../../../assets/topper.avif')}
-                        style={styles.coverImage}
-                    />
-                    {isOffline && (
-                        <View style={styles.downloadIndicator}>
-                            <Ionicons name="cloud-done" size={16} color="#10B981" />
-                        </View>
-                    )}
-                </View>
-
-                <View style={styles.cardInfo}>
-                    <View style={styles.infoTop}>
-                        <AppText style={styles.noteSubject} weight="bold">{item.subject?.toUpperCase()}</AppText>
-                        <AppText style={styles.noteTitle} weight="medium" numberOfLines={2}>{item.title || item.chapterName}</AppText>
-                        <AppText style={styles.authorBadge}>By {item.topperName || 'Verified Topper'}</AppText>
-                    </View>
-
-                    <View style={styles.infoBottom}>
-                        <View style={styles.actionRow}>
-                            <View style={styles.primaryAction}>
-                                <Feather name="book-open" size={14} color="white" />
-                                <AppText style={styles.actionText} weight="bold">READ</AppText>
-                            </View>
-
-                            {activeTab === 'Downloaded' && (
-                                <TouchableOpacity
-                                    style={styles.deleteIcon}
-                                    onPress={() => handleDeleteDownload(item.id)}
-                                >
-                                    <Feather name="trash-2" size={18} color="#EF4444" />
-                                </TouchableOpacity>
-                            )}
-                        </View>
-                    </View>
-                </View>
-            </TouchableOpacity>
-        );
-    };
-
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
             <View style={styles.header}>
                 <PageHeader
@@ -235,7 +185,7 @@ const MyLibrary = ({ navigation, route }) => {
                     onBackPress={() => navigation.goBack()}
                     rightComponent={
                         <TouchableOpacity style={styles.configBtn} onPress={() => navigation.navigate('TransactionHistory')}>
-                            <Feather name="clock" size={20} color="#94A3B8" />
+                            <Feather name="clock" size={20} color={theme.colors.textMuted} />
                         </TouchableOpacity>
                     }
                 />
@@ -324,7 +274,7 @@ const MyLibrary = ({ navigation, route }) => {
                                                 />
                                                 {isOffline && (
                                                     <View style={styles.downloadIndicator}>
-                                                        <Ionicons name="cloud-done" size={16} color="#10B981" />
+                                                        <Ionicons name="cloud-done" size={16} color={theme.colors.success} />
                                                     </View>
                                                 )}
                                             </View>
@@ -339,7 +289,7 @@ const MyLibrary = ({ navigation, route }) => {
                                                 <View style={styles.infoBottom}>
                                                     <View style={styles.actionRow}>
                                                         <View style={styles.primaryAction}>
-                                                            <Feather name="book-open" size={14} color="white" />
+                                                            <Feather name="book-open" size={14} color={theme.colors.primary} />
                                                             <AppText style={styles.actionText} weight="bold">READ</AppText>
                                                         </View>
 
@@ -348,7 +298,7 @@ const MyLibrary = ({ navigation, route }) => {
                                                                 style={styles.deleteIcon}
                                                                 onPress={() => handleDeleteDownload(item.id)}
                                                             >
-                                                                <Feather name="trash-2" size={18} color="#EF4444" />
+                                                                <Feather name="trash-2" size={18} color={theme.colors.danger} />
                                                             </TouchableOpacity>
                                                         )}
                                                     </View>
@@ -370,7 +320,8 @@ const MyLibrary = ({ navigation, route }) => {
                                     <RefreshControl
                                         refreshing={refreshing}
                                         onRefresh={onRefresh}
-                                        tintColor="#00B1FC"
+                                        tintColor={theme.colors.primary}
+                                        backgroundColor="transparent"
                                     />
                                 }
                                 ListHeaderComponent={() => (
@@ -403,7 +354,7 @@ const MyLibrary = ({ navigation, route }) => {
                                 }
                                 ListFooterComponent={
                                     ((isFetching && page > 1 && tab === 'Purchases') || (isFavoritesFetching && favoritesPage > 1 && tab === 'Favorites')) ? (
-                                        <ActivityIndicator size="small" color="#00B1FC" style={{ marginVertical: 20 }} />
+                                        <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginVertical: 20 }} />
                                     ) : <View style={{ height: 100 }} />
                                 }
                             />
@@ -429,36 +380,35 @@ const MyLibrary = ({ navigation, route }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background,
-
+        backgroundColor: theme.colors.background,
     },
     header: {
-        backgroundColor: '#1E293B20',
+        backgroundColor: theme.colors.surface ,
         paddingBottom: 5,
         borderBottomWidth: 1,
-        borderBottomColor: '#33415540',
+        borderBottomColor: theme.colors.border,
     },
     configBtn: {
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
     },
     searchBar: {
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
         marginBottom: 20,
     },
     tabsWrapper: {
         flexDirection: 'row',
         gap: 30,
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
     },
     tabItem: {
         paddingVertical: 12,
@@ -466,11 +416,11 @@ const styles = StyleSheet.create({
     },
     tabLabel: {
         fontSize: 13,
-        color: '#64748B',
+        color: theme.colors.textMuted,
         letterSpacing: 0.5,
     },
     activeTabLabel: {
-        color: '#00B1FC',
+        color: theme.colors.primary,
     },
     activeLine: {
         position: 'absolute',
@@ -478,23 +428,23 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         height: 3,
-        backgroundColor: '#00B1FC',
+        backgroundColor: theme.colors.primary,
         borderTopLeftRadius: 3,
         borderTopRightRadius: 3,
     },
     listContainer: {
-        paddingHorizontal: Theme.layout.screenPadding,
+        paddingHorizontal: theme.layout.screenPadding,
         paddingTop: 20,
     },
     libraryStats: {
         flexDirection: 'row',
-        backgroundColor: '#1E293B60',
+        backgroundColor: theme.colors.card + '60',
         marginHorizontal: 0,
         borderRadius: 20,
         paddingVertical: 15,
         marginBottom: 25,
         borderWidth: 1,
-        borderColor: '#33415530',
+        borderColor: theme.colors.border + '30',
         alignItems: 'center',
     },
     libStatBox: {
@@ -503,32 +453,32 @@ const styles = StyleSheet.create({
     },
     statVal: {
         fontSize: 18,
-        color: 'white',
+        color: theme.colors.text,
     },
     statLab: {
         fontSize: 10,
-        color: '#64748B',
+        color: theme.colors.textMuted,
         marginTop: 2,
     },
     statDivider: {
         width: 1,
         height: '60%',
-        backgroundColor: '#334155',
+        backgroundColor: theme.colors.border,
     },
     card: {
         flex: 1,
         margin: 5,
-        backgroundColor: '#1E293B',
+        backgroundColor: theme.colors.card,
         borderRadius: 20,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: theme.colors.border,
         marginBottom: 15,
     },
     cardCover: {
         width: '100%',
         height: 160,
-        backgroundColor: '#33415540',
+        backgroundColor: theme.colors.surface + '40',
         position: 'relative',
     },
     coverImage: {
@@ -540,12 +490,14 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 10,
         right: 10,
-        backgroundColor: 'rgba(15, 23, 42, 0.8)',
+        backgroundColor: theme.colors.background + 'dd',
         width: 28,
         height: 28,
         borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: theme.colors.border,
     },
     cardInfo: {
         padding: 12,
@@ -557,19 +509,19 @@ const styles = StyleSheet.create({
     },
     noteSubject: {
         fontSize: 9,
-        color: '#00B1FC',
+        color: theme.colors.primary,
         letterSpacing: 1,
         marginBottom: 4,
     },
     noteTitle: {
         fontSize: 14,
-        color: 'white',
+        color: theme.colors.text,
         lineHeight: 18,
         marginBottom: 6,
     },
     authorBadge: {
         fontSize: 11,
-        color: '#64748B',
+        color: theme.colors.textMuted,
     },
     actionRow: {
         flexDirection: 'row',
@@ -580,7 +532,7 @@ const styles = StyleSheet.create({
     primaryAction: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#00B1FC20',
+        backgroundColor: theme.colors.primary + '15',
         paddingHorizontal: 10,
         paddingVertical: 6,
         borderRadius: 8,
@@ -588,7 +540,7 @@ const styles = StyleSheet.create({
     },
     actionText: {
         fontSize: 10,
-        color: '#00B1FC',
+        color: theme.colors.primary,
     },
     deleteIcon: {
         padding: 5,
